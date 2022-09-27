@@ -730,6 +730,7 @@ stages:
         --verbosity=2  \
         --vary=-time \
         --vary=user_group.available+=salsa-ci,domain_host.use_sudo=1 \
+        ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS:+--append-build-command=${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}} \
         ${SALSA_CI_REPROTEST_ARGS} \
         ${WORKING_DIR}/*.dsc -- null" |& OUTPUT_FILENAME=reprotest.log filter-output
   variables:

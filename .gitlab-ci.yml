@@ -168,6 +168,13 @@ test-pipeline:
         SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
         BUILD_PROFILES:
           - nocheck,nodoc
+      # curl is used to test calling reprotest and passing an --append-build-command
+      - PROJECT_URL: https://salsa.debian.org/debian/curl
+        PROJECT_TARGET_HEAD: debian/bookworm
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_ENABLE_REPROTEST: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
       # boxes is used to test gbp setup-gitattributes (#322)
       #- PROJECT_URL: https://salsa.debian.org/otto/boxes
       #  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
