@@ -32,6 +32,7 @@ variables:
     description: "Set this to 1 if you want to build the full set of images, even in staging branches"
     value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
+  SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
   STABLE: "bookworm"
@@ -189,6 +190,7 @@ test-pipeline-non-default-archs:
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
   allow_failure: true
 
 clean images:
@@ -197,7 +199,22 @@ clean images:
   services:
     - docker:20.10.12-dind
   variables:
-    IMAGES_LIST: 'aptly autopkgtest base arm32v5/base arm32v7/base arm64v8/base i386/base blhc gbp piuparts reprotest lintian generic_tests'
+    # TODO: include here the arm64v8/ missing images
+    IMAGES_LIST: |
+      aptly
+      autopkgtest
+      base
+      arm32v5/base
+      arm32v7/base
+      arm64v8/base
+      i386/base
+      riscv64/base
+      blhc
+      gbp
+      piuparts
+      reprotest
+      lintian
+      generic_tests
     RELEASE: sid
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY

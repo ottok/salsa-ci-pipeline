@@ -22,6 +22,9 @@ build armhf:
 build arm64:
   extends: .build-package-arm64
 
+build riscv64:
+  extends: .build-package-riscv64
+
 build source:
   extends: .build-source-only
 

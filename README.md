@@ -637,6 +637,18 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
 ```
 
+### Build job on RISC-V
+
+Salsa CI includes a riscv64 build job, but it is currently disabled by default.
+You can enable it for your project if you have a RISC-V gitlab runner
+available. For that, you need to register your runner, tagging it as `riscv64`,
+and set the related variable to anything different than 1, 'yes' or 'true':
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
+```
+
 ### Customizing reprotest
 
 #### Running reprotest with diffoscope
