@@ -81,8 +81,7 @@ Changing the release is as easy as setting a `RELEASE` variable.
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   RELEASE: 'buster'
@@ -111,8 +110,7 @@ By default, pipelines are only created for branches that contain a `debian/` fol
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_IGNORED_BRANCHES: 'some-branch|another-ref'
@@ -125,8 +123,7 @@ If your package has dependencies or build-dependencies in the `contrib` or `non-
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
     RELEASE: 'stretch'
@@ -161,8 +158,7 @@ There are many ways to skip a certain job. The recommended way is to set to `1` 
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 # This sample disables all default tests, only disable those that you
 # don't want
@@ -185,8 +181,7 @@ ones you want, which is good when testing a specific test:
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 # This sample disables all default tests, and then enables just autopkgtest
 variables:
@@ -210,8 +205,7 @@ For example, even though reproducible builds are important, `reprotest`'s behavi
 
 ```
 include:
- - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
- - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 reprotest:
   allow_failure: true
@@ -236,8 +230,7 @@ By default, the pipeline is run only for commits, tags are ignored. To run the p
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_ENABLE_PIPELINE_ON_TAGS: 1
@@ -442,8 +435,7 @@ To make Lintian shows overridden tags, set `SALSA_CI_LINTIAN_SHOW_OVERRIDES` to 
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_LINTIAN_FAIL_WARNING: 1
@@ -463,8 +455,7 @@ comma-separated list. For example:
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
@@ -476,8 +467,7 @@ profiles independently:
 
 ```
 include:
-  - https://salsa.debian.org/santiago/pipeline/raw/test-build-profile/salsa-ci.yml
-  - https://salsa.debian.org/santiago/pipeline/raw/test-build-profile/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
@@ -499,8 +489,7 @@ You can do this by setting the arguments in the `SALSA_CI_AUTOPKGTEST_ARGS` vari
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--debug'
@@ -509,10 +498,9 @@ variables:
 Note that autopkgtest can access the repository in the current directory, making it possible for `--setup-commands` to read commands from a file. For example:
 
 ```yaml
-----
-include
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
@@ -540,8 +528,7 @@ You can do this using the `SALSA_CI_DPKG_BUILDPACKAGE_ARGS` variable.
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --your-option
@@ -556,8 +543,7 @@ You can do this using the `SALSA_CI_GBP_BUILDPACKAGE_ARGS` variable.
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: --your-option
@@ -572,14 +558,14 @@ You can do this using the `SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT` and `SALSA_CI_P
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT: 'ci/pin-django-from-backports.sh'
 ```
 
 The `ci/pin-django-from-backports.sh`:
+
 ```shell
 #!/bin/sh
 
@@ -653,8 +639,7 @@ To enable diffoscope, setting `SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE` to 1 (or 'y
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE: 1
@@ -669,8 +654,7 @@ You can get this level of customization by adding extra `reprotest` parameters i
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_REPROTEST_ARGS: --vary=-build_path
@@ -690,8 +674,7 @@ If you want to run multiple reprotest jobs, one for each variation, set the
 ```yaml
 ---
 include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
   SALSA_CI_ENABLE_ATOMIC_REPROTEST: 1
