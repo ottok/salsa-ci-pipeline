@@ -49,7 +49,7 @@ To use the Salsa Pipeline, the first thing to do is to enable the project's Pipe
 Then, change the project's setting to make it point to the pipeline's config file.
 This can be done on `Settings` -> `CI/CD` (on the expanded menu, don't click on the CI / CD rocket) -> `General Pipelines` -> `CI/CD configuration file`.
 
-If the base pipeline configuration fits your needs without further modifications, the recommended way is to use `recipes/debian.yml@salsa-ci-team/pipeline` as the config path, which refers to a file kept in the salsa-ci-team/pipeline repository.
+If the base pipeline configuration fits your needs without further modifications, the recommended way is to use `recipes/debian.yml@salsa-ci-team/pipeline` as the config path, which refers to a file kept in the `salsa-ci-team/pipeline` repository.
 
 > :warning: **Note:** The pipeline is not run automatically after configuring it. You can either trigger it by [running the pipeline manually](https://salsa.debian.org/help/ci/pipelines/index.md#run-a-pipeline-manually) or pushing something.
 
@@ -66,12 +66,21 @@ include:
 
 ## Advanced Use
 
-Following the basic instructions will allow you to add all the building and testing stages as provided by the salsa-ci-team.
+Following the basic instructions will allow you to add all the building and testing stages as provided by the Salsa CI Team.
 However, customization of the scripts is possible.
 
 The [`salsa-ci.yml`](https://salsa.debian.org/salsa-ci-team/pipeline/blob/master/salsa-ci.yml) template delivers the jobs definitions.
 Including only this file, no job will be added to the pipeline.
 On the other hand, [`pipeline-jobs.yml`](https://salsa.debian.org/salsa-ci-team/pipeline/blob/master/pipeline-jobs.yml) includes all the jobs' instances.
+
+For an example of a very customized CI pipeline, one can have a look at the [salsa-ci.yml for the kernel](https://salsa.debian.org/kernel-team/linux/-/blob/master/debian/salsa-ci.yml), which starts like this:
+
+```yaml
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+
+# jobs are defined below ...
+```
 
 ### Changing the Debian Release
 
