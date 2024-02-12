@@ -623,32 +623,55 @@ See also
 By default, the build job will increase the release number using the +salsaci suffix.
 To disable this behavior set the `SALSA_CI_DISABLE_VERSION_BUMP` to 1, 'yes' or 'true'.
 
-### Build jobs on ARM
+### Build jobs on ARM and RISC-V
 
-Salsa CI includes builds jobs for armel, armhf and arm64, but those are
-disabled by default. You can enable them for your project if you have an ARM
-gitlab runner available. For that, you need to register your runner, tagging it
-as `arm64`, and set the related variables to anything different than 1, 'yes'
-or 'true':
+Salsa CI includes builds jobs for armel, armhf, arm64 and riscv64. They are
+disabled by default, but can be enabled if a project has a GitLab runner on
+arm64 hardware available and tagged `arm64`, or on RISC-V tagged `riscv64`.
+
+If you know you have such a runner available (e.g. the [shared Debian group on
+Salsa](https://salsa.debian.org/debian) has `salsaci-arm64-runner-01.debian.net`
+and `salsaci riscv64 runner 01`) you can active ARM or RISC-V build respectively
+by setting the related variables to anything different than 1, 'yes' or 'true':
 
 ```yaml
 variables:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
-  SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
-```
-
-### Build job on RISC-V
-
-Salsa CI includes a riscv64 build job, but it is currently disabled by default.
-You can enable it for your project if you have a RISC-V gitlab runner
-available. For that, you need to register your runner, tagging it as `riscv64`,
-and set the related variable to anything different than 1, 'yes' or 'true':
-
-```yaml
-variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
 ```
+
+If you have access to hardware that can be dedicated to expand the Salsa Ci
+runner fleet, you can configure it following the instructions at
+https://salsa.debian.org/salsa/salsa-ansible/-/tree/master/roles/gitlab-runner/
+
+Contributors who fork the project might not have runners tagged `arm64` or
+`riscv64` in their project, so you might also want to want to limit the special
+build jobs to the project name space with extra `rules`:
+
+```
+build arm64:
+  extends: .build-package-arm64
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+
+build armel:
+  extends: .build-package-armel
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+
+build armhf:
+  extends: .build-package-armhf
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+
+build riscv64:
+  extends: .build-package-riscv64
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+```
+
 
 ### Customizing reprotest
 
