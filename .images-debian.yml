@@ -67,6 +67,12 @@ images-prod:
           - autopkgtest
         ARCH: amd64
         RELEASE: $STABLE
+      # build image, only on sid, all arches
+      - IMAGE_NAME: build
+        ARCH:
+          - i386
+          - amd64
+        RELEASE: sid
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
@@ -112,6 +118,7 @@ images-prod-arm:
           - lintian
           - piuparts
           - reprotest
+          - build
         ARCH: arm64/v8
         RELEASE: sid
       # ci.debian.org runs stable + some packages from unstable
@@ -119,6 +126,13 @@ images-prod-arm:
           - autopkgtest
         ARCH: arm64/v8
         RELEASE: $STABLE
+      # build image, only on sid, all arches
+      - IMAGE_NAME: build
+        ARCH:
+          - arm/v5
+          - arm/v7
+          - arm64/v8
+        RELEASE: sid
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
@@ -139,6 +153,10 @@ images-prod-riscv:
           - riscv64
         # As of today, 2024-07, pre-trixie, riscv64 is only supported on
         # unstable
+        RELEASE: sid
+      - IMAGE_NAME: build
+        ARCH:
+          - riscv64
         RELEASE: sid
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
@@ -162,9 +180,12 @@ image-staging:
           - lintian
           - piuparts
           - reprotest
+          - build
         ARCH: amd64
         RELEASE: sid
-      - IMAGE_NAME: base
+      - IMAGE_NAME:
+          - base
+          - build
         ARCH: i386
         RELEASE: sid
       - IMAGE_NAME: autopkgtest
@@ -189,12 +210,14 @@ image-staging-arm:
           - reprotest
         ARCH: arm64/v8
         RELEASE: sid
+      # TODO: is arm64v8 build image enough?
       - IMAGE_NAME:
           - autopkgtest
         ARCH: arm64/v8
         RELEASE: $STABLE
       - IMAGE_NAME:
           - base
+          - build
         ARCH:
           - arm/v5
           - arm/v7
@@ -220,6 +243,7 @@ image-staging-riscv:
     matrix:
       - IMAGE_NAME:
           - base
+          - build
         ARCH:
           - riscv64
         RELEASE: sid
