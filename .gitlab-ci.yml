@@ -13,10 +13,12 @@ workflow:
       variables:
         IMAGE_VERSION: latest
         AUTOPKGTEST_IMAGE_VERSION: latest
+        BUILD_IMAGE_VERSION: latest
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_SLUG}
         AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_SLUG}
+        BUILD_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
     - when: always
   auto_cancel:
     on_new_commit: interruptible

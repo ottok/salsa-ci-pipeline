@@ -373,9 +373,6 @@ follows:
 ---
 include: https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
 
-extract-source:
-    extends: .provisioning-extract-source
-
 variables:
   RELEASE: 'experimental'
 
@@ -542,6 +539,14 @@ build riscv64:
   rules:
     - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
 ```
+
+### Customize the build jobs
+
+The build jobs run a script composed of different steps, predefined by, at a
+first level, .build-definition-common, and, at a second level, by
+`.build-script`.  Their composing scripts should be safe-explanatory.  If you
+need to customize the script run by any build job, the easiest way to do it is
+by redefining `.build-definition`.
 
 ### Add more architectures or CI runners
 
