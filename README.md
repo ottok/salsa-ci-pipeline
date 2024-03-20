@@ -84,7 +84,8 @@ include:
 
 ### Changing the Debian Release
 
-By default, everything will run on the `'unstable'` suite.
+By default, everything will run on the suite declared at the top of debian/changelog,
+or - if debian/changelog cannot be parsed for a suitable release - on the `'unstable'` suite.
 Changing the release is as easy as setting a `RELEASE` variable.
 
 ```yaml
