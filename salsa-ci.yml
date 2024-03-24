@@ -99,7 +99,7 @@ variables:
   SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_RC_BUGS: 1
   SALSA_CI_IGNORED_BRANCHES: ''
-  SALSA_CI_BUILD_TIMEOUT_ARGS: "-v 2.75h"
+  SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
   SALSA_CI_DISABLE_BUILD_DBGSYM: 1
   SALSA_CI_DISABLE_WRAP_AND_SORT: 1
   SALSA_CI_WRAP_AND_SORT_ARGS: ''
@@ -368,6 +368,13 @@ stages:
   - export BUILD_COMMAND="eatmydata dpkg-buildpackage ${HOST_ARCH:+--host-arch ${HOST_ARCH} -Pcross,nocheck} --build=${DB_BUILD_TYPE} ${DB_BUILD_PARAM}"
   # Set architecture to correct in case it is i386 to avoid pitfalls (See #284)
   - test "${BUILD_ARCH}" = "i386" && export BUILD_COMMAND="/usr/bin/setarch i686 ${BUILD_COMMAND}"
+
+  # Add verbose option for timeout
+  - |
+    timeout_version="$(timeout --version | awk 'NR==1{print $4}')"
+    if dpkg --compare-versions "$timeout_version" ge 8.29; then
+      export SALSA_CI_BUILD_TIMEOUT_ARGS=" -v ${SALSA_CI_BUILD_TIMEOUT_ARGS}"
+    fi
 
   # Print the build environment
   - printenv | sort
@@ -698,6 +705,11 @@ stages:
     - |
       if ! echo "${SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE}" | grep -q -E '^(1|yes|true)$'; then
         SALSA_CI_REPROTEST_ARGS="${SALSA_CI_REPROTEST_ARGS} --no-diffoscope"
+      fi
+    - |
+      timeout_version="$(timeout --version | awk 'NR==1{print $4}')"
+      if dpkg --compare-versions "$timeout_version" ge 8.29; then
+        export SALSA_CI_BUILD_TIMEOUT_ARGS=" -v ${SALSA_CI_BUILD_TIMEOUT_ARGS}"
       fi
     - |
       su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} reprotest \
