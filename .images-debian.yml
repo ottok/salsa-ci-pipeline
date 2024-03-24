@@ -39,6 +39,8 @@ images-prod:
         RELEASE: *all-supported-releases
       # All releases only amd64
       - IMAGE_NAME:
+          # A blhc image is required for all the supported releases. See #340
+          - blhc
           - generic_tests
         ARCH: amd64
         RELEASE: *all-supported-releases
@@ -62,7 +64,6 @@ images-prod:
       - IMAGE_NAME:
           - aptly
           - autopkgtest
-          - blhc
           - gbp
           - piuparts
           - reprotest
