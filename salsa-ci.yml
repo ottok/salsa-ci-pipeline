@@ -904,3 +904,16 @@ stages:
   needs:
     - job: build
       artifacts: true
+      optional: true
+    - job: build i386
+      artifacts: true
+      optional: true
+    - job: build armel
+      artifacts: true
+      optional: true
+    - job: build armhf
+      artifacts: true
+      optional: true
+    - job: build arm64
+      artifacts: true
+      optional: true
