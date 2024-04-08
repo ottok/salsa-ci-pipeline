@@ -87,14 +87,20 @@ check gpg signature:
     - echo "keyring /usr/share/keyrings/debian-keyring.gpg" >> ${HOME}/.gnupg/gpg.conf
     - echo "keyring /usr/share/keyrings/debian-maintainers.gpg" >> ${HOME}/.gnupg/gpg.conf
     - echo "keyring /usr/share/keyrings/debian-nonupload.gpg" >> ${HOME}/.gnupg/gpg.conf
-    - SIGNING_KEY=$(git log --show-signature HEAD~1..HEAD | grep "using.*key" | awk '{print $NF}')
+    - echo "Checking that contributors have signed git commits following to CONTRIBUTING.md .."
+    # The field %GK is the only one that will have a key ID if before the key has been downloaded
+    - SIGNING_KEY="$(git log --pretty="%GK" HEAD~1..HEAD)"
+    - 'if [ -z "$SIGNING_KEY" ]; then echo "ERROR: Git commit message signature missing!" && exit 1; fi'
     # Try OpenPGP first and if key was not found, try the Ubuntu keyserver.
     # Defining the keyserver for OpenPGP is done to be explicit, but it not
     # strictly necessary as is it is the default keyserver in GnuPG anyway
-    - |
-      gpg --verbose --keyserver hkps://keys.openpgp.org:443 --recv-key $SIGNING_KEY || \
-      gpg --verbose --keyserver hkps://keyserver.ubuntu.com:443 --recv-key $SIGNING_KEY
-    - GIT_TRACE2=true git verify-commit HEAD --raw --verbose || (echo "please sign your commit" && exit 1)
+    - >
+      (gpg --verbose --keyserver hkps://keys.openpgp.org:443 --recv-key $SIGNING_KEY ||
+      gpg --verbose --keyserver hkps://keyserver.ubuntu.com:443 --recv-key $SIGNING_KEY) ||
+      (echo "ERROR: Key not found. Please upload it to the OpenPGP or Ubuntu keyserver." && exit 1)
+    - >
+      GIT_TRACE2=true git verify-commit HEAD --raw --verbose ||
+      (echo "ERROR: Signature is invalid. Please sign your commits correctly. See CONTRIBUTING.md for details." && exit 1)
   rules:
     - if: $CI_SERVER_URL != "https://salsa.debian.org"
       when: never
