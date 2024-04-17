@@ -111,6 +111,7 @@ variables:
   SALSA_CI_EXTRA_REPOSITORY_KEY: ${EXTRA_REPOSITORY_KEY}
   SALSA_CI_MAX_ARTIFACTS_SIZE: 256000  # 250MB
   PYTHONIOENCODING: utf-8
+  FF_SCRIPT_SECTIONS: "true" # enables full command logging in job logs
 
 stages:
   - provisioning
