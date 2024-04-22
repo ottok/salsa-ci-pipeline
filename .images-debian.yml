@@ -16,7 +16,6 @@ variables:
   - stretch
   - stretch-backports
   - buster
-  - buster-backports
   - bullseye
   - bullseye-backports
   - bookworm
@@ -53,7 +52,6 @@ images-prod:
           - stretch
           - stretch-backports
           - buster
-          - buster-backports
           - bullseye
           - bullseye-backports
           - bookworm

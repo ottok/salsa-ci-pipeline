@@ -90,7 +90,6 @@ The following releases are currently supported:
 * stretch
 * stretch-backports
 * buster
-* buster-backports
 * bullseye
 * bullseye-backports
 * bookworm
