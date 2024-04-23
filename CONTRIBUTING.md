@@ -29,8 +29,7 @@ For that:
    find instructions about how to interact with Salsa via SSH at
    [salsa.debian.org/help/topics/authentication](https://salsa.debian.org/help/topics/authentication/index.md).
 
-1. After cloning, run [`git config --local commit.gpgsign
-   true`](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work#_everyone_must_sign)
+1. After cloning, run [`git config --local commit.gpgsign true`](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work#_everyone_must_sign)
    to ensure all your commits in this project are automatically signed. Debian
    relies on OpenPGP to guarantee the authenticity and integrity of contributions
    and code submissions to Salsa-CI will not be accepted if unsigned.
