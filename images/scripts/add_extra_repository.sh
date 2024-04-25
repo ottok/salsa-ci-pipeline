@@ -44,6 +44,10 @@ while [[ "$#" -ge 1 ]]; do
             VERBOSE=1
             shift
             ;;
+        *)
+            echo "Unkown argument $1"
+            exit 1
+            ;;
     esac
 done
 
