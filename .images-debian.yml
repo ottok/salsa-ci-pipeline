@@ -79,7 +79,7 @@ images-prod-arm:
   stage: build
   extends: .build_template
   tags:
-    - arm64
+    - $SALSA_CI_ARM_RUNNER_TAG
   parallel:
     matrix:
       # Base image, all releases, all arches
@@ -133,7 +133,7 @@ image-staging-arm:
   extends: .build_template
   stage: build
   tags:
-    - arm64
+    - $SALSA_CI_ARM_RUNNER_TAG
   parallel:
     matrix:
       - IMAGE_NAME:
