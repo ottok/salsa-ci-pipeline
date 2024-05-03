@@ -8,7 +8,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     eatmydata apt-get install -y \
         dnsmasq-base debci libvirt-clients libvirt-daemon-system libvirt-daemon-system-sysv \
-        autopkgtest lxc wget && \
+        autopkgtest lxc lxc-templates wget && \
     rm -rf /var/lib/apt && \
     rm /usr/sbin/policy-rc.d && \
     ln -s /bin/true /usr/sbin/policy-rc.d
