@@ -58,6 +58,9 @@ stages:
             esac
             ALIASES=$(wget -O - ${MIRROR}/dists/${RELEASE}/Release | awk "/^Suite:/ { if (\$2 !~ /${RELEASE}/) print \$2 }")
             test "$ALIASES" != 'unstable' || ALIASES="${ALIASES} latest"
+            # autopkgtest image is built on top of stable. Let's make the
+            # latest tag an alias of it.
+            test "$IMAGE_NAME" != 'autopkgtest' || ALIASES="${ALIASES} latest"
           ;;
           kali)
             test "$RELEASE" != "kali-dev" || ALIASES="${ALIASES} latest"

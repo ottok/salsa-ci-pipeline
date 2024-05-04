@@ -21,6 +21,9 @@ variables:
     description: "Set this to 1 if you want to disable the jobs that build the images"
     value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
+  # Used by .images-debian.yml to define the base for the
+  # autopkgtest image
+  STABLE: "bookworm"
 
 stages:
   - images
@@ -143,6 +146,7 @@ test-pipeline:
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
+        AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_NAME}
   parallel:
     matrix:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
