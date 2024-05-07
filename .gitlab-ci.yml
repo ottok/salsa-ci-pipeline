@@ -153,6 +153,7 @@ test-pipeline:
         SALSA_CI_DISABLE_WRAP_AND_SORT: 0
         SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
       - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/master
         SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
