@@ -5,20 +5,18 @@ The Salsa CI pipeline structure is composed mainly by two functional parts: the
 external pipeline, that is used by the projects, and the internal pipeline,
 that is responsible for making the external pipeline works.
 
-```
-           ----------            ---------- 
-          | Salsa CI |          | Salsa CI |
-          | internal |          | external |
-          | pipeline |          | pipeline |
-           ----------            ---------- 
-                   \              /
-   builds images    \            / pull images
-  and pushes them to \          /  from
-                     _\/      \/_
-                    -------------
-                   |  Container  |
-                   |  registry   |
-                    ------------- 
+```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: monospace
+---
+flowchart TD;
+  SCIP(Salsa CI\nInternal\nPipeline)
+  SCEP(Salsa CI\nExternal\nPipeline)
+  CR(Container\nRegistry)
+  SCIP -- builds images\nand pushes them to --> CR;
+  SCEP -- pull images\nfrom --> CR;
 
 ```
 
@@ -137,11 +135,23 @@ The Salsa CI internal pipeline has two main goals:
 2. define the Salsa CI's very own CI. The structure of the Internal pipeline
    can be summarised like this:
 
-```
-               includes                       includes
-.gitlab-ci.yml --------> .images-<vendor>.yml -------> .images-ci.yml
-             \ includes                       includes
-              \-------->  .pipeline-test.yml  -------> salsa external pipeline
+```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: monospace
+---
+flowchart LR;
+  GLCI(".gitlab-ci.yml");
+  IV("images-&lt;vendor&gt;.yml");
+  PT(".pipeline-test.yml");
+  ICI(".images-ci.yml");
+  SCEP("Salsa CI\nExternal\nPipeline");
+
+  GLCI -- includes --> IV;
+  GLCI -- includes --> PT;
+  IV -- includes --> ICI;
+  PT -- includes --> SCEP;
 ```
 
 * [.gitlab-ci.yml](.gitlab-ci.yml): it is the base file that defines the jobs
