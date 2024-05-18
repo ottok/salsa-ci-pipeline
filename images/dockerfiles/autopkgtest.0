@@ -4,11 +4,26 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 
+RUN echo "deb http://deb.debian.org/debian/ unstable main" >> /etc/apt/sources.list
+RUN echo "deb-src http://deb.debian.org/debian/ unstable main" >> /etc/apt/sources.list
+
+COPY files/autopkgtest/default-release.conf /etc/apt/apt.conf.d/default-release.conf
+COPY files/autopkgtest/apt-pinning.conf /etc/apt/preferences.d/apt-pinning.conf
+
+# To mimic the ci.debian.net setup as much as possible, create the autopkgtest
+# image based on stable, but install autodep8, autopkgtest and debci from
+# unstable (or from experimental during freeze, when required). The version
+# information of these packages in ci.d.n can be found at:
+# https://salsa.debian.org/ci-team/debian-ci-config/-/blob/master/rakelib/versions.rake?ref_type=heads
 RUN apt-get update && \
     apt-get upgrade -y && \
     eatmydata apt-get install -y \
-        dnsmasq-base debci libvirt-clients libvirt-daemon-system libvirt-daemon-system-sysv \
-        autopkgtest lxc lxc-templates wget && \
+        dnsmasq-base libvirt-clients libvirt-daemon-system libvirt-daemon-system-sysv \
+        lxc lxc-templates wget && \
+    eatmydata apt-get install -y -t unstable \
+        autodep8 \
+        autopkgtest \
+        debci && \
     rm -rf /var/lib/apt && \
     rm /usr/sbin/policy-rc.d && \
     ln -s /bin/true /usr/sbin/policy-rc.d

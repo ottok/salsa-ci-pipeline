@@ -61,12 +61,16 @@ images-prod:
       # Images in sid only amd64
       - IMAGE_NAME:
           - aptly
-          - autopkgtest
           - gbp
           - piuparts
           - reprotest
         ARCH: amd64
         RELEASE: sid
+      # ci.debian.org runs stable + some packages from unstable
+      - IMAGE_NAME:
+          - autopkgtest
+        ARCH: amd64
+        RELEASE: $STABLE
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
     - if: $BUILD_ALL_IMAGES
@@ -90,12 +94,16 @@ images-prod-arm:
         RELEASE: *all-supported-releases
       # Images in sid only arm64
       - IMAGE_NAME:
-          - autopkgtest
           - blhc
           - piuparts
           - reprotest
         ARCH: arm64v8
         RELEASE: sid
+      # ci.debian.org runs stable + some packages from unstable
+      - IMAGE_NAME:
+          - autopkgtest
+        ARCH: arm64v8
+        RELEASE: $STABLE
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
     - if: $BUILD_ALL_IMAGES
@@ -110,7 +118,6 @@ image-staging:
     matrix:
       - IMAGE_NAME:
           - aptly
-          - autopkgtest
           - base
           - blhc
           - gbp
@@ -123,6 +130,9 @@ image-staging:
       - IMAGE_NAME: base
         ARCH: i386
         RELEASE: sid
+      - IMAGE_NAME: autopkgtest
+        ARCH: amd64
+        RELEASE: $STABLE
   rules:
     - if: $BUILD_ALL_IMAGES
       when: never
@@ -136,12 +146,15 @@ image-staging-arm:
   parallel:
     matrix:
       - IMAGE_NAME:
-          - autopkgtest
           - blhc
           - piuparts
           - reprotest
         ARCH: arm64v8
         RELEASE: sid
+      - IMAGE_NAME:
+          - autopkgtest
+        ARCH: arm64v8
+        RELEASE: $STABLE
       - IMAGE_NAME:
           - base
         ARCH:
