@@ -773,7 +773,7 @@ stages:
     - |
       if [ "$VENDOR" = "debian" ]; then \
         case "$RELEASE" in
-          stretch*)
+          buster*|stretch*)
             MIRROR=${SALSA_CI_DEBIAN_ARCHIVE_MIRROR}
             ;;
           *)
