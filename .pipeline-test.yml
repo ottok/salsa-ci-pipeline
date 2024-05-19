@@ -33,6 +33,13 @@ extract-source:
     - cd repo_test
     - test -z "${PROJECT_TARGET_HEAD}" || git checkout "${PROJECT_TARGET_HEAD}"
 
+static-analysis:
+  extends: .provisioning-static-analysis
+  before_script:
+    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
+    - cd repo_test
+    - test -z "${PROJECT_TARGET_HEAD}" || git checkout "${PROJECT_TARGET_HEAD}"
+
 aptly with passphrase:
   extends: .publish-aptly
   variables:

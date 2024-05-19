@@ -7,6 +7,9 @@
 extract-source:
   extends: .provisioning-extract-source
 
+static-analysis:
+  extends: .provisioning-static-analysis
+
 build:
   extends: .build-package
 

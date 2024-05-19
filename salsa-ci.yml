@@ -241,6 +241,37 @@ stages:
         echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MB which may prevent the job to succeed.\e[39m"
       fi
 
+.provisioning-static-analysis: &provisioning-static-analysis
+  stage: provisioning
+  image: debian:sid-slim
+  dependencies: []
+  extends:
+    - .artifacts-default-expire
+  variables:
+    DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
+  script:
+    # Debug
+    - git status
+    - pwd
+    - ls -la
+    - apt-get update -qq && apt-get -qq install --no-install-recommends --yes
+      git dh-debputy python3-junit.xml python3-levenshtein python3-lsprotocol
+    # Check debian/* for typical errors. Don't check spelling as there are too
+    # many false positives and anyway spelling issues are level 'pedantic' in
+    # Debputy and do not emit an exit code, so wouldn't show up as failure in CI
+    # anyway.
+    - debputy lint || true
+    # Repeat, but output in junit file instead of the build log
+    - find ${WORKING_DIR} || true
+    - mkdir -vp ${WORKING_DIR} || true
+    - debputy lint --lint-report-format junit4-xml --report-output ${WORKING_DIR}/debputy-lint-report.xml
+  artifacts:
+    reports:
+      junit: ${WORKING_DIR}/debputy-lint-report.xml
+    paths:
+      - ${WORKING_DIR}/debputy-lint-report.xml
+    when: always
+
 .check-architecture-is-buildable: &check-architecture-is-buildable
   - cd ${WORKING_DIR}/${SOURCE_DIR}
   - |
