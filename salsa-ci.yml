@@ -115,6 +115,9 @@ variables:
   PYTHONIOENCODING: utf-8
   FF_SCRIPT_SECTIONS: "true" # enables full command logging in job logs
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
+  SALSA_CI_DISABLE_EXPORTORIG_FALLBACK:
+    description: "Disable origtargz fallback when gbp export-orig has failed. Stop CI when gbp export-orig has failed."
+    value: 0
 
 stages:
   - provisioning
@@ -186,10 +189,15 @@ stages:
         # Check if we can obtain the orig from the git branches
 
         if ! gbp export-orig --tarball-dir=${WORKING_DIR}; then
-          # Fallback using origtargz
-          origtargz -dt
-          cp -v ../*orig*tar* ${WORKING_DIR}
-          SALSA_CI_GBP_BUILDPACKAGE_ARGS="--git-overlay ${SALSA_CI_GBP_BUILDPACKAGE_ARGS}"
+          if [ $SALSA_CI_DISABLE_EXPORTORIG_FALLBACK -eq 1 ]; then
+            echo "Error: 'gbp export-orig' failed. Check that the branch with upstream source was pushed correctly. See 'gbp-push(1)' man page for details."
+            exit 1
+          else
+            # Fallback using origtargz
+            origtargz -dt
+            cp -v ../*orig*tar* ${WORKING_DIR}
+            SALSA_CI_GBP_BUILDPACKAGE_ARGS="--git-overlay ${SALSA_CI_GBP_BUILDPACKAGE_ARGS}"
+          fi
         fi
 
         # As of 2020-09-09, gbp doesn't have a simpler method to extract the
