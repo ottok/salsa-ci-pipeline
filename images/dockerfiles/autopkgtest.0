@@ -8,7 +8,7 @@ RUN echo "deb http://deb.debian.org/debian/ unstable main" >> /etc/apt/sources.l
 RUN echo "deb-src http://deb.debian.org/debian/ unstable main" >> /etc/apt/sources.list
 
 COPY files/autopkgtest/default-release.conf /etc/apt/apt.conf.d/default-release.conf
-COPY files/autopkgtest/apt-pinning.conf /etc/apt/preferences.d/apt-pinning.conf
+COPY files/autopkgtest/apt-pinning.pref /etc/apt/preferences.d/apt-pinning.pref
 
 # To mimic the ci.debian.net setup as much as possible, create the autopkgtest
 # image based on stable, but install autodep8, autopkgtest and debci from
