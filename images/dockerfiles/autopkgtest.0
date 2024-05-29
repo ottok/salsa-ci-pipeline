@@ -20,7 +20,7 @@ RUN apt-get update && \
     eatmydata apt-get install -y \
         dnsmasq-base libvirt-clients libvirt-daemon-system libvirt-daemon-system-sysv \
         lxc lxc-templates wget && \
-    eatmydata apt-get install -y -t unstable \
+    eatmydata apt-get install -y \
         autodep8 \
         autopkgtest \
         debci && \
