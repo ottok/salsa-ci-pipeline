@@ -87,3 +87,14 @@ and you want to save some time, you could:
 
 1. Once you are done, please remember to remove the staging images, setting
    `SALSA_CI_PERSIST_IMAGES` back to 0.Q
+
+### Test creating production images (in staging branches)
+
+By default, the pipeline for non-default branches (i.e. those from merge
+requests) only triggers a subset of image building jobs. The production job
+images that are built for every supported debian release, are limited to sid
+for staging branches. This reduces the use of computing resources, while making
+still possible to test the images. However, in some cases, contributors need to
+test how the full set of images are built from the changes introduced by their
+merge requests. To do that, set the `BUILD_ALL_IMAGES` variable to 1, 'yes' or
+'true'.

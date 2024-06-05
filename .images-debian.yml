@@ -72,8 +72,9 @@ images-prod:
         ARCH: amd64
         RELEASE: $STABLE
   rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-    - if: $BUILD_ALL_IMAGES
 
 # ARM images built on main branch
 # We need a separate matrix. If we place the ARM build jobs on images-prod, we
@@ -124,8 +125,9 @@ images-prod-arm:
         ARCH: arm64v8
         RELEASE: $STABLE
   rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-    - if: $BUILD_ALL_IMAGES
 
 # Images built on branches.
 # This is a subset of all the images, and are the only ones
@@ -153,7 +155,7 @@ image-staging:
         ARCH: amd64
         RELEASE: $STABLE
   rules:
-    - if: $BUILD_ALL_IMAGES
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
 
@@ -186,6 +188,6 @@ image-staging-arm:
   allow_failure: true
   when: manual
   rules:
-    - if: $BUILD_ALL_IMAGES
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
