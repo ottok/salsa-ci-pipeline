@@ -13,7 +13,7 @@ set -xe
 
 fix_apt_sources_for_archived_releases() {
     # Only for Debian's archived releases
-    if ! grep -E -q "^deb .* (stretch|buster) " /etc/apt/sources.list; then
+    if ! grep -E -q "^deb .* (stretch) " /etc/apt/sources.list; then
 	return
     fi
 

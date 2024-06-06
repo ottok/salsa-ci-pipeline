@@ -49,7 +49,7 @@ stages:
         case "$VENDOR" in
           debian)
             case "$RELEASE" in
-              buster*|stretch*)
+              stretch*)
                 MIRROR=${DEBIAN_ARCHIVE_MIRROR}
               ;;
               *)
