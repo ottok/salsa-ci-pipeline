@@ -91,7 +91,26 @@ images-prod-arm:
           - arm32v5
           - arm32v7
           - arm64v8
-        RELEASE: *all-supported-releases
+        RELEASE:
+          - stretch
+          - stretch-backports
+          - bullseye
+          - bullseye-backports
+          - bookworm
+          - bookworm-backports
+          - trixie
+          - sid
+          - experimental
+
+      # Temporarily disable base:buster armel(arm32v5).
+      # Related issue: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/355#note_492936
+      - IMAGE_NAME: base
+        ARCH:
+          - arm32v7
+          - arm64v8
+        RELEASE:
+          - buster
+
       # Images in sid only arm64
       - IMAGE_NAME:
           - blhc
