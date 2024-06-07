@@ -20,6 +20,9 @@ variables:
   SALSA_CI_DISABLE_BUILD_IMAGES:
     description: "Set this to 1 if you want to disable the jobs that build the images"
     value: 0
+  BUILD_ALL_IMAGES:
+    description: "Set this to 1 if you want to build the full set of images, even in staging branches"
+    value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
@@ -36,6 +39,9 @@ images:
     include:
       - local: .images-debian.yml
     strategy: depend
+    # https://gitlab.com/gitlab-org/gitlab/-/issues/341508#note_1939725601
+    forward:
+      pipeline_variables: true
   rules:
     - if: $SALSA_CI_DISABLE_BUILD_IMAGES !~ /^(1|yes|true)$/
       when: always
