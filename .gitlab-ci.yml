@@ -149,6 +149,7 @@ test-pipeline:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       variables:
         IMAGE_VERSION: latest
+        AUTOPKGTEST_IMAGE_VERSION: latest
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
