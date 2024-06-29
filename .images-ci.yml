@@ -10,11 +10,10 @@ stages:
 .build_template: &build_template
   stage: images
   image:
-    name: gcr.io/kaniko-project/executor:v1.7.0-debug
-    entrypoint: [""]
+    name: debian:trixie-slim
   before_script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - apt-get update ; apt-get -y install buildah ca-certificates
+    - buildah login --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY_IMAGE}"
   retry:
     max: 1
     when:
@@ -67,21 +66,22 @@ stages:
           ;;
         esac
       fi
+    # TOOD: test using cache. We had some issues with the cache used by kaniko.
+    # See 7788516d, but we could give it a try with buildah.
     - |
-      # Define the image aliases.
-      ALIASES_DESTINATION=''
-      for ALIAS in $ALIASES; do
-        ALIAS_IMAGE=${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME}:${ALIAS}${STAGING_TAG}
-        ALIASES_DESTINATION="${ALIASES_DESTINATION} --destination ${ALIAS_IMAGE}"
-      done
-    - |
-      # Build !
-      /kaniko/executor --context ${PWD} \
-        --dockerfile ${PWD}/Dockerfile \
+      buildah build \
+        --file ${PWD}/Dockerfile \
         --build-arg VENDOR=${VENDOR} \
         --build-arg RELEASE=${RELEASE} \
         --build-arg BASE_IMAGE=${BASE_IMAGE} \
         --build-arg ARCH=${ARCH} \
-        --destination ${IMAGE_URL} \
-        ${ALIASES_DESTINATION} \
-        --cache=false  # Do not use cache. See 7788516d
+        --arch "${ARCH}" \
+        --tag ${IMAGE_NAME_WITH_TAG}
+    - buildah push ${IMAGE_NAME_WITH_TAG} ${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}
+    - |
+      for ALIAS in ${ALIASES}; do
+        ALIAS_WITH_TAG=${IMAGE_NAME}:${ALIAS}${STAGING_TAG}
+        buildah push localhost/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG} ${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${ALIAS_WITH_TAG}
+      done
+  after_script:
+    - buildah logout "${CI_REGISTRY_IMAGE}"
