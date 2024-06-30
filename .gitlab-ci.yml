@@ -27,6 +27,7 @@ variables:
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
   STABLE: "bookworm"
+  FF_SCRIPT_SECTIONS: "true" # enables full command logging in job logs
 
 stages:
   - images
