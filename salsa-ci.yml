@@ -243,18 +243,17 @@ stages:
 
 .provisioning-static-analysis: &provisioning-static-analysis
   stage: provisioning
-  image: debian:sid-slim
   dependencies: []
+  image: $SALSA_CI_IMAGES_GENERIC_TESTS
   extends:
     - .artifacts-default-expire
-  variables:
-    DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
+  rules:
+    - if: $SALSA_CI_ENABLE_STATIC_TESTS =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_STATIC_TESTS !~ /^(1|yes|true)$/
   script:
-    # Debug
-    - git status
-    - pwd
-    - ls -la
-    - apt-get update -qq && apt-get -qq install --no-install-recommends --yes
+    - eatmydata apt-get install --no-install-recommends -qq --yes
       git dh-debputy python3-junit.xml python3-levenshtein python3-lsprotocol
     # Check debian/* for typical errors. Don't check spelling as there are too
     # many false positives and anyway spelling issues are level 'pedantic' in
@@ -262,8 +261,7 @@ stages:
     # anyway.
     - debputy lint || true
     # Repeat, but output in junit file instead of the build log
-    - find ${WORKING_DIR} || true
-    - mkdir -vp ${WORKING_DIR} || true
+    - mkdir -vp ${WORKING_DIR}
     - debputy lint --lint-report-format junit4-xml --report-output ${WORKING_DIR}/debputy-lint-report.xml
   artifacts:
     reports:
