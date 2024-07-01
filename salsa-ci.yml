@@ -881,12 +881,9 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_WRAP_AND_SORT !~ /^(1|yes|true)$/
   script:
-    - eatmydata apt-get install --no-install-recommends -y devscripts
-    - cd ${WORKING_DIR}
-    - mkdir -v wrap-and-sort
-    - cp -av ${SOURCE_DIR}/debian wrap-and-sort/
-    - (cd wrap-and-sort && wrap-and-sort ${SALSA_CI_WRAP_AND_SORT_ARGS})
-    - diff -ur ${SOURCE_DIR}/debian/ wrap-and-sort/debian/
+    - eatmydata apt-get install --no-install-recommends -qq --yes
+      git dh-debputy python3-junit.xml python3-levenshtein python3-lsprotocol
+    - debputy reformat --spellcheck --style black
   variables:
     GIT_STRATEGY: none
   needs:
