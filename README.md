@@ -398,7 +398,7 @@ variables:
 
 The job `wrap-and-sort` can be used to check if files in the `debian/`
 folder are wrapped properly using
-[wrap-and-sort(1)](https://manpages.debian.org/testing/devscripts/wrap-and-sort.1.en.html). To
+[debputy reformat(1)](https://manpages.debian.org/unstable/dh-debputy/debputy.1.en.html). To
 enable this check, either run your pipeline manually with
 `SALSA_CI_DISABLE_WRAP_AND_SORT` set to anything different than 1,
 'yes' or 'true' or by adding the following to your
@@ -409,21 +409,7 @@ variables:
   SALSA_CI_DISABLE_WRAP_AND_SORT: 0
 ```
 
-You can configure the parameters passed to `wrap-and-sort` using the
-`SALSA_CI_WRAP_AND_SORT_ARGS` variable like this:
-
-```yaml
-variables:
-  SALSA_CI_DISABLE_WRAP_AND_SORT: 0
-  SALSA_CI_WRAP_AND_SORT_ARGS: '-asbkt'
-```
-
-The style to use is a subjective decision.  The default behaviour may
-change over time
-[#895570](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895570).
-We suggest to consider `-a --wrap-always`, `-s --short-indent`, `-b
---sort-binary-packages`, `-k --keep-first`, and `-t --trailing-comma`
-as they encourage a minimal, consistent and deterministic style.
+Debputy will run the equivalent formatting as `wrap-and-sort -ast`.
 
 ### Customizing Lintian
 
