@@ -34,9 +34,8 @@ variables:
   WORKING_DIR: $CI_PROJECT_DIR/debian/output
   SOURCE_DIR: 'source_dir'
   VENDOR: 'debian'
-  RELEASE:
-    description: "The Debian release to build for (leave empty to automatically pick one, based on the target distribution in d/changelog)"
-    value: ''
+  # The Debian release to build for (leave empty to automatically pick one, based on the target distribution in d/changelog)
+  RELEASE: ''
   # the architecture of the builder
   BUILD_ARCH: 'amd64'
   # only set this for cross-compiling
