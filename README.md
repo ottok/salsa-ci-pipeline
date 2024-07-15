@@ -51,6 +51,8 @@ This can be done on `Settings` -> `CI/CD` (on the expanded menu, don't click on 
 
 If the base pipeline configuration fits your needs without further modifications, the recommended way is to use `recipes/debian.yml@salsa-ci-team/pipeline` as the config path, which refers to a file kept in the salsa-ci-team/pipeline repository.
 
+> :warning: **Note:** The pipeline is not run automatically after configuring it. You can either trigger it by [running the pipeline manually](https://salsa.debian.org/help/ci/pipelines/index.md#run-a-pipeline-manually) or pushing something.
+
 On the other hand, if you want to use the base configuration and apply customizations on top, the recommended path to create this file is `debian/salsa-ci.yml`.
 It should contain at least the following lines:
 
