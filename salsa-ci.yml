@@ -370,6 +370,11 @@ stages:
   # Reset ccache stats
   - ccache -z
 
+  # /builds directory is writeable by others by default on arm runners which
+  # may lead to failure of arm build jobs.
+  # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/362#note_507662
+  - chmod o-w /builds
+
   # Create salsaci user and fix permissions
   - useradd --create-home salsaci
   - chown -R 'salsaci:' ${WORKING_DIR} ${CCACHE_DIR}
