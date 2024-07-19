@@ -118,6 +118,11 @@ variables:
   SALSA_CI_DISABLE_EXPORTORIG_FALLBACK:
     description: "Disable origtargz fallback when gbp export-orig has failed. Stop CI when gbp export-orig has failed."
     value: 0
+  # GitLab runners execute `umask 0000` command by default which may lead to
+  # failure of build jobs due to everything being world writeable.
+  # This feature flag disables execution of `umask 0000`.
+  # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/362
+  FF_DISABLE_UMASK_FOR_DOCKER_EXECUTOR: 1
 
 stages:
   - provisioning
