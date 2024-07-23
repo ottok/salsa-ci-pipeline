@@ -787,23 +787,14 @@ stages:
       -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
       -t "${CHROOT_PATH}/etc-target"
     - sed  '/127.0.0.1/s/localhost/pipeline.salsa.debian.org localhost/' /etc/hosts > ${CHROOT_PATH}/etc/hosts
-    - PIUPARTS_DISTRIBUTION_ARG="--distribution $RELEASE"
-    - |
-      if [ "$VENDOR" = "debian" ]; then \
-        case "$RELEASE" in
-          stretch*)
-            MIRROR=${SALSA_CI_DEBIAN_ARCHIVE_MIRROR}
-            ;;
-          *)
-            MIRROR=${SALSA_CI_MIRROR}
-            ;;
-        esac
-        CODENAME=$(wget -O - ${MIRROR}/dists/${RELEASE}/Release | awk "/^Codename:/ { print \$2 }" | sed -e "s/-backports//"); \
-        PIUPARTS_DISTRIBUTION_ARG="--distribution ${CODENAME}"; \
-      fi
+    # Respect base image's sources.list (security, backports, point-updates, etc.) and don't rewrite sources.list
+    # This avoids package installability/mismatch issues e.g. when base image enables security updates while piuparts doesn't (#292).
+    # piuparts sources.list generation makes most sense when it generates the chroot on the fly, not when using our base image.
+    # No need for -d/--distribution either, which is only used for chroot and sources.list generation.
+    - PIUPARTS_DISTRIBUTION_ARG="--keep-sources-list";
     - |
       (for PACKAGE in $(ls ${WORKING_DIR}/*.deb); do
-        piuparts --mirror "${SALSA_CI_MIRROR} ${SALSA_CI_COMPONENTS}" ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge --hard-link -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}
+        piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge --hard-link -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}
       done) | filter-output
   variables:
     # To make the repository available in this job,
