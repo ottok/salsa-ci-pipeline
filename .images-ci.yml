@@ -37,10 +37,10 @@ stages:
       fi
     - IMAGE_URL=${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}
     - |
-      # Render Dockerfile.
-      cat $(ls -v dockerfiles/base.*) > Dockerfile
+      # Render Containerfile.
+      cat $(ls -v containerfiles/base.*) > Containerfile
       if ! [ "${IMAGE_NAME}" = "base" ]; then
-        cat $(ls -v dockerfiles/$IMAGE_NAME.*) >> Dockerfile
+        cat $(ls -v containerfiles/$IMAGE_NAME.*) >> Containerfile
       fi
     - |
       # Check if aliases are needed.
@@ -70,7 +70,7 @@ stages:
     # See 7788516d, but we could give it a try with buildah.
     - |
       buildah build \
-        --file ${PWD}/Dockerfile \
+        --file ${PWD}/Containerfile \
         --build-arg VENDOR=${VENDOR} \
         --build-arg RELEASE=${RELEASE} \
         --build-arg BASE_IMAGE=${BASE_IMAGE} \
