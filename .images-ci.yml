@@ -12,7 +12,7 @@ stages:
   image:
     name: debian:trixie-slim
   before_script:
-    - apt-get update ; apt-get -y install buildah ca-certificates
+    - apt-get update ; apt-get -y install buildah ca-certificates wget
     - buildah login --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY_IMAGE}"
   retry:
     max: 1
