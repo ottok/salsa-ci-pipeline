@@ -81,7 +81,7 @@ stages:
     - |
       for ALIAS in ${ALIASES}; do
         ALIAS_WITH_TAG=${IMAGE_NAME}:${ALIAS}${STAGING_TAG}
-        buildah push localhost/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG} ${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${ALIAS_WITH_TAG}
+        buildah push ${IMAGE_NAME_WITH_TAG} ${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${ALIAS_WITH_TAG}
       done
   after_script:
     - buildah logout "${CI_REGISTRY_IMAGE}"
