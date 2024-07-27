@@ -174,10 +174,10 @@ flowchart LR;
   staging images, depending if the pipeline is run for the default branch or a
   feature branch, respectively. By default, the `clean images` job from
   `.gitlab-ci.yml` erases the staging images at the pipeline's `clean` stage. 
-* [images/](images/): under this directory are found the dockerfiles, scripts
+* [images/](images/): under this directory are found the Containerfiles, scripts
   and patches required to build the different images. As it name suggests,
-  [images/dockerfiles/base.0](images/dockerfiles/base.0), is the base dockerfile
-  extended by all the other images.
+  [images/containerfiles/base.0](images/containerfiles/base.0), is the base
+  Containerfile extended by all the other images.
 * [.pipeline-test.yml](.pipeline-test.yml): defines a base to test the external
   pipeline (salsa-ci.yml and pipeline-jobs.yml files) from the same
   repository/branch. It overrides different variables, workflow and environment

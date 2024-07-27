@@ -48,7 +48,7 @@ variables:
   SALSA_CI_IMAGES: 'registry.salsa.debian.org/salsa-ci-team/pipeline'
   SALSA_CI_IMAGES_APTLY: ${SALSA_CI_IMAGES}/aptly
   # The autopkgtest:latest image is based on stable, but includes packages from
-  # unstable. See images/dockerfiles/autopkgtest.0
+  # unstable. See images/containerfiles/autopkgtest.0
   SALSA_CI_IMAGES_AUTOPKGTEST: ${SALSA_CI_IMAGES}/autopkgtest
   SALSA_CI_IMAGES_BASE: ${SALSA_CI_IMAGES}/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_I386: ${SALSA_CI_IMAGES}/i386/base:${RELEASE}
