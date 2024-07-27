@@ -4,7 +4,7 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 
-RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-install-recommends -y docker.io piuparts local-apt-repository usrmerge && rm -rf /var/lib/apt
+RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-install-recommends -y docker-cli piuparts local-apt-repository usrmerge && rm -rf /var/lib/apt
 
 COPY ./scripts/*_install_*_configs /etc/piuparts/scripts/
 
