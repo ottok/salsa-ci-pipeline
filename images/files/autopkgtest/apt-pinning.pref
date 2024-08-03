@@ -18,3 +18,10 @@ Pin-Priority: 990
 Package: lxc-templates
 Pin: release a=unstable
 Pin-Priority: 990
+
+# To support Ubuntu releases which aren't supported in the debootstrap stable
+# version. It is safe to remove this pinning if Ubuntu support got deprecated
+# unless other supported distros/forks became dependent on it later.
+Package: debootstrap
+Pin: release a=unstable
+Pin-Priority: 990
