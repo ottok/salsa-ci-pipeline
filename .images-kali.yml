@@ -51,7 +51,7 @@ images-prod:
         ARCH: amd64
         RELEASE: kali-dev
   rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} == ${CI_DEFAULT_BRANCH}
     - if: $BUILD_ALL_IMAGES
 
 # Images built on branches.
@@ -77,4 +77,4 @@ image-staging:
   rules:
     - if: $BUILD_ALL_IMAGES
       when: never
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH}

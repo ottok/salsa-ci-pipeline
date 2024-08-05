@@ -7,7 +7,7 @@
 workflow:
   rules:
     # Avoid duplicated pipelines, do not run detached pipelines.
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '${CI_PIPELINE_SOURCE} == "merge_request_event"'
       when: never
     - when: always
 
@@ -76,12 +76,12 @@ check license + contributor:
       PROBLEMS=$(($PROBLEMS + 1))
     - exit $PROBLEMS
   rules:
-    - if: $CI_SERVER_URL != "https://salsa.debian.org"
+    - if: ${CI_SERVER_URL} != "https://salsa.debian.org"
       when: never
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} == ${CI_DEFAULT_BRANCH}
       variables:
         IMAGE_VERSION: latest
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH}
       variables:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
 
@@ -116,9 +116,9 @@ check gpg signature:
       GIT_TRACE2=true git verify-commit HEAD --raw --verbose ||
       (echo "ERROR: Signature is invalid. Please sign your commits correctly. See CONTRIBUTING.md for details." && exit 1)
   rules:
-    - if: $CI_SERVER_URL != "https://salsa.debian.org"
+    - if: ${CI_SERVER_URL} != "https://salsa.debian.org"
       when: never
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_BRANCH} != ${CI_DEFAULT_BRANCH}
 
 check yaml lint:
   stage: test
@@ -132,10 +132,10 @@ check yaml lint:
   script:
     - yamllint .
   rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} == ${CI_DEFAULT_BRANCH}
       variables:
         IMAGE_VERSION: latest
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH}
       variables:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
 
@@ -147,11 +147,11 @@ test-pipeline:
       - local: .pipeline-test.yml
     strategy: depend
   rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} == ${CI_DEFAULT_BRANCH}
       variables:
         IMAGE_VERSION: latest
         AUTOPKGTEST_IMAGE_VERSION: latest
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH}
       variables:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
         AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_NAME}
@@ -190,7 +190,7 @@ clean images:
     IMAGES_LIST: 'aptly autopkgtest base arm32v5/base arm32v7/base arm64v8/base i386/base blhc gbp piuparts reprotest lintian generic_tests'
     RELEASE: sid
   before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} ${CI_REGISTRY}
     - wget -O /usr/bin/reg https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64
     - chmod +x /usr/bin/reg
   script:
@@ -204,5 +204,5 @@ clean images:
         reg --registry ${CI_REGISTRY} rm ${CI_PROJECT_PATH}/${IMAGE}:${RELEASE}${STAGING_TAG} || true
       done
   rules:
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH && $SALSA_CI_PERSIST_IMAGES !~ /^(1|yes|true)$/
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH} && $SALSA_CI_PERSIST_IMAGES !~ /^(1|yes|true)$/
       when: always

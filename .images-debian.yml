@@ -74,7 +74,7 @@ images-prod:
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} == ${CI_DEFAULT_BRANCH}
 
 # ARM images built on main branch
 # We need a separate matrix. If we place the ARM build jobs on images-prod, we
@@ -127,7 +127,7 @@ images-prod-arm:
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} == ${CI_DEFAULT_BRANCH}
 
 # Images built on branches.
 # This is a subset of all the images, and are the only ones
@@ -157,7 +157,7 @@ image-staging:
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH}
 
 image-staging-arm:
   extends: .build_template
@@ -190,4 +190,4 @@ image-staging-arm:
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+    - if: ${CI_COMMIT_REF_NAME} != ${CI_DEFAULT_BRANCH}

@@ -47,7 +47,7 @@ stages:
       if [ "${CI_COMMIT_REF_NAME}" = "master" ]; then
         case "$VENDOR" in
           debian)
-            case "$RELEASE" in
+            case "${RELEASE}" in
               stretch*)
                 MIRROR=${DEBIAN_ARCHIVE_MIRROR}
               ;;
@@ -62,7 +62,7 @@ stages:
             test "$IMAGE_NAME" != 'autopkgtest' || ALIASES="${ALIASES} latest"
           ;;
           kali)
-            test "$RELEASE" != "kali-dev" || ALIASES="${ALIASES} latest"
+            test "${RELEASE}" != "kali-dev" || ALIASES="${ALIASES} latest"
           ;;
         esac
       fi

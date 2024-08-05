@@ -8,16 +8,16 @@
 workflow:
   rules:
     # If the branch matches the ones it should not run on, ignore it
-    - if: $SALSA_CI_IGNORED_BRANCHES && $CI_COMMIT_REF_NAME =~ $SALSA_CI_IGNORED_BRANCHES
+    - if: $SALSA_CI_IGNORED_BRANCHES && ${CI_COMMIT_REF_NAME} =~ $SALSA_CI_IGNORED_BRANCHES
       when: never
     # Avoid running on gbp pq's patch-queue branches
-    - if: $CI_COMMIT_REF_NAME =~ /^patch-queue\/.*/
+    - if: ${CI_COMMIT_REF_NAME} =~ /^patch-queue\/.*/
       when: never
     # Avoid duplicated pipelines, do not run detached pipelines
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '${CI_PIPELINE_SOURCE} == "merge_request_event"'
       when: never
     # Do not create a pipeline for tags unless SALSA_CI_ENABLE_PIPELINE_ON_TAGS is set
-    - if: $CI_COMMIT_TAG != null && $SALSA_CI_ENABLE_PIPELINE_ON_TAGS !~ /^(1|yes|true)$/
+    - if: ${CI_COMMIT_TAG} != null && $SALSA_CI_ENABLE_PIPELINE_ON_TAGS !~ /^(1|yes|true)$/
       when: never
     # Otherwise, if there's a debian/ folder, run
     - exists:
@@ -31,7 +31,7 @@ variables:
   DEBFULLNAME: "Salsa Pipeline"
   DEBEMAIL: "salsa-pipeline@debian.org"
   DEBIAN_FRONTEND: noninteractive
-  WORKING_DIR: $CI_PROJECT_DIR/debian/output
+  WORKING_DIR: ${CI_PROJECT_DIR}/debian/output
   SOURCE_DIR: 'source_dir'
   VENDOR: 'debian'
   # The Debian release to build for (leave empty to automatically pick one, based on the target distribution in d/changelog)
@@ -130,7 +130,7 @@ stages:
   - test
 
 .artifacts: &artifacts
-  name: "$CI_JOB_NAME_SLUG:$CI_COMMIT_REF_SLUG"
+  name: "${CI_JOB_NAME_SLUG}:${CI_COMMIT_REF_SLUG}"
   when: always
   paths:
     - ${WORKING_DIR}/
@@ -342,13 +342,13 @@ stages:
   - test "$DB_BUILD_TYPE" != "all" || aptopts="--indep-only"
   # use aspcud solver for experimental and backports
   - |
-    if [ "$RELEASE" = "experimental" ] || [[ "$RELEASE" =~ .*-backports$ ]]; then
+    if [ "${RELEASE}" = "experimental" ] || [[ "${RELEASE}" =~ .*-backports$ ]]; then
       eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
       aptopts="$aptopts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
       # minimize number of packages from experimental and backports
-      if [ "$RELEASE" = "experimental" ]; then
+      if [ "${RELEASE}" = "experimental" ]; then
         aptopts="$aptopts-count(solution,APT-Release:=/a=experimental/),"
-      elif [[ "$RELEASE" =~ .*-backports$ ]]; then
+      elif [[ "${RELEASE}" =~ .*-backports$ ]]; then
         aptopts="$aptopts-count(solution,APT-Release:~/a=.*-backports/),"
       fi
       aptopts="$aptopts-removed,-changed,-new"
@@ -712,7 +712,7 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_REPROTEST !~ /^(1|yes|true)$/
   artifacts:
-    name: "$CI_JOB_NAME_SLUG:$CI_COMMIT_REF_SLUG"
+    name: "${CI_JOB_NAME_SLUG}:${CI_COMMIT_REF_SLUG}"
     paths:
       - $WORKING_DIR/reprotest
       - $WORKING_DIR/reprotest.log
@@ -787,10 +787,10 @@ stages:
       -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
       -t "${CHROOT_PATH}/etc-target"
     - sed  '/127.0.0.1/s/localhost/pipeline.salsa.debian.org localhost/' /etc/hosts > ${CHROOT_PATH}/etc/hosts
-    - PIUPARTS_DISTRIBUTION_ARG="--distribution $RELEASE"
+    - PIUPARTS_DISTRIBUTION_ARG="--distribution ${RELEASE}"
     - |
       if [ "$VENDOR" = "debian" ]; then \
-        case "$RELEASE" in
+        case "${RELEASE}" in
           stretch*)
             MIRROR=${SALSA_CI_DEBIAN_ARCHIVE_MIRROR}
             ;;
@@ -930,7 +930,7 @@ stages:
         "$(base64 -w0 ${CI_PROJECT_DIR}/${REPO_PATH}/${PUBKEY_BINARY_FILENAME})" \
         >> aptly.env
   artifacts:
-    name: "$CI_JOB_NAME_SLUG:$CI_COMMIT_REF_SLUG"
+    name: "${CI_JOB_NAME_SLUG}:${CI_COMMIT_REF_SLUG}"
     paths:
       - ${CI_PROJECT_DIR}/${REPO_PATH}
     reports:
