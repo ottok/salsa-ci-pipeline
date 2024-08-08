@@ -188,6 +188,8 @@ image-staging-arm:
   allow_failure: true
   when: manual
   rules:
+    - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/ && $BUILD_ALL_IMAGES !~ /^(1|yes|true)$/
+      when: always
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH

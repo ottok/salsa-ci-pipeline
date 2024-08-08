@@ -9,6 +9,14 @@ workflow:
     # Avoid duplicated pipelines, do not run detached pipelines.
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      variables:
+        IMAGE_VERSION: latest
+        AUTOPKGTEST_IMAGE_VERSION: latest
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      variables:
+        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
+        AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_NAME}
     - when: always
 
 variables:
@@ -78,12 +86,6 @@ check license + contributor:
   rules:
     - if: $CI_SERVER_URL != "https://salsa.debian.org"
       when: never
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      variables:
-        IMAGE_VERSION: latest
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
-      variables:
-        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
 
 check gpg signature:
   stage: test
@@ -91,7 +93,6 @@ check gpg signature:
   dependencies: []
   variables:
     RELEASE: sid
-    IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
   before_script:
     - apt-get update && apt-get upgrade -y
     - apt-get install -y --no-install-recommends debian-keyring dirmngr git gpg gpg-agent ca-certificates
@@ -131,13 +132,6 @@ check yaml lint:
     - apt-get install -y yamllint
   script:
     - yamllint .
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      variables:
-        IMAGE_VERSION: latest
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
-      variables:
-        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
 
 test-pipeline:
   variables:
@@ -146,15 +140,6 @@ test-pipeline:
     include:
       - local: .pipeline-test.yml
     strategy: depend
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      variables:
-        IMAGE_VERSION: latest
-        AUTOPKGTEST_IMAGE_VERSION: latest
-    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
-      variables:
-        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
-        AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_NAME}
   parallel:
     matrix:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
@@ -180,6 +165,31 @@ test-pipeline:
       #- PROJECT_URL: https://salsa.debian.org/otto/boxes
       #  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
 
+# test pipeline to test the build jobs in architectures non-enabled-by-default
+# While we don't have shared runners for these architectures, this pipeline
+# has to be manually triggered in Salsa CI/pipeline forks.
+test-pipeline-non-default-archs:
+  extends: test-pipeline
+  trigger:
+    include:
+      - local: .pipeline-test.yml
+    strategy: depend
+  rules:
+    - if: $CI_SERVER_URL == "https://salsa.debian.org" && $CI_PROJECT_PATH == "salsa-ci-team/pipeline"
+      when: always
+    - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/
+      when: always
+    - when: manual
+  parallel:
+    matrix:
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/master
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+        SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
+  allow_failure: true
 
 clean images:
   stage: clean
