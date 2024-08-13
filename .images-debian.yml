@@ -135,9 +135,6 @@ images-prod-arm:
 images-prod-riscv:
   stage: build
   extends: .build_template
-  image:
-    # As of today, there is no debian riscv64 image for trixie
-    name: debian:sid-slim
   tags:
     - $SALSA_CI_RISCV_RUNNER_TAG
   parallel:
@@ -221,9 +218,6 @@ image-staging-arm:
 image-staging-riscv:
   extends: .build_template
   stage: build
-  image:
-    # As of today, there is no debian riscv64 image for trixie
-    name: debian:sid-slim
   tags:
     - $SALSA_CI_RISCV_RUNNER_TAG
   parallel:
