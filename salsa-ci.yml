@@ -126,6 +126,10 @@ variables:
   # This feature flag disables execution of `umask 0000`.
   # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/362
   FF_DISABLE_UMASK_FOR_DOCKER_EXECUTOR: 1
+  # In case RELEASE wasn't specified by the user and can't be detected from the
+  # changelog, use this release. This var is added to enable changing the default
+  # release to an ubuntu release in the Ubuntu pipeline.
+  DEFAULT_RELEASE: 'unstable'
 
 stages:
   - provisioning
@@ -158,7 +162,7 @@ stages:
   - dist=${dist%-UNRELEASED}
   - dist=${dist%-security}
   - dist=${dist#UNRELEASED}
-  - test -n "${dist}" || dist=unstable
+  - test -n "${dist}" || dist=$DEFAULT_RELEASE
 
   - echo "RELEASE_FROM_CHANGELOG=${dist}" | tee ${CI_PROJECT_DIR}/salsa.env
 
