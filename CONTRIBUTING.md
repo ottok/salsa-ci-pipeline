@@ -98,3 +98,17 @@ still possible to test the images. However, in some cases, contributors need to
 test how the full set of images are built from the changes introduced by their
 merge requests. To do that, set the `BUILD_ALL_IMAGES` variable to 1, 'yes' or
 'true'.
+
+### Test images built for non-default architectures (in staging branches)
+
+By default, the test pipeline for non-default branches (i.e. those from merge
+requests) only triggers test build jobs for x86 architectures (amd64 and i386).
+If you want to test the images built for ARM and RISC-V, running build jobs for
+those architectures, set the `SALSA_CI_TEST_NON_DEFAULT_ARCHS` variable to 1,
+'yes' or 'true'.
+
+```yaml
+
+variables:
+  SALSA_CI_TEST_NON_DEFAULT_ARCHS: 1
+```
