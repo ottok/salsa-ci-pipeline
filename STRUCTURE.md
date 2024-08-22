@@ -84,8 +84,8 @@ the `build-script` anchor/alias:
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
   script:
-    # pass the RELEASE envvar to any consecutive job
-    - echo "RELEASE=${RELEASE}" | tee ${CI_PROJECT_DIR}/salsa.env
+    # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
+    - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
     - *build-before-script
     - *build-script
     - mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}

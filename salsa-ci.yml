@@ -34,8 +34,8 @@ variables:
   WORKING_DIR: $CI_PROJECT_DIR/debian/output
   SOURCE_DIR: 'source_dir'
   VENDOR: 'debian'
-  # The Debian release to build for (leave empty to automatically pick one, based on the target distribution in d/changelog)
-  RELEASE: ''
+  # The Debian release to build for (leave it assigned to $RELEASE_FROM_CHANGELOG to automatically pick one, based on the target distribution in d/changelog)
+  RELEASE: '$RELEASE_FROM_CHANGELOG'
   # the architecture of the builder
   BUILD_ARCH: 'amd64'
   # only set this for cross-compiling
@@ -159,8 +159,8 @@ stages:
   - dist=${dist%-security}
   - dist=${dist#UNRELEASED}
   - test -n "${dist}" || dist=unstable
-  # but only set the autodetected distribution, if it has not been set by the user
-  - echo "RELEASE=${RELEASE:-${dist}}" | tee ${CI_PROJECT_DIR}/salsa.env
+
+  - echo "RELEASE_FROM_CHANGELOG=${dist}" | tee ${CI_PROJECT_DIR}/salsa.env
 
 
 .provisioning-extract-source: &provisioning-extract-source
@@ -465,8 +465,8 @@ stages:
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
   script:
-    # pass the RELEASE envvar to any consecutive job
-    - echo "RELEASE=${RELEASE}" | tee ${CI_PROJECT_DIR}/salsa.env
+    # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
+    - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
     - *build-before-script
     - *build-script
     - mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
