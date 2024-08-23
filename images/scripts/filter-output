@@ -81,4 +81,6 @@ if ($stdout_truncated) {
     STDOUT->flush();
     copy $fh, *STDOUT;
     close $fh;
+    my $msg = "$separation_line\n# WARNING stdout has been truncated\n# The full output can be found on the artifact file $output_filepath\n$separation_line\n";
+    print STDERR $msg;
 }
