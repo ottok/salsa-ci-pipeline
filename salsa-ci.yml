@@ -344,22 +344,24 @@ stages:
   - aptopts=""
   - test "$DB_BUILD_TYPE" != "any" || aptopts="--arch-only"
   - test "$DB_BUILD_TYPE" != "all" || aptopts="--indep-only"
+  - apt_solver_opts=""
   # use aspcud solver for experimental and backports
   - |
     case "$RELEASE" in
     experimental | *-backports)
       eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
-      aptopts="$aptopts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
+      apt_solver_opts="$apt_solver_opts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
       # minimize number of packages from experimental and backports
       case "$RELEASE" in
       experimental)
-        aptopts="$aptopts-count(solution,APT-Release:=/a=experimental/),"
+        apt_solver_opts="$apt_solver_opts-count(solution,APT-Release:=/a=experimental/),"
         ;;
       *-backports)
-        aptopts="$aptopts-count(solution,APT-Release:~/a=.*-backports/),"
+        apt_solver_opts="$apt_solver_opts-count(solution,APT-Release:~/a=.*-backports/),"
         ;;
       esac
-      aptopts="$aptopts-removed,-changed,-new"
+      apt_solver_opts="$apt_solver_opts-removed,-changed,-new"
+      aptopts="$aptopts $apt_solver_opts"
       ;;
     esac
   - eatmydata apt-get build-dep ${HOST_ARCH:+--host-architecture ${HOST_ARCH} -Pcross,nocheck} --no-install-recommends -y $aptopts .
