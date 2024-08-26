@@ -346,17 +346,22 @@ stages:
   - test "$DB_BUILD_TYPE" != "all" || aptopts="--indep-only"
   # use aspcud solver for experimental and backports
   - |
-    if [ "$RELEASE" = "experimental" ] || [[ "$RELEASE" =~ .*-backports$ ]]; then
+    case "$RELEASE" in
+    experimental | *-backports)
       eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
       aptopts="$aptopts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
       # minimize number of packages from experimental and backports
-      if [ "$RELEASE" = "experimental" ]; then
+      case "$RELEASE" in
+      experimental)
         aptopts="$aptopts-count(solution,APT-Release:=/a=experimental/),"
-      elif [[ "$RELEASE" =~ .*-backports$ ]]; then
+        ;;
+      *-backports)
         aptopts="$aptopts-count(solution,APT-Release:~/a=.*-backports/),"
-      fi
+        ;;
+      esac
       aptopts="$aptopts-removed,-changed,-new"
-     fi
+      ;;
+    esac
   - eatmydata apt-get build-dep ${HOST_ARCH:+--host-architecture ${HOST_ARCH} -Pcross,nocheck} --no-install-recommends -y $aptopts .
 
   # If not disabled, bump package version
