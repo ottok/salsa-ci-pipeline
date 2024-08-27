@@ -340,24 +340,51 @@ stages:
 
   # Install package build dependencies
   # use plain "apt-get build-dep" so that we can install only packages for
-  # architecture indep or arch:any builds
+  # architecture indep or arch:any builds. When doing source-only builds,
+  # manually extract and satisfy the Build-Dependencies field to improve
+  # salsa-ci-team/pipeline#187 until #1021342 is resolved.
   - aptopts=""
   - test "$DB_BUILD_TYPE" != "any" || aptopts="--arch-only"
   - test "$DB_BUILD_TYPE" != "all" || aptopts="--indep-only"
+  - apt_solver_opts=""
   # use aspcud solver for experimental and backports
   - |
-    if [ "$RELEASE" = "experimental" ] || [[ "$RELEASE" =~ .*-backports$ ]]; then
+    case "$RELEASE" in
+    experimental | *-backports)
       eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
-      aptopts="$aptopts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
+      apt_solver_opts="$apt_solver_opts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
       # minimize number of packages from experimental and backports
-      if [ "$RELEASE" = "experimental" ]; then
-        aptopts="$aptopts-count(solution,APT-Release:=/a=experimental/),"
-      elif [[ "$RELEASE" =~ .*-backports$ ]]; then
-        aptopts="$aptopts-count(solution,APT-Release:~/a=.*-backports/),"
-      fi
-      aptopts="$aptopts-removed,-changed,-new"
-     fi
-  - eatmydata apt-get build-dep ${HOST_ARCH:+--host-architecture ${HOST_ARCH} -Pcross,nocheck} --no-install-recommends -y $aptopts .
+      case "$RELEASE" in
+      experimental)
+        apt_solver_opts="$apt_solver_opts-count(solution,APT-Release:=/a=experimental/),"
+        ;;
+      *-backports)
+        apt_solver_opts="$apt_solver_opts-count(solution,APT-Release:~/a=.*-backports/),"
+        ;;
+      esac
+      apt_solver_opts="$apt_solver_opts-removed,-changed,-new"
+      aptopts="$aptopts $apt_solver_opts"
+      ;;
+    esac
+  - |
+    if [ "$DB_BUILD_TYPE" = 'source' ]
+    then
+      perl <<- 'EOF' | xargs -r0 eatmydata apt-get -y --no-install-recommends $apt_solver_opts satisfy
+      use Dpkg::Control::Info;
+      my $control         = Dpkg::Control::Info->new();
+      my $fields          = $control->get_source();
+      my $build_depends   = $fields->{'Build-Depends'};
+      my $build_conflicts = $fields->{'Build-Conflicts'};
+      if ( length $build_depends ) {
+          print $build_depends . "\0";
+      }
+      if ( length $build_conflicts ) {
+          print 'Conflicts: ' . $build_conflicts . "\0";
+      }
+    EOF
+    else
+      eatmydata apt-get build-dep ${HOST_ARCH:+--host-architecture ${HOST_ARCH} -Pcross,nocheck} --no-install-recommends -y $aptopts .
+    fi
 
   # If not disabled, bump package version
   - |
