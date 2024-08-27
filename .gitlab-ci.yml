@@ -165,6 +165,14 @@ test-pipeline:
       # boxes is used to test gbp setup-gitattributes (#322)
       #- PROJECT_URL: https://salsa.debian.org/otto/boxes
       #  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
+      #
+      # cloudflare-ddns is used to verify that the build source job only
+      # satisfies Build-Depends and Build-Conflicts See:
+      # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/187
+      - PROJECT_URL: https://salsa.debian.org/tachi/cloudflare-ddns/
+        PROJECT_TARGET_HEAD: debian/2.1.0-2
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
