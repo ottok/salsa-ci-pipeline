@@ -366,8 +366,10 @@ stages:
       aptopts="$aptopts $apt_solver_opts"
       ;;
     esac
+  # Before attemping apt-get satisfy usage, check that it is working - it
+  # doesn't exist on buster and older
   - |
-    if [ "$DB_BUILD_TYPE" = 'source' ]
+    if [ "$DB_BUILD_TYPE" = 'source' ] && apt-get -qq --no-act satisfy apt
     then
       perl <<- 'EOF' | xargs -r0 eatmydata apt-get -y --no-install-recommends $apt_solver_opts satisfy
       use Dpkg::Control::Info;
