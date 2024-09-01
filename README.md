@@ -14,6 +14,7 @@ recipes/debian.yml@salsa-ci-team/pipeline
 * [Basic Use](#basic-use)
 * [Advanced Use](#advanced-use)
 * [Contributing](#contributing)
+* [Known issues](#known-issues)
 * [Support](#support)
 
 ## Introduction
@@ -736,6 +737,28 @@ variables:
 ## Contributing
 
 The success of this project comes from meaningful contributions that are made by interested contributors like you. If you want to contribute to this project, follow the detailed guidelines in the [CONTRIBUTING file](CONTRIBUTING.md)
+
+## Known issues
+
+### systemd masked tmp
+
+If an autopkgtest fail with:
+```
+systemctl restart myservice
+Failed to restart myservice.service: Unit tmp.mount is masked.
+```
+The error is probably due to bug [#1078157](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1078157).
+
+You could workaround by adding at the top of the autopkgtest:
+```bash
+SERVICE=myservice
+mkdir -p /run/systemd/system/$SERVICE.service.d
+tee /run/systemd/system/$SERVICE.service.d/disabletmp.conf << "EOF"
+[Service]
+PrivateTmp=no
+EOF
+systemctl daemon-reload
+```
 
 ## Support
 
