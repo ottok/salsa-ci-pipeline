@@ -629,10 +629,9 @@ Salsa CI includes builds jobs for armel, armhf, arm64 and riscv64. They are
 disabled by default, but can be enabled if a project has a GitLab runner on
 arm64 hardware available and tagged `arm64`, or on RISC-V tagged `riscv64`.
 
-If you know you have such a runner available (e.g. the [shared Debian group on
-Salsa](https://salsa.debian.org/debian) has `salsaci-arm64-runner-01.debian.net`
-and `salsaci riscv64 runner 01`) you can active ARM or RISC-V build respectively
-by setting the related variables to anything different than 1, 'yes' or 'true':
+If you know you have such a runner available, you can activate ARM or RISC-V
+build respectively by setting the related variables to anything different than
+1, 'yes' or 'true':
 
 ```yaml
 variables:
@@ -642,13 +641,12 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
 ```
 
-If you have access to hardware that can be dedicated to expand the Salsa Ci
-runner fleet, you can configure it following the instructions at
-https://salsa.debian.org/salsa/salsa-ansible/-/tree/master/roles/gitlab-runner/
+All Debian Developers can enable `salsaci-arm64-runner-01.debian.net` or
+`salsaci riscv64 runner 01` in any project.
 
 Contributors who fork the project might not have runners tagged `arm64` or
-`riscv64` in their project, so you might also want to want to limit the special
-build jobs to the project name space with extra `rules`:
+`riscv64` in their project. The example below illustrates how to limit the
+special build jobs to the `debian` project name space with extra `rules`:
 
 ```
 build arm64:
@@ -671,6 +669,9 @@ build riscv64:
   rules:
     - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
 ```
+
+If you want to add more architectures or for other reasons have your own
+runners, see [Adding new runners for Salsa CI](RUNNERS.md).
 
 
 ### Customizing reprotest
