@@ -152,10 +152,18 @@ stages:
 # try to autodetect the target distribution
 .get-target-distribution: &get-target-distribution
   - dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED)
-  # if dist is UNRELEASED, try to use 'dch' to guess a sane default
+  # if dist is UNRELEASED, try to use 'dch' to guess a sane default.
+  # Use oracular by default if VENDOR's value is `ubuntu`.
   - clbak="/tmp/debian.changelog"
   - cp debian/changelog "${clbak}"
-  - if [ "${dist}" = UNRELEASED ]; then dch --release foo || true; dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED); cat "${clbak}" >debian/changelog; fi
+  - |
+    if [ "$VENDOR" = ubuntu ] && [ "${dist}" = UNRELEASED ]
+    then
+      dist=oracular
+    elif [ "${dist}" = UNRELEASED ]
+    then
+      dch --release foo || true; dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED); cat "${clbak}" >debian/changelog;
+    fi
   - rm -rf "${clbak}"
   # strip away UNRELEASED prefix/suffix/...
   - dist=${dist#UNRELEASED-}
