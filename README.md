@@ -758,6 +758,31 @@ variables:
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
 ```
 
+### Experimental Ubuntu support
+
+You can test Ubuntu packages via using the ubuntu recipe on `debian/salsa-ci.yml`
+file like this:
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/ubuntu.yml
+```
+
+> :warning: **Note:** If you don't specify a value for `RELEASE` variable and a
+> debian release is specified on the latest `debian/changelog` entry, the pipeline
+> won't work properly.
+
+autopkgtest is the only test job enabled by default (Related: [1](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_518079),
+[2](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_523235)).
+Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables, refer to
+[skipping jobs](#skipping-a-job) section for more details.
+
+> :warning: **Note:** The Ubuntu support is experimental and exists to collect
+> feedback and potential contributions from the wider Ubuntu community.
+> It may be removed if the benefits are not clearly larger than the cost of
+> maintaining it.
+
 ## Contributing
 
 The success of this project comes from meaningful contributions that are made by interested contributors like you. If you want to contribute to this project, follow the detailed guidelines in the [CONTRIBUTING file](CONTRIBUTING.md)
