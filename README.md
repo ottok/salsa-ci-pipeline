@@ -1,82 +1,107 @@
-# Debian pipeline for Developers
+# Salsa CI – Quality Assurance for Debian packaging
 
-Build and test on reproducible environments on every push.
+This Salsa CI pipeline increases the quality of Debian packages by providing
+[Continuous Integration](https://about.gitlab.com/product/continuous-integration/)
+that can be run on every commit on any Debian package.
 
-TL;DR: Use this CI/CD configuration file setting:
+To activate Salsa CI, use this CI/CD configuration file setting:
 
 ```
 recipes/debian.yml@salsa-ci-team/pipeline
 ```
 
+If you want to be able to customize the Salsa CI pipeline for a package, set
+`debian/salsa-ci.yml` as the CI/CD configuration file setting instead, and
+create the equivalent file with the contents:
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+# Customizations here
+```
+
 ## Table of contents
 
-* [Introduction](#introduction)
-* [What does this pipeline give to my project?](#what-does-this-pipeline-provide-for-my-projectpackage)
-* [Basic Use](#basic-use)
-* [Advanced Use](#advanced-use)
-* [Contributing](#contributing)
+* [Benefits – Why use Salsa CI?](#benefits--why-use-salsa-ci)
+* [Activate Salsa CI](#activate-salsa-ci)
+* [Customize Salsa CI](#customize-salsa-ci)
+  * [Changing the Debian Release](#changing-the-debian-release)
+  * [Avoid running CI on certain branches](#avoid-running-ci-on-certain-branches)
+  * [Building with non-free dependencies](#building-with-non-free-dependencies)
+  * [Select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline)
+  * [Disabling building on i386](#disabling-building-on-i386)
+  * [Allow a job to fail](#allow-a-job-to-fail)
+  * [Set build timeout](#set-build-timeout)
+  * [Allow pipeline to run when git tags are pushed](#allow-pipeline-to-run-when-git-tags-are-pushed)
+  * [Adding Salsa CI to an existing GitLab CI pipeline](#adding-salsa-ci-to-an-existing-gitlab-ci-pipeline)
+  * [Don't run Salsa CI on every commit](#dont-run-salsa-ci-on-every-commit)
+  * [Adding your private repositories to the builds](#adding-your-private-repositories-to-the-builds)
+  * [Setting variables on pipeline creation](#setting-variables-on-pipeline-creation)
+  * [Run only selected jobs](#run-only-selected-jobs)
+  * [Testing build of arch=any and arch=all packages](#testing-build-of-archany-and-archall-packages)
+  * [Enable generation of dbgsym packages](#enable-generation-of-dbgsym-packages)
+  * [Enable building packages twice in a row](#enable-building-packages-twice-in-a-row)
+  * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
+  * [Customizing Lintian](#customizing-lintian)
+  * [Testing build profiles](#testing-build-profiles)
+  * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
+  * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
+  * [Add extra arguments to dpkg-buildpackage](#add-extra-arguments-to-dpkg-buildpackage)
+  * [Adding extra arguments to gbp-buildpackage](#adding-extra-arguments-to-gbp-buildpackage)
+  * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
+  * [Using automatically built apt repository](#using-automatically-built-apt-repository)
+  * [Debian release bump](#debian-release-bump)
+  * [Build jobs on ARM and RISC-V](#build-jobs-on-arm-and-risc-v)
+  * [Customizing reprotest](#customizing-reprotest)
+  * [Git attributes](#git-attributes)
+  * [Experimental: Ubuntu support](#experimental-ubuntu-support)
 * [Known issues](#known-issues)
-* [Support](#support)
+* [General Debian packaging support and resources](#general-debian-packaging-support-and-resources)
+* [General Salsa information](#general-salsa-information)
+* [Support for Salsa CI use](#support-for-salsa-ci-use)
+* [Contributing](#contributing)
 
-## Introduction
 
-The Salsa CI Team's work aims to improve the Debian packaging lifecycle by
-providing [Continuous Integration](https://about.gitlab.com/product/continuous-integration/)
-fully compatible with Debian packaging.
+## Benefits – Why use Salsa CI?
 
-Currently, all the building and testing performed by Debian QA is run
-asynchronously and takes a long time to give feedback because it is only
-accessible after pushing a release to the archive.
+The official building and testing performed by Debian QA is run asynchronously
+and takes a long time to provide feedback because it is only accessible after
+pushing a release to the archive. Any issues with the package will be flagged,
+but remain broken and may cause havoc until a fixed version is uploaded.
 
-Our [pipeline](https://salsa.debian.org/help/ci/pipelines/index.md) definition
-is focused on speeding up this process by giving developers faster feedback.
+The Salsa CI pipeline mimics the tests that are run after each upload to Debian,
+but instead of having to wait for results or risk the health of the Debian
+repositories, Salsa CI provides you with instant feedback about any problems the
+changes you made may have created or solved.
 
-## What does this _pipeline_ provide for my project/package?
+Salsa CI currently offers:
 
-The [pipeline](https://salsa.debian.org/help/ci/pipelines/index.md) builds your
-package(s) and runs multiple checks on them after every push to Salsa.
+* Building the package from the source using
+  [git-buildpackage](https://manpages.debian.org/unstable/git-buildpackage/git-buildpackage.1.en.html)
+  with multiple build profiles and architectures
+* Static analysis for Debian packages using [Lintian](https://lintian.debian.org)
+* Functional testing using [Autopkgtest](https://salsa.debian.org/ci-team/autopkgtest/raw/master/doc/README.package-tests.rst)
+* Package installation and removal testing using [Piuparts](https://piuparts.debian.org)
+* Checking proper use of secure build flags etc using [Buildd Log Scanner](https://qa.debian.org/bls/)
+* Build reproducibility testing using [Reprotest](https://reproducible-builds.org/tools)
 
-This provides you with instant feedback about any problems the changes you made
-may have created or solved, without the need to do a push to the archive,
-speeding up your development cycle and improving the quality of packages
-uploaded to Debian.
+## Activate Salsa CI
 
-While the pipeline is a Work-In-Progress project, it will always try to
-replicate the tests run by Debian QA. The services we got working are the
-following:
-
-* Building the package from the source (only gbp is supported)
-* [Lintian](https://lintian.debian.org)
-* Reproducible build using [Reprotest](https://reproducible-builds.org/tools)
-* [Piuparts](https://piuparts.debian.org)
-* [Autopkgtest](https://salsa.debian.org/ci-team/autopkgtest/raw/master/doc/README.package-tests.rst)
-* [Buildd Log Scanner](https://qa.debian.org/bls/)
-
-Those services are enabled by something we called `salsa-pipeline` and it will
-be shared for all Salsa projects who adopt it. Having this on GitLab CI ensures
-that every package accomplishes the minimum quality to be in the archive and if
-we improve or add a new service the project will get the benefit
-instantaneously.
-
-## Basic Use
+### Enable feature 'CI/CD' in Settings
 
 To use the Salsa Pipeline, the first thing to do is to enable the project's
 Pipeline. Go to `Settings` (General), expand `Visibility, project features,
 permissions`, and in `Repository`, enable `CI/CD`. This makes the `CI/CD`
 settings and menu available. Then, change the project's setting to make it point
-to the pipeline's config file. This can be done on `Settings` -> `CI/CD` (on the
-expanded menu, don't click on the CI / CD rocket) -> `General Pipelines` ->
-`CI/CD configuration file`.
+to the pipeline's config file. This can be done on `Settings` ⇾ `CI/CD`,
+expand `General Pipelines` and update the field `CI/CD configuration file`.
 
 If the base pipeline configuration fits your needs without further
 modifications, the recommended way is to use
 `recipes/debian.yml@salsa-ci-team/pipeline` as the config path, which refers to
 a file kept in the `salsa-ci-team/pipeline` repository.
-
-> :warning: **Note:** The pipeline is not run automatically after configuring
-> it. You can either trigger it by
-> [running the pipeline manually](https://salsa.debian.org/help/ci/pipelines/index.md#run-a-pipeline-manually)
-> or pushing something.
 
 On the other hand, if you want to use the base configuration and apply
 customizations on top, the recommended path to create this file is
@@ -88,24 +113,50 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 ```
 
-> :warning: **Note:** On Debian projects, you would normally want to put this
-> file under the `debian/` folder.
+> :warning: **Note:** The pipeline is not run automatically after configuring
+> it. You can either trigger it by
+> [running the pipeline manually](https://salsa.debian.org/help/ci/pipelines/index.md#run-a-pipeline-manually)
+> or pushing something.
 
-## Advanced Use
+### Alternatively use command-line tools `salsa` or `glab`
 
-Following the basic instructions will allow you to add all the building and
-testing stages as provided by the Salsa CI Team. However, customization of the
-scripts is possible.
+If you wish to activate Salsa CI directly from the command-line, set up the
+[salsa](https://manpages.debian.org/unstable/devscripts/salsa.1.en.html) tool
+and run this for all your projects:
 
-The
+```shell
+salsa update_projects $NAMESPACE/$PROJECT \
+  --jobs yes --ci-config-path recipes/debian.yml@salsa-ci-team/pipeline
+```
+
+Alternatively, use the more generic command-line tool
+[glab](https://manpages.debian.org/unstable/glab/glab.1.en.html) which works for
+any GitLab instance.
+
+## Customize Salsa CI
+
+Salsa CI is designed to as-is for the vast majority of Debian packages. In most
+cases Salsa CI should be used without any customizations. However, for packages
+that need it, Salsa CI offers many ways to customize how it runs and what it
+runs.
+
+The easiest way to grasp the possibilities is to browse various examples of Salsa CI
+being used on prominent Debian packages, from simple to complex:
+
+* https://salsa.debian.org/sudo-team/sudo/-/blob/master/debian/salsa-ci.yml
+* https://salsa.debian.org/mariadb-team/mariadb-server/-/blob/debian/latest/debian/salsa-ci.yml
+* https://salsa.debian.org/kernel-team/linux/-/blob/master/debian/salsa-ci.yml
+
+Salsa CI offers a wide range of variables that can be used to easily turn on/off
+certain features or customize how they behave.
+
+It is even possible to only include the
 [`salsa-ci.yml`](https://salsa.debian.org/salsa-ci-team/pipeline/blob/master/salsa-ci.yml)
-template delivers the jobs definitions. Including only this file, no job will be
-added to the pipeline. On the other hand,
-[`pipeline-jobs.yml`](https://salsa.debian.org/salsa-ci-team/pipeline/blob/master/pipeline-jobs.yml)
-includes all the jobs' instances.
+template for jobs definitions without adding any jobs to the pipeline from
+[`pipeline-jobs.yml`](https://salsa.debian.org/salsa-ci-team/pipeline/blob/master/pipeline-jobs.yml).
 
 For an example of a very customized CI pipeline, one can have a look at the
-[salsa-ci.yml for the kernel](https://salsa.debian.org/kernel-team/linux/-/blob/master/debian/salsa-ci.yml),
+[Debian's Linux kernel salsa-ci.yml](https://salsa.debian.org/kernel-team/linux/-/blob/master/debian/salsa-ci.yml),
 which starts like this:
 
 ```yaml
@@ -117,10 +168,11 @@ include:
 
 ### Changing the Debian Release
 
-By default, everything will run on the suite declared at the top of
-debian/changelog, or - if debian/changelog cannot be parsed for a suitable
-release - on the `'unstable'` suite. Changing the release is as easy as setting
-a `RELEASE` variable.
+By default, everything will run based on the target release in
+`debian/changelog`. If the latest entry is `UNRELEASED`, then the target release
+from the second entry will be used.
+
+The target release can be customized by setting the `RELEASE` variable explicitly.
 
 ```yaml
 ---
@@ -128,10 +180,10 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
-  RELEASE: 'buster'
+  RELEASE: 'bookworm'
 ```
 
-The following releases are currently supported:
+The following releases are available:
 * stretch
 * stretch-backports
 * buster
@@ -200,10 +252,10 @@ Many `contrib` and `non-free` packages only build on `amd64`, so the
 32-bit x86 build (`build i386`) should be disabled. (refer to the
 [Disabling building on i386](#Disabling-building-on-i386) Section).
 
-### Skipping a job
+### Select which jobs run in the CI pipeline
 
-There are many ways to skip a certain job. The recommended way is to set to `1`
-(or "`yes`" or "`true`") the `SALSA_CI_DISABLE_*` variables that have been
+There are several ways to skip a certain job. The recommended way is to set to
+`1` (or "`yes`" or "`true`") the `SALSA_CI_DISABLE_*` variables that have been
 created for this purpose.
 
 ```yaml
@@ -252,14 +304,14 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
 ```
 
-### Allowing a job to fail
+### Allow a job to fail
 
 Without completely disabling a job, you can allow it to fail without failing the
 whole pipeline. That way, if the job fails, the pipeline will pass and show an
 orange warning telling you something went wrong.
 
 For example, even though reproducible builds are important, `reprotest`'s
-behavior can sometimes be a little erratic and fail randomly on packages that
+behaviour can sometimes be a slightly flaky and fail randomly on packages that
 aren't totally reproducible (yet!). In such case, you can allow `reprotest` to
 fail by adding this variable in your salsa-ci.yml manifest:
 
@@ -280,7 +332,7 @@ without saving the artifacts.
 
 To prevent this, the build phase of the build job and the build phase of the
 reprotest job have a timeout of `2.75h` (the runner's timeout is 3h). This
-permits also saving the cache of ccache. That way, on the next run, there is
+permits also saving the cache of `ccache`. That way, on the next run, there is
 more chance to finish the job since it can use ccache's cache.
 
 You can set the `SALSA_CI_BUILD_TIMEOUT_ARGS` variable to override this. The
@@ -292,7 +344,7 @@ variables:
   SALSA_CI_BUILD_TIMEOUT_ARGS: "0.75h"
 ```
 
-### Enabling the pipeline for tags
+### Allow pipeline to run when git tags are pushed
 
 By default, the pipeline is run only for commits, tags are ignored. To run the
 pipeline against tags as well, export the `SALSA_CI_ENABLE_PIPELINE_ON_TAGS`
@@ -308,7 +360,7 @@ variables:
   SALSA_CI_ENABLE_PIPELINE_ON_TAGS: 1
 ```
 
-### Skipping the whole pipeline on push
+### Skip pipeline temporairly when running a `git push`
 
 There may be reasons to skip the whole pipeline for a `git push`, for example
 when you are adding `salsa-ci.yml` to hundreds of repositories or doing other
@@ -329,6 +381,45 @@ git push -o ci.skip               # using git 2.18+
 ```
 
 See also https://salsa.debian.org/help/ci/pipelines/index.md#skip-a-pipeline
+
+
+### Adding Salsa CI to an existing GitLab CI pipeline
+
+If your project already has a GitLab pipeline, you can add Salsa CI in the
+`.gitlab-ci.yml` file as an additional child pipeline with:
+
+```yaml
+stage: package
+trigger:
+  include: debian/salsa-ci.yml
+  strategy: depend
+rules:
+  - if: $CI_COMMIT_TAG != null
+    when: never
+```
+
+### Don't run Salsa CI on every commit
+
+If you don't want to run Salsa CI on every commit, you can add custom `rules`
+to trigger the Salsa CI pipeline only manually or for example when a scheduled
+pipeline run takes place. The typical use case is when maintaining native Debian
+packages where the program code is tested on every git commit, and the commits
+are frequent, while the packaging needs to be tested only infrequently.
+
+```yaml
+stage: package
+trigger:
+  include: debian/salsa-ci.yml
+  strategy: depend
+    # run if user manually presses the "play" icon on pipeline
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+    # run during for scheduled pipeline runs
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    # never allow other pipeline sources to trigger running this job
+    - when: never
+```
 
 ### Adding your private repositories to the builds
 
@@ -370,7 +461,7 @@ You can set these and other similar variables when launching a new pipeline in d
   [launch_pipelines](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py#L568).
 * Setting them as part of a pipeline-triggered build.
 
-### Only running selected jobs
+### Run only selected jobs
 
 If you want to use the definitions provided by the Salsa CI Team, but want to
 explicitly define which jobs to run, you might want to declare your YAML as
@@ -422,8 +513,8 @@ through on all tests currently provided. You can choose to run only some of the
 jobs by deleting any of the definitions above.
 
 As new changes are expected to happen from time to time, we **firmly recommend
-NOT to do define all jobs manually**. Please consider if [skipping
-jobs](#skipping-a-job) meets your needs instead.
+NOT to do define all jobs manually**. Most of the time it is better to simply
+[select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline).
 
 ### Testing build of arch=any and arch=all packages
 
@@ -570,7 +661,7 @@ test-build-profiles:
       - BUILD_PROFILES: nodoc
 ```
 
-### Adding extra arguments to autopkgtest
+### Add extra arguments to autopkgtest
 
 Sometimes it is desirable to add arguments to autopkgtest.
 
@@ -598,7 +689,7 @@ variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
 ```
 
-### Making autopkgtest more strict
+### Make autopkgtest more strict
 
 By default, the autopkgtest job will succeed if autopkgtest exits with status
 0, 2 or 8. If you would like the autopkgtest job to only succeed if all tests
@@ -611,7 +702,7 @@ variables:
 
 To allow multiple exit codes, separate them by comma.
 
-### Adding extra arguments to dpkg-buildpackage
+### Add extra arguments to dpkg-buildpackage
 
 Sometimes it is desirable to add direct options to the dpkg-buildpackage that is
 run for the package building.
@@ -642,7 +733,7 @@ variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: --your-option
 ```
 
-### Executing a pre-install / post-install script in piuparts
+### Run a pre-install / post-install script in piuparts
 
 Sometimes it is desirable to execute a pre-install or post-install scripts in
 piuparts.
@@ -724,8 +815,8 @@ the old repository that the job number points to. If you want `src:pkgB` to use
 the updated binary packages, you have to retrieve the job number of the `aptly`
 job from `src:pkgA` and update the `${JOB_ID}` of `src:pkgB`.
 
-See also
-[Adding your private repositories to the builds](#adding-your-private-repositories-to-the-builds)
+See also howto
+[add private repositories to the builds](#add-private-repositories-to-the-builds).
 
 ### Debian release bump
 
@@ -874,10 +965,13 @@ variables:
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
 ```
 
-### Experimental Ubuntu support
+### Experimental: Ubuntu support
 
-You can test Ubuntu packages via using the ubuntu recipe on `debian/salsa-ci.yml`
-file like this:
+> :warning: The Ubuntu support is experimental and exists to collect feedback
+> and potential contributions from the wider Ubuntu community. It may be removed
+> if the benefits are not clearly larger than the cost of maintaining it.
+
+Test Ubuntu packages by using recipe `debian/salsa-ci.yml`:
 
 ```yaml
 ---
@@ -885,25 +979,14 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/ubuntu.yml
 ```
 
-> :warning: **Note:** If you don't specify a value for `RELEASE` variable and a
-> debian release is specified on the latest `debian/changelog` entry, the pipeline
-> won't work properly.
+Additionally you must ensure a Ubuntu release is defined in the latest
+`debian/changelog` entry or as a `RELEASE` variable.
 
-autopkgtest is the only test job enabled by default (Related: [1](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_518079),
+Currently autopkgtest is the only test job enabled by default (see
+[1](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_518079)
+and
 [2](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_523235)).
-Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables, refer to
-[skipping jobs](#skipping-a-job) section for more details.
-
-> :warning: **Note:** The Ubuntu support is experimental and exists to collect
-> feedback and potential contributions from the wider Ubuntu community.
-> It may be removed if the benefits are not clearly larger than the cost of
-> maintaining it.
-
-## Contributing
-
-The success of this project comes from meaningful contributions that are made by
-interested contributors like you. If you want to contribute to this project,
-follow the detailed guidelines in the [CONTRIBUTING file](CONTRIBUTING.md)
+Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
 
 ## Known issues
 
@@ -929,10 +1012,32 @@ EOF
 systemctl daemon-reload
 ```
 
-## Support
+## General Debian packaging support and resources
 
-We have different support media:
+* The [Debian Policy](https://www.debian.org/doc/debian-policy/): packages must conform to it.
+* The [Developers Reference](https://www.debian.org/doc/developers-reference/): details best packaging practices.
+* The [Guide for Debian Maintainers](https://www.debian.org/doc/debmake-doc): puts a bit of the two above in practice.
 
-* IRC: \#salsaci @ OFTC
+
+## General Salsa information
+
+The GitLab instance salsa.debian.org is maintained by the
+[Debian Salsa admin team](https://wiki.debian.org/Salsa), which is separate from
+the Salsa CI team.
+
+
+## Support for Salsa CI use
+
+The Salsa CI developers and users can be found at:
+
 * Mailing list: [debian-salsa-ci_at_alioth-lists.debian.net](mailto:debian-salsa-ci_at_alioth-lists.debian.net)
-* [Issue tracker](https://salsa.debian.org/salsa-ci-team/pipeline/issues)
+* Matrix: [#salsaci:matrix.debian.social](https://matrix.to/#/#salsaci:matrix.debian.social)
+* IRC: [#salsaci @ OFTC](ircs://irc.oftc.net/salsa) ([webchat](https://webchat.oftc.net/?channels=salsaci))
+* Issue tracker: [salsa-ci-team/pipeline/issues](https://salsa.debian.org/salsa-ci-team/pipeline/issues)
+
+
+## Contributing
+
+The success of this project comes from meaningful contributions that are made by
+interested contributors like you. If you want to contribute to this project,
+follow the detailed guidelines in the [CONTRIBUTING file](CONTRIBUTING.md)

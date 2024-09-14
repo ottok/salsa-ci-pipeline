@@ -7,19 +7,19 @@ such as:
 * Improving the documentation e.g. by explaining concepts better or adding
   missing information
 * Solving open issues. Some issues have labels attached to them which have
-  different meanings. This also means they have been triaged and it would be
-  great to have them solved. Some labels are:
+  different meanings. This also means they have been triaged (assessed and
+  categorized) and it would be great to have them solved. Some labels are:
   * **`Accepting MR`** - The issue has been triaged and is worthy of solving
     so a meaningful Merge Request is welcome
   * **`Newcomer`** - Issue is a good first start in case you are new to the
     project.
   * **`Nice-To-Have`** - The issue is good to solve but not urgent
 
-To contribute to Salsa CI, you must have a Salsa (Debian's Gitlab Instance)
+To contribute to Salsa CI, you must have a Salsa (Debian's GitLab Instance)
 account. To create an account, please follow the instructions in the [Salsa
 Documentation](https://wiki.debian.org/Salsa/Doc#Users).
 
-## Merge Request worklow explanined
+## Merge Request workflow explained
 
 Proposed modifications to the Salsa CI's pipeline are done via merge requests.
 For that:
@@ -37,7 +37,7 @@ For that:
    and code submissions to Salsa-CI will not be accepted if unsigned.
 
 1. Branch off to the default branch to work on a meaningfully named branch (e.g.
-   `git checkout -b 193-build-twice`). If you are fixing an issue, it is
+   `git checkout -b 193-build-twice`). If you are addressing an issue, it is
    convenient to prefix the branch name with the issue number. **Slashes (`/`)
    are not allowed in the branch name, as the branch name is used as a staging
    tag on the generated images, which does not support slashes._**
@@ -69,16 +69,16 @@ certain tests.
 
 When triggered from staging (not the default) branches, there is a `clean
 images` job that removes the images created during the first stage (the `images`
-stage), in order to avoid consuming space in the Container Registry. Depending
+stage), to avoid consuming space in the Container Registry. Depending
 on how you have to test your Merge Request, you may want to keep those images.
 
-To disable this behavior set the `SALSA_CI_PERSIST_IMAGES` to 1, 'yes' or
+To disable this behaviour, set the `SALSA_CI_PERSIST_IMAGES` to 1, 'yes' or
 'true' on a CI variable (*CI/CD Settings*).
 
 ### Avoid creating images (in staging branches)
 
-During the development process, it is possible that you would like to make
-several `git push`es. For each `git push`, all the staging images are built by
+During the development process, it is possible that you would like to run
+`git push`several times. For each `git push`, all the staging images are built by
 default, and that could be time-consuming. So if you are making several changes
 and you want to save some time, you could:
 
@@ -88,17 +88,17 @@ and you want to save some time, you could:
    'true'.
 
 1. Once you are done, please remember to remove the staging images, setting
-   `SALSA_CI_PERSIST_IMAGES` back to 0.Q
+   `SALSA_CI_PERSIST_IMAGES` back to `0`.
 
 ### Test creating production images (in staging branches)
 
 By default, the pipeline for non-default branches (i.e. those from merge
 requests) only triggers a subset of image building jobs. The production job
-images that are built for every supported debian release, are limited to sid
+images that are built for every supported Debian release, are limited to Sid
 for staging branches. This reduces the use of computing resources, while making
 still possible to test the images. However, in some cases, contributors need to
 test how the full set of images are built from the changes introduced by their
-merge requests. To do that, set the `BUILD_ALL_IMAGES` variable to 1, 'yes' or
+merge requests. To achieve that, set the `BUILD_ALL_IMAGES` variable to 1, 'yes' or
 'true'.
 
 ### Test images built for non-default architectures (in staging branches)
@@ -117,6 +117,6 @@ variables:
 ### Build Ubuntu images outside Salsa
 
 By default, Ubuntu images are built on salsa.debian.org GitLab instance only;
-There are SalsaCI forks which are interested in debian images only and operate
-on other GitLab instances. If you want to build Ubuntu images on GitLab instaces
+There are Salsa CI forks which are interested in Debian images only and operate
+on other GitLab instances. If you want to build Ubuntu images on GitLab instances
 other than Salsa, set the `BUILD_UBUNTU_IMAGES` variable to 1, 'yes' or 'true'.
