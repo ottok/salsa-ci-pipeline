@@ -1,3 +1,5 @@
+# Contributing to Salsa CI
+
 The Salsa CI project is a Debian open source project and welcomes contributions
 such as:
 
@@ -7,11 +9,11 @@ such as:
 * Solving open issues. Some issues have labels attached to them which have
   different meanings. This also means they have been triaged and it would be
   great to have them solved. Some labels are:
-    * **`Accepting MR`** - The issue has been triaged and is worthy of solving
-      so a meaningful Merge Request is welcome
-    * **`Newcomer`** - Issue is a good first start in case you are new to the
-      project.
-    * **`Nice-To-Have`** - The issue is good to solve but not urgent
+  * **`Accepting MR`** - The issue has been triaged and is worthy of solving
+    so a meaningful Merge Request is welcome
+  * **`Newcomer`** - Issue is a good first start in case you are new to the
+    project.
+  * **`Nice-To-Have`** - The issue is good to solve but not urgent
 
 To contribute to Salsa CI, you must have a Salsa (Debian's Gitlab Instance)
 account. To create an account, please follow the instructions in the [Salsa
@@ -108,7 +110,6 @@ those architectures, set the `SALSA_CI_TEST_NON_DEFAULT_ARCHS` variable to 1,
 'yes' or 'true'.
 
 ```yaml
-
 variables:
   SALSA_CI_TEST_NON_DEFAULT_ARCHS: 1
 ```

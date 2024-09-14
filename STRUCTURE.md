@@ -1,5 +1,4 @@
-Salsa CI Pipeline Structure
-===========================
+# Salsa CI Pipeline Structure
 
 The Salsa CI pipeline structure is composed mainly by two functional parts: the
 external pipeline, that is used by the projects, and the internal pipeline,
@@ -17,11 +16,9 @@ flowchart TD;
   CR(Container\nRegistry)
   SCIP -- builds images\nand pushes them to --> CR;
   SCEP -- pull images\nfrom --> CR;
-
 ```
 
-Salsa CI External Pipeline
---------------------------
+## Salsa CI External Pipeline
 
 We call external pipeline to the yaml document included in the users' projects
 to make the pipeline to run. This is composed mainly by two files:
@@ -50,7 +47,7 @@ is defined and structured across the files. This is an example taken from the
 `build` (amd64) job, aiming to show the modularity of the job definition
 structure:
 
-The build job is declared in `pipeline-jobs.yml`, merely extending 
+The build job is declared in `pipeline-jobs.yml`, merely extending
 the (hidden) template `.build-package` job:
 
 ```yaml
@@ -125,8 +122,7 @@ where vendors can create specific include recipe to easily customize the
 pipeline for specific cases.
 
 
-Salsa CI Internal Pipeline
---------------------------
+## Salsa CI Internal Pipeline
 
 The Salsa CI internal pipeline has two main goals:
 1. create the images used by the different jobs in the external pipeline and
@@ -173,7 +169,7 @@ flowchart LR;
   [Kali](.images-kali.yml)). The Debian image build jobs includes production or
   staging images, depending if the pipeline is run for the default branch or a
   feature branch, respectively. By default, the `clean images` job from
-  `.gitlab-ci.yml` erases the staging images at the pipeline's `clean` stage. 
+  `.gitlab-ci.yml` erases the staging images at the pipeline's `clean` stage.
 * [images/](images/): under this directory are found the Containerfiles, scripts
   and patches required to build the different images. As it name suggests,
   [images/containerfiles/base.0](images/containerfiles/base.0), is the base

@@ -57,7 +57,7 @@ Podman can be used.
 On a Debian 12 (Bookworm) host, the following commands will install the minimal
 set of required software and start the registration:
 
-```bash
+```shell
 curl -L https://packages.gitlab.com/gpg.key | \
   sudo gpg --dearmor --yes --output /usr/share/keyrings/runner_gitlab-runner-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/runner_gitlab-runner-archive-keyring.gpg] \
@@ -129,7 +129,7 @@ For reference, see also the configuration of Salsa provided runners at
 
 To restart the runner and see the systemd logs run:
 
-```bash
+```shell
 sudo systemctl restart gitlab-runner.service
 sudo journalctl --follow -u gitlab-runner
 ```
