@@ -31,6 +31,9 @@ variables:
   BUILD_ALL_IMAGES:
     description: "Set this to 1 if you want to build the full set of images, even in staging branches"
     value: 0
+  BUILD_UBUNTU_IMAGES:
+    description: "Set this to 1 if you want to build ubuntu images on GitLab instaces other than Salsa"
+    value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
   # Used by .images-debian.yml to define the base for the
@@ -53,6 +56,22 @@ images:
     forward:
       pipeline_variables: true
   rules:
+    - if: $SALSA_CI_DISABLE_BUILD_IMAGES !~ /^(1|yes|true)$/
+      when: always
+
+ubuntu-images:
+  stage: images
+  trigger:
+    include:
+      - local: .images-ubuntu.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $BUILD_UBUNTU_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_SERVER_URL != "https://salsa.debian.org"
+      when: never
     - if: $SALSA_CI_DISABLE_BUILD_IMAGES !~ /^(1|yes|true)$/
       when: always
 
@@ -201,6 +220,29 @@ test-pipeline-non-default-archs:
         SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
   allow_failure: true
 
+ubuntu-test-pipeline:
+  trigger:
+    include:
+      - local: .pipeline-test-ubuntu.yml
+    strategy: depend
+  rules:
+    - if: $BUILD_UBUNTU_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_SERVER_URL != "https://salsa.debian.org"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      variables:
+        IMAGE_VERSION: oracular
+        DEBIAN_IMAGE_VERSION: sid
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      variables:
+        IMAGE_VERSION: oracular_${CI_COMMIT_REF_NAME}
+        DEBIAN_IMAGE_VERSION: sid_${CI_COMMIT_REF_NAME}
+  parallel:
+    matrix:
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/master
+
 clean images:
   stage: clean
   image: docker:latest
@@ -224,6 +266,10 @@ clean images:
       lintian
       generic_tests
     RELEASE: sid
+    UBUNTU_IMAGES_LIST: |
+      arm64v8/base
+      base
+    UBUNTU_RELEASE: oracular
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - wget -O /usr/bin/reg https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64
@@ -237,6 +283,10 @@ clean images:
     - |
       for IMAGE in $IMAGES_LIST; do
         reg --registry ${CI_REGISTRY} rm ${CI_PROJECT_PATH}/${IMAGE}:${RELEASE}${STAGING_TAG} || true
+      done
+    - |
+      for IMAGE in $UBUNTU_IMAGES_LIST; do
+        reg --registry ${CI_REGISTRY} rm ${CI_PROJECT_PATH}/${IMAGE}:${UBUNTU_RELEASE}${STAGING_TAG} || true
       done
   rules:
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH && $SALSA_CI_PERSIST_IMAGES !~ /^(1|yes|true)$/

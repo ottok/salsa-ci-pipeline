@@ -6,8 +6,10 @@
 
 RUN \
 set -eux; \
-printf 'Package: *\nPin: release a=%s\nPin-Priority: 900\n' "$RELEASE" \
-  | tee /etc/apt/preferences.d/salsa-ci; \
+if [ "$RELEASE" =~ .*-backports$ ]; then \
+    printf 'Package: *\nPin: release a=%s\nPin-Priority: 900\n' "$RELEASE" \
+      | tee /etc/apt/preferences.d/salsa-ci; \
+fi; \
 apt-get update; \
 apt-get upgrade -y; \
 eatmydata apt-get -y install git lintian; \

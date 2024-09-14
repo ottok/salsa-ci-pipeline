@@ -1,0 +1,20 @@
+# Copyright salsa-ci-team and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+
+# The Ubuntu support is experimental and exists to collect feedback and
+# potential contributions from the wider Ubuntu community. It may be removed
+# if the benefits are not clearly larger than the cost of maintaining it.
+
+---
+include:
+  - salsa-ci.yml
+  - pipeline-jobs.yml
+  - vars/ubuntu.yml
+  - .pipeline-test.yml
+
+variables:
+  SALSA_CI_IMAGES_GBP: ${CI_REGISTRY_IMAGE}/gbp:${DEBIAN_IMAGE_VERSION}
+  SALSA_CI_IMAGES_APTLY: ${CI_REGISTRY_IMAGE}/aptly:${DEBIAN_IMAGE_VERSION}

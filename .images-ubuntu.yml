@@ -1,0 +1,99 @@
+# Copyright salsa-ci-team and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+
+# The Ubuntu support is experimental and exists to collect feedback and
+# potential contributions from the wider Ubuntu community. It may be removed
+# if the benefits are not clearly larger than the cost of maintaining it.
+
+---
+include:
+  - .images-ci.yml
+
+variables:
+  VENDOR: ubuntu
+  UBUNTU_MIRROR: "http://archive.ubuntu.com/ubuntu"
+
+.all-supported-releases: &all-supported-releases
+  - oracular
+  - noble
+  - jammy
+  - focal
+
+# Images built on main branch
+ubuntu-images-prod:
+  stage: build
+  extends: .build_template
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - base
+          - lintian
+          - blhc
+          - generic_tests
+        ARCH: amd64
+        RELEASE: *all-supported-releases
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# ARM images built on main branch
+ubuntu-images-prod-arm:
+  stage: build
+  extends: .build_template
+  tags:
+    - $SALSA_CI_ARM_RUNNER_TAG
+  parallel:
+    matrix:
+      # Base image, all releases, all arches
+      - IMAGE_NAME:
+          - base
+          - blhc
+        ARCH:
+          - arm32v7
+          - arm64v8
+        RELEASE: *all-supported-releases
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# Images built on branches.
+# This is a subset of all the images, and are the only ones
+# built for branches != main.
+ubuntu-image-staging:
+  extends: .build_template
+  stage: build
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - base
+        ARCH: amd64
+        RELEASE: oracular
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: never
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+ubuntu-image-staging-arm:
+  extends: .build_template
+  stage: build
+  tags:
+    - $SALSA_CI_ARM_RUNNER_TAG
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - base
+        ARCH: arm64v8
+        RELEASE: oracular
+  # While there isn't an ARM shared runner available, let's allow these images
+  # to fail to don't block pipelines on MRs.
+  allow_failure: true
+  when: manual
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: never
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH

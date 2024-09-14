@@ -112,3 +112,10 @@ those architectures, set the `SALSA_CI_TEST_NON_DEFAULT_ARCHS` variable to 1,
 variables:
   SALSA_CI_TEST_NON_DEFAULT_ARCHS: 1
 ```
+
+### Build Ubuntu images outside Salsa
+
+By default, Ubuntu images are built on salsa.debian.org GitLab instance only;
+There are SalsaCI forks which are interested in debian images only and operate
+on other GitLab instances. If you want to build Ubuntu images on GitLab instaces
+other than Salsa, set the `BUILD_UBUNTU_IMAGES` variable to 1, 'yes' or 'true'.
