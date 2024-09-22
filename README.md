@@ -26,38 +26,41 @@ include:
 
 * [Benefits – Why use Salsa CI?](#benefits--why-use-salsa-ci)
 * [Activate Salsa CI](#activate-salsa-ci)
+  * [Enable feature 'CI/CD' in Settings](#enable-feature-cicd-in-settings)
+  * [Include Salsa CI in an existing GitLab CI pipeline](#include-salsa-ci-in-an-existing-gitlab-ci-pipeline)
 * [Customize Salsa CI](#customize-salsa-ci)
-  * [Changing the Debian Release](#changing-the-debian-release)
-  * [Avoid running CI on certain branches](#avoid-running-ci-on-certain-branches)
-  * [Building with non-free dependencies](#building-with-non-free-dependencies)
   * [Select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline)
-  * [Disabling building on i386](#disabling-building-on-i386)
   * [Allow a job to fail](#allow-a-job-to-fail)
-  * [Set build timeout](#set-build-timeout)
+  * [Disable the pipeline on certain branches](#disable-the-pipeline-on-certain-branches)
   * [Allow pipeline to run when git tags are pushed](#allow-pipeline-to-run-when-git-tags-are-pushed)
-  * [Adding Salsa CI to an existing GitLab CI pipeline](#adding-salsa-ci-to-an-existing-gitlab-ci-pipeline)
-  * [Don't run Salsa CI on every commit](#dont-run-salsa-ci-on-every-commit)
-  * [Adding your private repositories to the builds](#adding-your-private-repositories-to-the-builds)
   * [Setting variables on pipeline creation](#setting-variables-on-pipeline-creation)
   * [Run only selected jobs](#run-only-selected-jobs)
+* [Customize builds and build dependencies](#customize-builds-and-build-dependencies)
+  * [Set build timeout](#set-build-timeout)
+  * [Disabling building on i386](#disabling-building-on-i386)
+  * [Enable building on ARM and RISC-V](#enable-building-on-arm-and-risc-v)
   * [Testing build of arch=any and arch=all packages](#testing-build-of-archany-and-archall-packages)
-  * [Enable generation of dbgsym packages](#enable-generation-of-dbgsym-packages)
-  * [Enable building packages twice in a row](#enable-building-packages-twice-in-a-row)
-  * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
-  * [Customizing Lintian](#customizing-lintian)
   * [Testing build profiles](#testing-build-profiles)
-  * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
-  * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
+  * [Enable building packages twice in a row](#enable-building-packages-twice-in-a-row)
+  * [Enable generation of dbgsym packages](#enable-generation-of-dbgsym-packages)
+  * [Build with non-free dependencies](#build-with-non-free-dependencies)
+  * [Add private repositories to the builds](#add-private-repositories-to-the-builds)
   * [Add extra arguments to dpkg-buildpackage](#add-extra-arguments-to-dpkg-buildpackage)
   * [Adding extra arguments to gbp-buildpackage](#adding-extra-arguments-to-gbp-buildpackage)
+  * [Git attributes](#git-attributes)
+  * [Customize reprotest](#customize-reprotest)
+* [Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs](#lintian-autopkgtests-piuparts-and-other-quality-assurance-ci-jobs)
+  * [Customize Lintian](#customize-lintian)
+  * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
+  * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
+  * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
   * [Using automatically built apt repository](#using-automatically-built-apt-repository)
+  * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
   * [Debian release bump](#debian-release-bump)
-  * [Build jobs on ARM and RISC-V](#build-jobs-on-arm-and-risc-v)
-  * [Customizing reprotest](#customizing-reprotest)
-  * [Git attributes](#git-attributes)
+* [Distribution and release selection](#distribution-and-release-selection)
+  * [Customise what Debian release to use](#customise-what-debian-release-to-use)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
-* [Known issues](#known-issues)
 * [General Debian packaging support and resources](#general-debian-packaging-support-and-resources)
 * [General Salsa information](#general-salsa-information)
 * [Support for Salsa CI use](#support-for-salsa-ci-use)
@@ -133,6 +136,45 @@ Alternatively, use the more generic command-line tool
 [glab](https://manpages.debian.org/unstable/glab/glab.1.en.html) which works for
 any GitLab instance.
 
+### Include Salsa CI in an existing GitLab CI pipeline
+
+If your project already has a GitLab pipeline, you can add Salsa CI in the
+`.gitlab-ci.yml` file as an additional child pipeline with:
+
+```yaml
+stage: package
+trigger:
+  include: debian/salsa-ci.yml
+  strategy: depend
+rules:
+  - if: $CI_COMMIT_TAG != null
+    when: never
+```
+
+#### Don't run Salsa CI on every commit
+
+If you don't want to run Salsa CI on every commit, you can add custom `rules`
+to trigger the Salsa CI pipeline only manually or for example when a scheduled
+pipeline run takes place. The typical use case is when maintaining native Debian
+packages where the program code is tested on every git commit, and the commits
+are frequent, while the packaging needs to be tested only infrequently.
+
+```yaml
+stage: package
+trigger:
+  include: debian/salsa-ci.yml
+  strategy: depend
+    # run if user manually presses the "play" icon on pipeline
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+    # run during for scheduled pipeline runs
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    # never allow other pipeline sources to trigger running this job
+    - when: never
+```
+
+
 ## Customize Salsa CI
 
 Salsa CI is designed to as-is for the vast majority of Debian packages. In most
@@ -165,92 +207,6 @@ include:
 
 # jobs are defined below ...
 ```
-
-### Changing the Debian Release
-
-By default, everything will run based on the target release in
-`debian/changelog`. If the latest entry is `UNRELEASED`, then the target release
-from the second entry will be used.
-
-The target release can be customized by setting the `RELEASE` variable explicitly.
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-  RELEASE: 'bookworm'
-```
-
-The following releases are available:
-* stretch
-* stretch-backports
-* buster
-* bullseye
-* bullseye-backports
-* bookworm
-* bookworm-backports
-* stable
-* testing
-* unstable
-* experimental
-
-### Avoid running CI on certain branches
-
-It is possible to configure the pipeline to skip branches you don't want CI to
-run on. The `SALSA_CI_IGNORED_BRANCHES` variable can be set to a regex that will
-be compared against the ref name and will decide if a pipeline is created.
-
-By default, pipelines are only created for branches that contain a `debian/` folder.
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-  SALSA_CI_IGNORED_BRANCHES: 'some-branch|another-ref'
-```
-
-### Building with non-free dependencies
-
-By default, only `main` repositories are used. If your package has dependencies
-or build-dependencies in the `contrib` or `non-free` components (archive areas),
-set `SALSA_CI_COMPONENTS` to indicate this:
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-    RELEASE: 'stretch'
-    SALSA_CI_COMPONENTS: 'main contrib non-free'
-```
-
-This is currently used for `piuparts`, but is likely to be used for
-other stages in future.
-
-It is possible to use the `SALSA_CI_EXTRA_REPOSITORY` support to add a
-suitable apt source to the build environment and allow builds to access
-build-dependencies from contrib and non-free. You will need permission
-to modify the Salsa Settings for the project.
-
-The CI/CD settings are at a URL like:
-
-`https://salsa.debian.org/<team>/<project>/-/settings/ci_cd`
-Expand the section on Variables and add a **File** type variable:
-
-> Key: SALSA_CI_EXTRA_REPOSITORY
-
-> Value: deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] https://deb.debian.org/debian/ sid contrib non-free
-
-The apt source should reference `sid` or `unstable`.
-
-Many `contrib` and `non-free` packages only build on `amd64`, so the
-32-bit x86 build (`build i386`) should be disabled. (refer to the
-[Disabling building on i386](#Disabling-building-on-i386) Section).
 
 ### Select which jobs run in the CI pipeline
 
@@ -292,18 +248,6 @@ variables:
   SALSA_CI_ENABLE_AUTOPKGTEST: 1
 ```
 
-### Disabling building on i386
-
-The `build i386` job builds packages against the 32-bit x86 architecture. If for
-any reason you need to skip this job, set the `SALSA_CI_DISABLE_BUILD_PACKAGE_I386`
-in the variables' block to `1`, '`yes`' or '`true`'.  i.e;
-
-```yaml
-
-variables:
-  SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
-```
-
 ### Allow a job to fail
 
 Without completely disabling a job, you can allow it to fail without failing the
@@ -323,25 +267,21 @@ reprotest:
   allow_failure: true
 ```
 
-### Set build timeout
+### Disable the pipeline on certain branches
 
-At times your job may fail because it reached its max duration (either job
-timeout, or runner timeout). In that case, the job would stop immediately
-without entering the `after_script` phase, and without saving the cache and
-without saving the artifacts.
+It is possible to configure the pipeline to skip branches you don't want CI to
+run on. The `SALSA_CI_IGNORED_BRANCHES` variable can be set to a regex that will
+be compared against the ref name and will decide if a pipeline is created.
 
-To prevent this, the build phase of the build job and the build phase of the
-reprotest job have a timeout of `2.75h` (the runner's timeout is 3h). This
-permits also saving the cache of `ccache`. That way, on the next run, there is
-more chance to finish the job since it can use ccache's cache.
+By default, pipelines are only created for branches that contain a `debian/` folder.
 
-You can set the `SALSA_CI_BUILD_TIMEOUT_ARGS` variable to override this. The
-arguments can be any valid argument used by the `timeout` command. For example,
-you may set:
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
-```
 variables:
-  SALSA_CI_BUILD_TIMEOUT_ARGS: "0.75h"
+  SALSA_CI_IGNORED_BRANCHES: 'some-branch|another-ref'
 ```
 
 ### Allow pipeline to run when git tags are pushed
@@ -359,6 +299,19 @@ include:
 variables:
   SALSA_CI_ENABLE_PIPELINE_ON_TAGS: 1
 ```
+
+### Setting variables on pipeline creation
+
+You can set these and other similar variables when launching a new pipeline in different ways:
+
+* Using the web interface under CI/CD, Run Pipeline, and setting the desired
+  variables.
+* Using the [GitLab API](https://salsa.debian.org/help/api/index.md). For
+  example,  check the script
+  [salsa_drive_build.py](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py),
+  in particular the function
+  [launch_pipelines](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py#L568).
+* Setting them as part of a pipeline-triggered build.
 
 ### Skip pipeline temporairly when running a `git push`
 
@@ -381,85 +334,6 @@ git push -o ci.skip               # using git 2.18+
 ```
 
 See also https://salsa.debian.org/help/ci/pipelines/index.md#skip-a-pipeline
-
-
-### Adding Salsa CI to an existing GitLab CI pipeline
-
-If your project already has a GitLab pipeline, you can add Salsa CI in the
-`.gitlab-ci.yml` file as an additional child pipeline with:
-
-```yaml
-stage: package
-trigger:
-  include: debian/salsa-ci.yml
-  strategy: depend
-rules:
-  - if: $CI_COMMIT_TAG != null
-    when: never
-```
-
-### Don't run Salsa CI on every commit
-
-If you don't want to run Salsa CI on every commit, you can add custom `rules`
-to trigger the Salsa CI pipeline only manually or for example when a scheduled
-pipeline run takes place. The typical use case is when maintaining native Debian
-packages where the program code is tested on every git commit, and the commits
-are frequent, while the packaging needs to be tested only infrequently.
-
-```yaml
-stage: package
-trigger:
-  include: debian/salsa-ci.yml
-  strategy: depend
-    # run if user manually presses the "play" icon on pipeline
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-    # run during for scheduled pipeline runs
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: always
-    # never allow other pipeline sources to trigger running this job
-    - when: never
-```
-
-### Adding your private repositories to the builds
-
-The variables `SALSA_CI_EXTRA_REPOSITORY` and `SALSA_CI_EXTRA_REPOSITORY_KEY`
-can be used to add private apt repositories to the sources.list, to be used by
-the build and tests, and (optionally) the signing key for the repositories in
-armor format. Alternatively, the single variable `SALSA_CI_EXTRA_REPOSITORY_SOURCES`
- can be used to add an extra repository (with its corresponding signing key) in
- deb822-style format (which is conveniently rendered by the aptly job). These
- variables are of [type file](https://salsa.debian.org/help/ci/variables/index.md#cicd-variable-types),
- which eases the multiline handling, but have the disadvantage that their
- content can't be set on the salsa-ci.yml file - but they can be added to the
- repository as files and have their filenames then set in the salsa-ci.yml file:
-
-```yaml
----
-include: https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-
-variables:
-  SALSA_CI_EXTRA_REPOSITORY: debian/ci/extra_repository.list
-  SALSA_CI_EXTRA_REPOSITORY_KEY: debian/ci/extra_repository.asc
-  # or
-  SALSA_CI_EXTRA_REPOSITORY_SOURCES: debian/ci/extra_repository.sources
-```
-
-See also
-[Using automatically built apt repository](#using-automatically-built-apt-repository)
-
-### Setting variables on pipeline creation
-
-You can set these and other similar variables when launching a new pipeline in different ways:
-
-* Using the web interface under CI/CD, Run Pipeline, and setting the desired
-  variables.
-* Using the [GitLab API](https://salsa.debian.org/help/api/index.md). For
-  example,  check the script
-  [salsa_drive_build.py](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py),
-  in particular the function
-  [launch_pipelines](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py#L568).
-* Setting them as part of a pipeline-triggered build.
 
 ### Run only selected jobs
 
@@ -516,6 +390,92 @@ As new changes are expected to happen from time to time, we **firmly recommend
 NOT to do define all jobs manually**. Most of the time it is better to simply
 [select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline).
 
+
+## Customize builds and build dependencies
+
+### Set build timeout
+
+At times your job may fail because it reached its max duration (either job
+timeout, or runner timeout). In that case, the job would stop immediately
+without entering the `after_script` phase, and without saving the cache and
+without saving the artifacts.
+
+To prevent this, the build phase of the build job and the build phase of the
+reprotest job have a timeout of `2.75h` (the runner's timeout is 3h). This
+permits also saving the cache of `ccache`. That way, on the next run, there is
+more chance to finish the job since it can use ccache's cache.
+
+You can set the `SALSA_CI_BUILD_TIMEOUT_ARGS` variable to override this. The
+arguments can be any valid argument used by the `timeout` command. For example,
+you may set:
+
+```
+variables:
+  SALSA_CI_BUILD_TIMEOUT_ARGS: "0.75h"
+```
+
+### Disabling building on i386
+
+The `build i386` job builds packages against the 32-bit x86 architecture. If for
+any reason you need to skip this job, set the `SALSA_CI_DISABLE_BUILD_PACKAGE_I386`
+in the variables' block to `1`, '`yes`' or '`true`'.  i.e;
+
+```yaml
+
+variables:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
+```
+
+### Enable building on ARM and RISC-V
+
+Salsa CI includes builds jobs for armel, armhf, arm64 and riscv64. They are
+disabled by default, but can be enabled if a project has a GitLab runner on
+arm64 hardware available and tagged `arm64`, or on RISC-V tagged `riscv64`.
+
+If you know you have such a runner available, you can activate ARM or RISC-V
+build respectively by setting the related variables to anything different than
+1, 'yes' or 'true':
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
+  SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
+```
+
+All Debian Developers can enable `salsaci-arm64-runner-01.debian.net` or
+`salsaci riscv64 runner 01` in any project.
+
+Contributors who fork the project might not have runners tagged `arm64` or
+`riscv64` in their project. The example below illustrates how to limit the
+special build jobs to the `debian` project name space with extra `rules`:
+
+```yaml
+build arm64:
+  extends: .build-package-arm64
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+
+build armel:
+  extends: .build-package-armel
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+
+build armhf:
+  extends: .build-package-armhf
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+
+build riscv64:
+  extends: .build-package-riscv64
+  rules:
+    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
+```
+
+If you want to add more architectures or for other reasons have your own
+runners, see [Adding new runners for Salsa CI](RUNNERS.md).
+
 ### Testing build of arch=any and arch=all packages
 
 If your package contains binary packages for `all` or `any`, you may want to
@@ -542,89 +502,6 @@ and will only build arch-specific packages.
 
 `.test-build-package-all` does the opposite and runs `dpkg-buildpackage` with
 the option `--build=all` building only arch-indep packages.
-
-### Enable generation of dbgsym packages
-
-To reduce the size of the artifacts produced by the build jobs, auto-generation
-of dbgsym packages is disabled by default. This behaviour can be controlled by
-the `SALSA_CI_DISABLE_BUILD_DBGSYM`. Set it to anything different than 1, 'yes'
-or 'true', to generate those packages.
-
-```yaml
-variables:
-  SALSA_CI_DISABLE_BUILD_DBGSYM: 0
-```
-
-### Enable building packages twice in a row
-
-The job `test-build-twice` can be used to check whether it is possible to run
-`dpkg-buildpackage` twice in a row. To enable this check, either run your
-pipeline manually with `SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE` set to anything
-different than 1, 'yes' or 'true' or by adding the following to your
-`debian/salsaci.yml`:
-
-```yaml
-variables:
-  SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE: 0
-```
-
-### Enable wrap-and-sort job
-
-The job `wrap-and-sort` can be used to check if files in the `debian/`
-folder are wrapped properly using
-[wrap-and-sort(1)](https://manpages.debian.org/testing/devscripts/wrap-and-sort.1.en.html).
-To enable this check, either run your pipeline manually with
-`SALSA_CI_DISABLE_WRAP_AND_SORT` set to anything different than 1, 'yes' or
-'true' or by adding the following to your `debian/salsa-ci.yml`:
-
-```yaml
-variables:
-  SALSA_CI_DISABLE_WRAP_AND_SORT: 0
-```
-
-You can configure the parameters passed to `wrap-and-sort` using the
-`SALSA_CI_WRAP_AND_SORT_ARGS` variable like this:
-
-```yaml
-variables:
-  SALSA_CI_DISABLE_WRAP_AND_SORT: 0
-  SALSA_CI_WRAP_AND_SORT_ARGS: '-asbkt'
-```
-
-The style to use is a subjective decision.  The default behaviour may
-change over time
-[#895570](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895570).
-We suggest to consider `-a --wrap-always`, `-s --short-indent`, `-b
---sort-binary-packages`, `-k --keep-first`, and `-t --trailing-comma`
-as they encourage a minimal, consistent and deterministic style.
-
-### Customizing Lintian
-
-The Lintian job can be customized to ignore certain tags.
-
-To ignore a tag, add it to the setting `SALSA_CI_LINTIAN_SUPPRESS_TAGS`.
-
-By default, the Lintian jobs fail either if a Lintian run-time error occurs or
-if Lintian finds a tag of the error category.
-
-To also fail the job on findings of the category warning, set
-`SALSA_CI_LINTIAN_FAIL_WARNING` to 1 (or "yes" or "true").
-
-To make Lintian shows overridden tags, set `SALSA_CI_LINTIAN_SHOW_OVERRIDES` to
-1 (or "yes" or "true").
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-  SALSA_CI_LINTIAN_FAIL_WARNING: 1
-  SALSA_CI_LINTIAN_SUPPRESS_TAGS: 'orig-tarball-missing-upstream-signature'
-```
-
-It is possible to add any other lintian argument using `SALSA_CI_LINTIAN_ARGS`.
-Those arguments will be appended after the arguments generated by the pipeline.
 
 ### Testing build profiles
 
@@ -661,12 +538,36 @@ test-build-profiles:
       - BUILD_PROFILES: nodoc
 ```
 
-### Add extra arguments to autopkgtest
+### Enable building packages twice in a row
 
-Sometimes it is desirable to add arguments to autopkgtest.
+The job `test-build-twice` can be used to check whether it is possible to run
+`dpkg-buildpackage` twice in a row. To enable this check, either run your
+pipeline manually with `SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE` set to anything
+different than 1, 'yes' or 'true' or by adding the following to your
+`debian/salsaci.yml`:
 
-You can do this by setting the arguments in the `SALSA_CI_AUTOPKGTEST_ARGS`
-variable.
+```yaml
+variables:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE: 0
+```
+
+### Enable generation of dbgsym packages
+
+To reduce the size of the artifacts produced by the build jobs, auto-generation
+of dbgsym packages is disabled by default. This behaviour can be controlled by
+the `SALSA_CI_DISABLE_BUILD_DBGSYM`. Set it to anything different than 1, 'yes'
+or 'true', to generate those packages.
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_BUILD_DBGSYM: 0
+```
+
+### Build with non-free dependencies
+
+By default, only `main` repositories are used. If your package has dependencies
+or build-dependencies in the `contrib` or `non-free` components (archive areas),
+set `SALSA_CI_COMPONENTS` to indicate this:
 
 ```yaml
 ---
@@ -674,33 +575,59 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
-  SALSA_CI_AUTOPKGTEST_ARGS: '--debug'
+    RELEASE: 'stretch'
+    SALSA_CI_COMPONENTS: 'main contrib non-free'
 ```
 
-Note that autopkgtest can access the repository in the current directory, making
-it possible for `--setup-commands` to read commands from a file. For example:
+This is currently used for `piuparts`, but is likely to be used for
+other stages in future.
+
+It is possible to use the `SALSA_CI_EXTRA_REPOSITORY` support to add a
+suitable apt source to the build environment and allow builds to access
+build-dependencies from contrib and non-free. You will need permission
+to modify the Salsa Settings for the project.
+
+The CI/CD settings are at a URL like:
+
+`https://salsa.debian.org/<team>/<project>/-/settings/ci_cd`
+Expand the section on Variables and add a **File** type variable:
+
+> Key: SALSA_CI_EXTRA_REPOSITORY
+
+> Value: deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] https://deb.debian.org/debian/ sid contrib non-free
+
+The apt source should reference `sid` or `unstable`.
+
+Many `contrib` and `non-free` packages only build on `amd64`, so the
+32-bit x86 build (`build i386`) should be disabled. (refer to the
+[Disabling building on i386](#Disabling-building-on-i386) Section).
+
+### Add private repositories to the builds
+
+The variables `SALSA_CI_EXTRA_REPOSITORY` and `SALSA_CI_EXTRA_REPOSITORY_KEY`
+can be used to add private apt repositories to the sources.list, to be used by
+the build and tests, and (optionally) the signing key for the repositories in
+armor format. Alternatively, the single variable `SALSA_CI_EXTRA_REPOSITORY_SOURCES`
+ can be used to add an extra repository (with its corresponding signing key) in
+ deb822-style format (which is conveniently rendered by the aptly job). These
+ variables are of [type file](https://salsa.debian.org/help/ci/variables/index.md#cicd-variable-types),
+ which eases the multiline handling, but have the disadvantage that their
+ content can't be set on the salsa-ci.yml file - but they can be added to the
+ repository as files and have their filenames then set in the salsa-ci.yml file:
 
 ```yaml
 ---
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+include: https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
 
 variables:
-  SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
+  SALSA_CI_EXTRA_REPOSITORY: debian/ci/extra_repository.list
+  SALSA_CI_EXTRA_REPOSITORY_KEY: debian/ci/extra_repository.asc
+  # or
+  SALSA_CI_EXTRA_REPOSITORY_SOURCES: debian/ci/extra_repository.sources
 ```
 
-### Make autopkgtest more strict
-
-By default, the autopkgtest job will succeed if autopkgtest exits with status
-0, 2 or 8. If you would like the autopkgtest job to only succeed if all tests
-pass and fail otherwise, you can restrict success to exit status 0 by writing:
-
-```yaml
-variables:
-  SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS: '0'
-```
-
-To allow multiple exit codes, separate them by comma.
+See also
+[Using automatically built apt repository](#using-automatically-built-apt-repository)
 
 ### Add extra arguments to dpkg-buildpackage
 
@@ -731,6 +658,190 @@ include:
 
 variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: --your-option
+```
+
+### Git attributes
+
+Some upstream projects ship a `.gitattributes` file to set up special
+attributes to specific paths. To properly handle those path attributes, the
+Salsa CI's pipeline relies on `gbp setup-gitattributes`, that is call after
+fetching all the required branches from the repository.  See `gitattributes(5)`
+and `gbp-setup-gitattributes(1)`, and
+[#322](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/322). If `gbp
+setup-gitattributes` is causing trouble (such as staging changes or encoding
+inconsistencies), the `gbp setup-gitattributes` call can be disabled setting
+the `SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES` variable to 1, 'yes' or 'true':
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
+```
+
+### Customize reprotest
+
+#### Run reprotest with diffoscope
+
+Reprotest stage can be run with [diffoscope](https://try.diffoscope.org/), which
+is an useful tool that helps identifying reproducibility issues. Large projects
+will not pass on low resources runners as the ones available right now.
+
+To enable diffoscope, setting `SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE` to 1 (or
+'yes' or 'true') is needed.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE: 1
+```
+
+#### Add extra arguments to reprotest
+
+Sometimes it is desirable to disable some reprotest validations because the
+reproducibility issue comes inherently from the programming language being used,
+and not from the code being packaged. For example, some compilers embed the
+build path in the generated binaries.
+
+You can get this level of customization by adding extra `reprotest` parameters
+in the `SALSA_CI_REPROTEST_ARGS` variable.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_REPROTEST_ARGS: --vary=-build_path
+```
+
+#### Break up the reprotest job into the different variations
+
+By default, reprotest applies all the known variations (`--variations=+all`,
+see the full list at
+[reprotest(1)](https://manpages.debian.org/buster/reprotest/reprotest.1.en.html)).
+One way to debug a failing reprotest job and find out what variations are
+producing unreproducibility issues is to run the variations independently.
+
+If you want to run multiple reprotest jobs, one for each variation, set the
+`SALSA_CI_ENABLE_ATOMIC_REPROTEST` variable to 1, 'yes' or 'true':
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_ENABLE_ATOMIC_REPROTEST: 1
+```
+
+You can also set the `SALSA_CI_ENABLE_ATOMIC_REPROTEST` variable when
+triggering the pipeline, without the need of creating a specific commit.
+
+#### Faketime is currently disabled
+
+Note that reprotest's faketime support is currently disabled, as it causes false
+positives on files touched by quilt. It will be re-enabled once this is fixed.
+https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/251
+
+
+## Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs
+
+### Customize Lintian
+
+The Lintian job can be customized to ignore certain tags.
+
+To ignore a tag, add it to the setting `SALSA_CI_LINTIAN_SUPPRESS_TAGS`.
+
+By default, the Lintian jobs fail either if a Lintian run-time error occurs or
+if Lintian finds a tag of the error category.
+
+To also fail the job on findings of the category warning, set
+`SALSA_CI_LINTIAN_FAIL_WARNING` to 1 (or "yes" or "true").
+
+To make Lintian shows overridden tags, set `SALSA_CI_LINTIAN_SHOW_OVERRIDES` to
+1 (or "yes" or "true").
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_LINTIAN_FAIL_WARNING: 1
+  SALSA_CI_LINTIAN_SUPPRESS_TAGS: 'orig-tarball-missing-upstream-signature'
+```
+
+It is possible to add any other lintian argument using `SALSA_CI_LINTIAN_ARGS`.
+Those arguments will be appended after the arguments generated by the pipeline.
+
+### Make autopkgtest more strict
+
+By default, the autopkgtest job will succeed if autopkgtest exits with status
+0, 2 or 8. If you would like the autopkgtest job to only succeed if all tests
+pass and fail otherwise, you can restrict success to exit status 0 by writing:
+
+```yaml
+variables:
+  SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS: '0'
+```
+
+To allow multiple exit codes, separate them by comma.
+
+### Add extra arguments to autopkgtest
+
+Sometimes it is desirable to add arguments to autopkgtest.
+
+You can do this by setting the arguments in the `SALSA_CI_AUTOPKGTEST_ARGS`
+variable.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_AUTOPKGTEST_ARGS: '--debug'
+```
+
+Note that autopkgtest can access the repository in the current directory, making
+it possible for `--setup-commands` to read commands from a file. For example:
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
+```
+
+### Avoid autopkgtest failures on systemd masked tmp
+
+If an autopkgtest fail with:
+
+```shell
+$> systemctl restart myservice
+Failed to restart myservice.service: Unit tmp.mount is masked.
+```
+The error is probably due to bug [#1078157](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1078157).
+
+You could workaround by adding at the top of the autopkgtest:
+
+```shell
+SERVICE=myservice
+mkdir -p /run/systemd/system/$SERVICE.service.d
+tee /run/systemd/system/$SERVICE.service.d/disabletmp.conf << "EOF"
+[Service]
+PrivateTmp=no
+EOF
+systemctl daemon-reload
 ```
 
 ### Run a pre-install / post-install script in piuparts
@@ -818,73 +929,52 @@ job from `src:pkgA` and update the `${JOB_ID}` of `src:pkgB`.
 See also howto
 [add private repositories to the builds](#add-private-repositories-to-the-builds).
 
+### Enable wrap-and-sort job
+
+The job `wrap-and-sort` can be used to check if files in the `debian/`
+folder are wrapped properly using
+[wrap-and-sort(1)](https://manpages.debian.org/testing/devscripts/wrap-and-sort.1.en.html).
+To enable this check, either run your pipeline manually with
+`SALSA_CI_DISABLE_WRAP_AND_SORT` set to anything different than 1, 'yes' or
+'true' or by adding the following to your `debian/salsa-ci.yml`:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_WRAP_AND_SORT: 0
+```
+
+You can configure the parameters passed to `wrap-and-sort` using the
+`SALSA_CI_WRAP_AND_SORT_ARGS` variable like this:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_WRAP_AND_SORT: 0
+  SALSA_CI_WRAP_AND_SORT_ARGS: '-asbkt'
+```
+
+The style to use is a subjective decision.  The default behaviour may
+change over time
+[#895570](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895570).
+We suggest to consider `-a --wrap-always`, `-s --short-indent`, `-b
+--sort-binary-packages`, `-k --keep-first`, and `-t --trailing-comma`
+as they encourage a minimal, consistent and deterministic style.
+
 ### Debian release bump
 
 By default, the build job will increase the release number using the +salsaci
 suffix. To disable this behavior set the `SALSA_CI_DISABLE_VERSION_BUMP` to 1,
 'yes' or 'true'.
 
-### Build jobs on ARM and RISC-V
 
-Salsa CI includes builds jobs for armel, armhf, arm64 and riscv64. They are
-disabled by default, but can be enabled if a project has a GitLab runner on
-arm64 hardware available and tagged `arm64`, or on RISC-V tagged `riscv64`.
+## Distribution and release selection
 
-If you know you have such a runner available, you can activate ARM or RISC-V
-build respectively by setting the related variables to anything different than
-1, 'yes' or 'true':
+### Customise what Debian release to use
 
-```yaml
-variables:
-  SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
-  SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
-  SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
-  SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
-```
+By default, everything will run based on the target release in
+`debian/changelog`. If the latest entry is `UNRELEASED`, then the target release
+from the second entry will be used.
 
-All Debian Developers can enable `salsaci-arm64-runner-01.debian.net` or
-`salsaci riscv64 runner 01` in any project.
-
-Contributors who fork the project might not have runners tagged `arm64` or
-`riscv64` in their project. The example below illustrates how to limit the
-special build jobs to the `debian` project name space with extra `rules`:
-
-```yaml
-build arm64:
-  extends: .build-package-arm64
-  rules:
-    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
-
-build armel:
-  extends: .build-package-armel
-  rules:
-    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
-
-build armhf:
-  extends: .build-package-armhf
-  rules:
-    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
-
-build riscv64:
-  extends: .build-package-riscv64
-  rules:
-    - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
-```
-
-If you want to add more architectures or for other reasons have your own
-runners, see [Adding new runners for Salsa CI](RUNNERS.md).
-
-
-### Customizing reprotest
-
-#### Running reprotest with diffoscope
-
-Reprotest stage can be run with [diffoscope](https://try.diffoscope.org/), which
-is an useful tool that helps identifying reproducibility issues. Large projects
-will not pass on low resources runners as the ones available right now.
-
-To enable diffoscope, setting `SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE` to 1 (or
-'yes' or 'true') is needed.
+The target release can be customized by setting the `RELEASE` variable explicitly.
 
 ```yaml
 ---
@@ -892,78 +982,21 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
-  SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE: 1
+  RELEASE: 'bookworm'
 ```
 
-#### Adding extra arguments to reprotest
-
-Sometimes it is desirable to disable some reprotest validations because the
-reproducibility issue comes inherently from the programming language being used,
-and not from the code being packaged. For example, some compilers embed the
-build path in the generated binaries.
-
-You can get this level of customization by adding extra `reprotest` parameters
-in the `SALSA_CI_REPROTEST_ARGS` variable.
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-  SALSA_CI_REPROTEST_ARGS: --vary=-build_path
-```
-
-#### Breaking up the reprotest job into the different variations
-
-By default, reprotest applies all the known variations (`--variations=+all`,
-see the full list at
-[reprotest(1)](https://manpages.debian.org/buster/reprotest/reprotest.1.en.html)).
-One way to debug a failing reprotest job and find out what variations are
-producing unreproducibility issues is to run the variations independently.
-
-If you want to run multiple reprotest jobs, one for each variation, set the
-`SALSA_CI_ENABLE_ATOMIC_REPROTEST` variable to 1, 'yes' or 'true':
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-  SALSA_CI_ENABLE_ATOMIC_REPROTEST: 1
-```
-
-You can also set the `SALSA_CI_ENABLE_ATOMIC_REPROTEST` variable when
-triggering the pipeline, without the need of creating a specific commit.
-
-#### Faketime is currently disabled
-
-Note that reprotest's faketime support is currently disabled, as it causes false
-positives on files touched by quilt. It will be re-enabled once this is fixed.
-https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/251
-
-### Git attributes
-
-Some upstream projects ship a `.gitattributes` file to set up special
-attributes to specific paths. To properly handle those path attributes, the
-Salsa CI's pipeline relies on `gbp setup-gitattributes`, that is call after
-fetching all the required branches from the repository.  See `gitattributes(5)`
-and `gbp-setup-gitattributes(1)`, and
-[#322](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/322). If `gbp
-setup-gitattributes` is causing trouble (such as staging changes or encoding
-inconsistencies), the `gbp setup-gitattributes` call can be disabled setting
-the `SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES` variable to 1, 'yes' or 'true':
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
-
-variables:
-  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
-```
+The following releases are available:
+* stretch
+* stretch-backports
+* buster
+* bullseye
+* bullseye-backports
+* bookworm
+* bookworm-backports
+* stable
+* testing
+* unstable
+* experimental
 
 ### Experimental: Ubuntu support
 
@@ -988,29 +1021,6 @@ and
 [2](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_523235)).
 Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
 
-## Known issues
-
-### systemd masked tmp
-
-If an autopkgtest fail with:
-
-```shell
-$> systemctl restart myservice
-Failed to restart myservice.service: Unit tmp.mount is masked.
-```
-The error is probably due to bug [#1078157](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1078157).
-
-You could workaround by adding at the top of the autopkgtest:
-
-```shell
-SERVICE=myservice
-mkdir -p /run/systemd/system/$SERVICE.service.d
-tee /run/systemd/system/$SERVICE.service.d/disabletmp.conf << "EOF"
-[Service]
-PrivateTmp=no
-EOF
-systemctl daemon-reload
-```
 
 ## General Debian packaging support and resources
 
