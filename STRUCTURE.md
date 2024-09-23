@@ -20,8 +20,8 @@ flowchart TD;
 
 ## Salsa CI External Pipeline
 
-We call external pipeline to the yaml document included in the users' projects
-to make the pipeline to run. This is composed mainly by two files:
+By "external pipeline" we refer to the yaml document included in the users'
+projects to make the pipeline to run. This is composed mainly by two files:
 
 * [salsa-ci.yml](salsa-ci.yml): includes the stage and job definitions and the different
   scripts that compose the jobs. It also contains the workflow, rules and
@@ -33,9 +33,9 @@ to make the pipeline to run. This is composed mainly by two files:
 As of April 2024, the Salsa CI pipeline defines three stages: `provisioning`,
 `build` and `test`.  The `provisioning` stage aims at preparing any artifact
 needed by the build jobs. The current `extract-source` job creates a debianized
-source tree that can be used in the next stage to build the debian package. As
+source tree that can be used in the next stage to build the Debian package. As
 its name suggests, the `build` stage comprises the different build jobs. By
-default, the pipeline builds for `amd64`, `i386` and the `source` debian
+default, the pipeline builds for `amd64`, `i386` and the `source` Debian
 package. Build jobs for other architectures should be added in this stage.
 Finally, the `test` stage includes all the automated checks. Most of them
 require the artifacts from the amd64 `build` job.
@@ -93,7 +93,7 @@ Finally, the `&build-script` anchor is where it can be found the actual code
 that builds the package.
 
 Using the same templates we can define another different build job, such as
-`build source`. We do so slightly adjusting the job's definition template.
+`build source`. We do so by slightly adjusting the job's definition template.
 Hopefully this is self-explanatory:
 
 From `pipeline-jobs.yml`:
@@ -117,7 +117,7 @@ From `salsa-ci.yml`:
     SALSA_CI_DISABLE_VERSION_BUMP: 1
 ```
 
-In the external pipeline we can also find the [recipes](recipes) directory
+In the external pipeline, we can also find the [recipes](recipes) directory
 where vendors can create specific include recipe to easily customize the
 pipeline for specific cases.
 
@@ -167,11 +167,11 @@ flowchart LR;
   releases, architectures and any related variables required for building them
   for a specific vendor (e.g. [Debian](.images-debian.yml) or
   [Kali](.images-kali.yml)). The Debian image build jobs includes production or
-  staging images, depending if the pipeline is run for the default branch or a
+  staging images, depending on if the pipeline is run for the default branch or a
   feature branch, respectively. By default, the `clean images` job from
   `.gitlab-ci.yml` erases the staging images at the pipeline's `clean` stage.
 * [images/](images/): under this directory are found the Containerfiles, scripts
-  and patches required to build the different images. As it name suggests,
+  and patches required to build the different images. As its name suggests,
   [images/containerfiles/base.0](images/containerfiles/base.0), is the base
   Containerfile extended by all the other images.
 * [.pipeline-test.yml](.pipeline-test.yml): defines a base to test the external
@@ -185,5 +185,3 @@ flowchart LR;
   the autopkgtest-lxc jobs. It creates one lxc.tar per supported release, tar
   file that is fetched by the autopkgtest-job according to the target release
   set in the pipeline.
-
-
