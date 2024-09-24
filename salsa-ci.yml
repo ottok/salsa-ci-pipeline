@@ -298,7 +298,7 @@ stages:
   - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
 
   # https://salsa.debian.org/salsa-ci-team/pipeline/-/merge_requests/230
-  - rm -vrf ${CCACHE_TMP_DIR}
+  - (set -o pipefail; rm -vrf ${CCACHE_TMP_DIR} | tail)
 
   - mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
   - add_extra_repository.sh -v
