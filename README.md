@@ -684,6 +684,39 @@ variables:
 
 ### Customize reprotest
 
+The `reprotest` job runs with the `time` (see below) and `build_path`
+variations disabled by default. To save memory usage, it also runs with
+`diffoscope` disabled. This behaviour can be modified as explained here below.
+
+#### Faketime is currently disabled
+
+Note that reprotest's faketime support is currently disabled, as it causes false
+positives on files touched by quilt. It will be re-enabled once this is fixed.
+https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/251
+
+#### Add extra arguments to reprotest
+
+Sometimes it is desirable to disable (or enable) some `reprotest` validations
+because the reproducibility issue comes inherently from the programming
+language being used, and not from the code being packaged.
+
+You can customize the variations tested by `reprotest` by adding extra parameters
+in the `SALSA_CI_REPROTEST_ARGS` variable.
+For example, some compilers embed the build path in the generated binaries. As
+mentioned above, the `build_path` variation is disabled by default, but if you
+still want to test it, you can enable it as shown below.
+Please refer to `reprotest(1)` to find more information about the variations
+available.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_REPROTEST_ARGS: --vary=+build_path
+```
+
 #### Run reprotest with diffoscope
 
 Reprotest stage can be run with [diffoscope](https://try.diffoscope.org/), which
@@ -702,30 +735,11 @@ variables:
   SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE: 1
 ```
 
-#### Add extra arguments to reprotest
-
-Sometimes it is desirable to disable some reprotest validations because the
-reproducibility issue comes inherently from the programming language being used,
-and not from the code being packaged. For example, some compilers embed the
-build path in the generated binaries.
-
-You can get this level of customization by adding extra `reprotest` parameters
-in the `SALSA_CI_REPROTEST_ARGS` variable.
-
-```yaml
----
-include:
-  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-variables:
-  SALSA_CI_REPROTEST_ARGS: --vary=-build_path
-```
-
 #### Break up the reprotest job into the different variations
 
-By default, reprotest applies all the known variations (`--variations=+all`,
-see the full list at
-[reprotest(1)](https://manpages.debian.org/buster/reprotest/reprotest.1.en.html)).
+By default, reprotest applies all the known variations together (see the full
+list at
+[reprotest(1)](https://manpages.debian.org/unstable/reprotest/reprotest.1.en.html)).
 One way to debug a failing reprotest job and find out what variations are
 producing unreproducibility issues is to run the variations independently.
 
@@ -743,12 +757,6 @@ variables:
 
 You can also set the `SALSA_CI_ENABLE_ATOMIC_REPROTEST` variable when
 triggering the pipeline, without the need of creating a specific commit.
-
-#### Faketime is currently disabled
-
-Note that reprotest's faketime support is currently disabled, as it causes false
-positives on files touched by quilt. It will be re-enabled once this is fixed.
-https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/251
 
 
 ## Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs

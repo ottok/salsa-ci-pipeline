@@ -794,6 +794,7 @@ stages:
         --store-dir ${WORKING_DIR}/reprotest \
         --verbosity=2  \
         --vary=-time \
+        --vary=-build_path \
         --vary=user_group.available+=salsa-ci,domain_host.use_sudo=1 \
         ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS:+--append-build-command=${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}} \
         ${SALSA_CI_REPROTEST_ARGS} \
