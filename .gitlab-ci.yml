@@ -106,6 +106,7 @@ check license + contributor:
   rules:
     - if: $CI_SERVER_URL != "https://salsa.debian.org"
       when: never
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
 check gpg signature:
   stage: test
