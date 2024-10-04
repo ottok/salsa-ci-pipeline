@@ -1,4 +1,10 @@
 #!/bin/bash
+# Copyright salsa-ci-team and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+
 #
 # This script generates a Markdown table-of-contents from a README.html file,
 # in order to update the README.md documentation source file.
