@@ -295,9 +295,6 @@ stages:
   - cd ${OLDPWD}
 
 .build-before-script: &build-before-script
-  # salsa-ci-team/pipeline#107
-  - rm -vrf ${CI_PROJECT_DIR}/debian/output/.ccache
-
   - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
 
   # https://salsa.debian.org/salsa-ci-team/pipeline/-/merge_requests/230
