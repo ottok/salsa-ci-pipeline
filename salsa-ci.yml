@@ -68,6 +68,9 @@ variables:
   SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE:
     description: "Set this to 1 to produce an in-depth comparison of reprotest results"
     value: 0
+  SALSA_CI_REPROTEST_ARTIFACT_PATTERN:
+    description: "Build artifacts to test for reproducibility. May be space-separated shell globs."
+    value: ''
   SALSA_CI_AUTOPKGTEST_LXC: https://salsa.debian.org/salsa-ci-team/autopkgtest-lxc
   SALSA_CI_AUTOPKGTEST_ARGS:
     description: "debci_autopkgtest_args is set to this variable and used by autopkgtest"
@@ -803,7 +806,9 @@ stages:
         --vary=user_group.available+=salsa-ci,domain_host.use_sudo=1 \
         ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS:+--append-build-command=${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}} \
         ${SALSA_CI_REPROTEST_ARGS} \
-        ${WORKING_DIR}/*.dsc -- null" |& OUTPUT_FILENAME=reprotest.log filter-output
+        ${WORKING_DIR}/*.dsc \
+        ${SALSA_CI_REPROTEST_ARTIFACT_PATTERN:+\"$SALSA_CI_REPROTEST_ARTIFACT_PATTERN\"} \
+        -- null" |& OUTPUT_FILENAME=reprotest.log filter-output
   variables:
     GIT_STRATEGY: none
   needs:

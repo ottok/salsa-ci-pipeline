@@ -726,6 +726,26 @@ variables:
   SALSA_CI_REPROTEST_ARGS: --vary=+build_path
 ```
 
+#### Run reprotest for custom build artifacts
+
+By default reprotest will check reproducibility of any binary packages built,
+using the `*.deb` shell glob. This should be fine for most packages, but some
+can generate files that don't match this pattern. For example, various packages
+create "udeb"s to be used by the installer and the debian-installer package
+generates a tarball of images.
+
+You can customize the build artifacts tested by `reprotest` by setting the
+`SALSA_CI_REPROTEST_ARTIFACT_PATTERN` variable.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_REPROTEST_ARTIFACT_PATTERN: '*.deb *.udeb *-images_*.tar.gz'
+```
+
 #### Run reprotest with diffoscope
 
 Reprotest stage can be run with [diffoscope](https://try.diffoscope.org/), which
