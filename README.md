@@ -989,10 +989,8 @@ variables:
 
 The following releases are available:
 * stretch
-* stretch-backports
 * buster
 * bullseye
-* bullseye-backports
 * bookworm
 * bookworm-backports
 * stable
