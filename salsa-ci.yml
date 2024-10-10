@@ -359,12 +359,14 @@ stages:
   - test "$DB_BUILD_TYPE" != "any" || aptopts="--arch-only"
   - test "$DB_BUILD_TYPE" != "all" || aptopts="--indep-only"
   - apt_solver_opts=""
+  - aspcud_version="1:0.0.0-0"
   # use aspcud solver for experimental and backports
   - |
     case "$RELEASE" in
     experimental | *-backports)
       eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
       apt_solver_opts="$apt_solver_opts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
+      aspcud_version=$(dpkg-query --show --showformat '${Version}' aspcud)
       # minimize number of packages from experimental and backports
       case "$RELEASE" in
       experimental)
@@ -378,10 +380,16 @@ stages:
       aptopts="$aptopts $apt_solver_opts"
       ;;
     esac
+
   # Before attemping apt-get satisfy usage, check that it is working - it
-  # doesn't exist on buster and older
+  # doesn't exist on buster and older. Also check aspcud version as it doesn't
+  # work well on versions before the mentioned one.
+  # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/387
+
+  - aspcud_confirmed_to_work_version="1:1.9.6-2"
+
   - |
-    if [ "$DB_BUILD_TYPE" = 'source' ] && apt-get -qq --no-act satisfy apt
+    if [ "$DB_BUILD_TYPE" = 'source' ] && apt-get -qq --no-act satisfy apt && dpkg --compare-versions $aspcud_version ge $aspcud_confirmed_to_work_version
     then
       perl <<- 'EOF' | xargs -r0 eatmydata apt-get -y --no-install-recommends $apt_solver_opts satisfy
       use Dpkg::Control::Info;
