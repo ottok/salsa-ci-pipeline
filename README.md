@@ -81,6 +81,7 @@ include:
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
   * [Using old snapshot.debian.org timestamps](#using-old-snapshotdebianorg-timestamps)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
+  * [Kali support](#kali-support)
 * [Testing Salsa CI \(and GitLab CI in general\) pipeline definitions locally](#testing-salsa-ci-and-gitlab-ci-in-general-pipeline-definitions-locally)
   * [Testing definition file for correctness](#testing-definition-file-for-correctness)
   * [Running the pipeline locally](#running-the-pipeline-locally)
@@ -1536,10 +1537,15 @@ The following releases are available:
 * bookworm-backports
 * trixie
 * trixie-backports
+* forky
 * stable
 * testing
 * unstable
 * experimental
+
+See [Salsa CI pipeline jobs per Debian release](JOBS-PER-RELEASE.md) for a
+description of which jobs run on which release, and how the pipeline adapts to
+the chosen `RELEASE` value.
 
 ### Using old snapshot.debian.org timestamps
 
@@ -1576,6 +1582,9 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/ubuntu.yml
 ```
 
+The recipe also includes [vars/ubuntu.yml](vars/ubuntu.yml), which pre-disables
+the test jobs that do not apply to Ubuntu packages.
+
 Additionally you must ensure a Ubuntu release is defined in the latest
 `debian/changelog` entry or as a `RELEASE` variable.
 
@@ -1584,6 +1593,17 @@ Currently autopkgtest is the only test job enabled by default (see
 and
 [2](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_523235)).
 Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
+
+### Kali support
+
+Kali packages are tested by including
+[recipes/kali.yml](recipes/kali.yml) instead, which pulls in
+[vars/kali.yml](vars/kali.yml) and points at Kali's own fork of the pipeline.
+Because that file is included, the pre-set variables behave as defaults and can
+still be overridden in the project's own `debian/salsa-ci.yml`.
+
+See [Salsa CI pipeline jobs per Debian release](JOBS-PER-RELEASE.md) for how the
+job scope differs between Debian, Ubuntu and Kali.
 
 
 ## Testing Salsa CI (and GitLab CI in general) pipeline definitions locally

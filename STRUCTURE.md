@@ -32,17 +32,18 @@ projects to make the pipeline to run. This is composed mainly by two files:
 
 As of January 2026, the Salsa CI pipeline defines four stages: `provisioning`,
 `build`, `publish`, and `test`. The `provisioning` stage aims at preparing any artifact
-needed by the build jobs. The current `extract-source` job creates a debianized
-source tree that can be used in the next stage to build the Debian package. As
-its name suggests, the `build` stage comprises the different build jobs. By
-default, the pipeline builds for `amd64`, `i386` and the `source` Debian
-package. Build jobs for other architectures should be added in this stage.
+needed by the build jobs. As its name suggests, the `build` stage comprises the
+different build jobs. By default, the pipeline builds for `amd64`, `i386` and
+the `source` Debian package. Build jobs for other architectures should be added
+in this stage.
 The `publish` stage handles artifact publication, such as the Aptly repository job.
 Finally, the `test` stage includes all the automated checks. Most of them
 require the artifacts from the amd64 `build` job.
 
-Note: The `extract-source` job is deprecated and will be removed in a future
-release. The pipeline now directly uses the source from the repository.
+Note: The `provisioning` stage is currently empty. The `extract-source` job that
+used to create a debianized source tree for the build stage has been removed;
+the pipeline now builds directly from the source in the repository. Only the
+unused `.provisioning-extract-source` template is left in `salsa-ci.yml`.
 
 Hopefully, the following extracts from the YAML code help to describe how a job
 is defined and structured across the files. This is an example taken from the
@@ -124,6 +125,10 @@ In the external pipeline, we can also find the [recipes](recipes) directory
 where vendors can create specific include recipe to easily customize the
 pipeline for specific cases. Additionally, the [vars](vars) directory contains
 distribution-specific variables and configurations.
+
+The [JOBS-PER-RELEASE.md](JOBS-PER-RELEASE.md) document describes which jobs run
+on which Debian release, how the `RELEASE` value morphs the pipeline, and which
+requirement tier each job has.
 
 
 ## Salsa CI Internal Pipeline
