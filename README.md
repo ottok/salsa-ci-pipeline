@@ -1,25 +1,20 @@
 # Salsa CI – Quality Assurance for Debian packaging
 
+## TL;DR
+
 This Salsa CI pipeline increases the quality of Debian packages by providing
 [Continuous Integration](https://about.gitlab.com/product/continuous-integration/)
 that can be run on every commit on any Debian package.
 
-To activate Salsa CI, use this CI/CD configuration file setting:
-
-```
-recipes/debian.yml@salsa-ci-team/pipeline
-```
-
-If you want to be able to customize the Salsa CI pipeline for a package, set
-`debian/salsa-ci.yml` as the CI/CD configuration file setting instead, and
-create the equivalent file with the contents:
+To activate Salsa CI, open settings at `https://salsa.debian.org/TEAM/PROJECT/-/settings/ci_cd`,
+and in _General pipelines_ set the project _CI/CD configuration file_ to
+`debian/salsa-ci.yml`, and on the Debian packaging git branch create the file
+containing:
 
 ```yaml
 ---
 include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
-
-# Customizations here
 ```
 
 ## Table of contents
@@ -101,20 +96,19 @@ settings and menu available. Then, change the project's setting to make it point
 to the pipeline's config file. This can be done on `Settings` ⇾ `CI/CD`,
 expand `General Pipelines` and update the field `CI/CD configuration file`.
 
-If the base pipeline configuration fits your needs without further
-modifications, the recommended way is to use
-`recipes/debian.yml@salsa-ci-team/pipeline` as the config path, which refers to
-a file kept in the `salsa-ci-team/pipeline` repository.
-
-On the other hand, if you want to use the base configuration and apply
-customizations on top, the recommended path to create this file is
-`debian/salsa-ci.yml`. It should contain at least the following lines:
+It is recommended to set this value to `debian/salsa-ci.yml` and create the file
+containing at least the following lines:
 
 ```yaml
 ---
 include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 ```
+
+If creating a new file is too much hassle, and there is no need to modify it,
+the alternative way is to just set `recipes/debian.yml@salsa-ci-team/pipeline`
+as the config path, which refers to a file kept in the `salsa-ci-team/pipeline`
+repository.
 
 > :warning: **Note:** The pipeline is not run automatically after configuring
 > it. You can either trigger it by
