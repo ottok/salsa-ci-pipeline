@@ -44,7 +44,7 @@ variables:
   BUILD_TWICE: 'false'
   SALSA_CI_MIRROR: 'http://deb.debian.org/debian'
   SALSA_CI_DEBIAN_ARCHIVE_MIRROR: 'http://archive.debian.org/debian'
-  SALSA_CI_COMPONENTS: 'main'
+  SALSA_CI_COMPONENTS: ''
   SALSA_CI_IMAGES: 'registry.salsa.debian.org/salsa-ci-team/pipeline'
   SALSA_CI_IMAGES_APTLY: ${SALSA_CI_IMAGES}/aptly
   # The autopkgtest:latest image is based on stable, but includes packages from
@@ -830,6 +830,16 @@ stages:
   script:
     - CHROOT_PATH="/tmp/debian-chroot"
     - CONTAINER_ID=$(docker run --rm -d "${SALSA_CI_IMAGES_BASE}" sleep infinity)
+    - |
+      if [ -n "$SALSA_CI_COMPONENTS" ]; then
+        docker exec "$CONTAINER_ID" bash -c '
+          if [ -f /etc/apt/sources.list ]; then
+            sed -i "/^deb /s/main$/'"${SALSA_CI_COMPONENTS}"'/" /etc/apt/sources.list;
+          elif [ -f /etc/apt/sources.list.d/debian.sources ]; then
+            sed -i "/Components:/s/main$/'"${SALSA_CI_COMPONENTS}"'/" /etc/apt/sources.list.d/debian.sources;
+          fi
+        ';
+      fi
     - docker exec ${CONTAINER_ID} bash -c "apt-get update && apt-get upgrade -y"
     - docker exec ${CONTAINER_ID} bash -c "apt-get install eatmydata -y"
     - mkdir -vp ${CHROOT_PATH}
