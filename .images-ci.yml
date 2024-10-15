@@ -28,8 +28,17 @@ stages:
     - |
       # Set BASE_IMAGE, unless already set.
       if [ -z "${BASE_IMAGE}" ]; then
-        BASE_IMAGE=${VENDOR}:${RELEASE}
+        case "${VENDOR}" in
+          kali) BASE_IMAGE=${RELEASE}:${ARCH} ;;
+          *)    BASE_IMAGE=${VENDOR}:${RELEASE} ;;
+        esac
       fi
+    - |
+      # Set REGISTRY_NAMESPACE where BASE_IMAGE exists.
+      case "${VENDOR}" in
+        kali) REGISTRY_NAMESPACE=kalilinux ;;
+        *)    REGISTRY_NAMESPACE=${ARCH} ;;
+      esac
     - IMAGE_NAME_WITH_TAG=${IMAGE_NAME}:${RELEASE}${STAGING_TAG}
     - |
       # Non-amd64 images have their own namespace
@@ -75,7 +84,7 @@ stages:
         --build-arg VENDOR=${VENDOR} \
         --build-arg RELEASE=${RELEASE} \
         --build-arg BASE_IMAGE=${BASE_IMAGE} \
-        --build-arg REGISTRY_NAMESPACE=${ARCH} \
+        --build-arg REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE} \
         --arch "${ARCH}" \
         --tag ${IMAGE_NAME_WITH_TAG}
     - buildah push ${IMAGE_NAME_WITH_TAG} ${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}

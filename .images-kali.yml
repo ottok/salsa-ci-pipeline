@@ -9,7 +9,6 @@ include:
 
 variables:
   VENDOR: kali
-  BASE_IMAGE: "debian:testing"
 
 .all-supported-releases: &all-supported-releases
   - kali-rolling
