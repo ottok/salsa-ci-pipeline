@@ -26,7 +26,8 @@ stages:
         STAGING_TAG="_${CI_COMMIT_REF_SLUG}"
       fi
     - |
-      if [ -z ${BASE_IMAGE} ]; then
+      # Set BASE_IMAGE, unless already set.
+      if [ -z "${BASE_IMAGE}" ]; then
         BASE_IMAGE=${VENDOR}:${RELEASE}
       fi
     - IMAGE_NAME_WITH_TAG=${IMAGE_NAME}:${RELEASE}${STAGING_TAG}
