@@ -38,9 +38,7 @@ For that:
 
 1. Branch off to the default branch to work on a meaningfully named branch (e.g.
    `git checkout -b 193-build-twice`). If you are addressing an issue, it is
-   convenient to prefix the branch name with the issue number. **Slashes (`/`)
-   are not allowed in the branch name, as the branch name is used as a staging
-   tag on the generated images, which does not support slashes._**
+   convenient to prefix the branch name with the issue number.
 
 1. Make necessary changes and commit. Make sure your syntax is flawless, scripts
    follow their language-wide coding style, and that git commit message is

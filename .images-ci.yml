@@ -23,7 +23,7 @@ stages:
     - |
       # If not master, use REF as staging tag.
       if ! [ "${CI_COMMIT_REF_NAME}" = "master" ]; then
-        STAGING_TAG="_${CI_COMMIT_REF_NAME}"
+        STAGING_TAG="_${CI_COMMIT_REF_SLUG}"
       fi
     - |
       if [ -z ${BASE_IMAGE} ]; then

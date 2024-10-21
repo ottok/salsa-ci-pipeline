@@ -15,8 +15,8 @@ workflow:
         AUTOPKGTEST_IMAGE_VERSION: latest
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_NAME}
-        AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_NAME}
+        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_SLUG}
+        AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_SLUG}
     - when: always
 
 variables:
@@ -237,8 +237,8 @@ ubuntu-test-pipeline:
         DEBIAN_IMAGE_VERSION: sid
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: oracular_${CI_COMMIT_REF_NAME}
-        DEBIAN_IMAGE_VERSION: sid_${CI_COMMIT_REF_NAME}
+        IMAGE_VERSION: oracular_${CI_COMMIT_REF_SLUG}
+        DEBIAN_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
   parallel:
     matrix:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
@@ -279,7 +279,7 @@ clean images:
     - |
       # If not master, use REF as staging tag.
       if ! [ "${CI_COMMIT_REF_NAME}" = "master" ]; then
-        STAGING_TAG="_${CI_COMMIT_REF_NAME}"
+        STAGING_TAG="_${CI_COMMIT_REF_SLUG}"
       fi
     - |
       for IMAGE in $IMAGES_LIST; do
