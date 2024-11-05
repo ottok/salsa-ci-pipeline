@@ -99,33 +99,34 @@ case "$VENDOR" in
 	# For plain Debian images, we don't have any further changes to
 	# do. We use the docker images as provided.
 	;;
-    kali)
-	# Kali currently doesn't have a good docker base image so it uses
-	# the debian:testing base image and crossgrades into a kali image
-	# with the following operations:
-	install_apt_key https://archive.kali.org/archive-key.asc
-	case $RELEASE in
-	    kali-experimental|kali-bleeding-edge)
-		EXTRA_RELEASE="$RELEASE"
-		RELEASE="kali-dev"
-		;;
-	esac
-	MIRROR=http://http.kali.org/kali
-	COMPONENTS="main contrib non-free"
-	clear_apt_sources
-	add_apt_sources $RELEASE $EXTRA_RELEASE
-	apt_update
-	apt_install kali-archive-keyring
-	remove_apt_key
-	apt_dist_upgrade
-	fix_vendor_symlink
-	;;
     *)
 	# Derivatives that don't have a good docker base image can use
 	# another docker image (like one of those provided by Debian) and
 	# add commands in this script to transform the base image into an
 	# image of their derivative (likely installing the appropriate APT
 	# keys, rewriting sources.list and dist-upgrading).
+	#
+	# As an example, Kali Linux images used to be based on Debian testing,
+	# and were initialized as such:
+	#
+	# ```
+	# install_apt_key https://archive.kali.org/archive-key.asc
+	# case $RELEASE in
+	#     kali-experimental|kali-bleeding-edge)
+	#         EXTRA_RELEASE="$RELEASE"
+	#         RELEASE="kali-dev"
+	#         ;;
+	# esac
+	# MIRROR=http://http.kali.org/kali
+	# COMPONENTS="main contrib non-free non-free-firmware"
+	# clear_apt_sources
+	# add_apt_sources $RELEASE $EXTRA_RELEASE
+	# apt_update
+	# apt_install kali-archive-keyring
+	# remove_apt_key
+	# apt_dist_upgrade
+	# fix_vendor_symlink
+	# ```
 	;;
 esac
 

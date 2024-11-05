@@ -5,8 +5,8 @@
 # this notice are preserved. This file is offered as-is, without any warranty.
 
 ARG BASE_IMAGE
-ARG ARCH=amd64
-FROM docker.io/${ARCH}/${BASE_IMAGE}
+ARG REGISTRY_NAMESPACE
+FROM docker.io/${REGISTRY_NAMESPACE}/${BASE_IMAGE}
 
 ARG VENDOR
 ARG RELEASE
