@@ -75,7 +75,7 @@ stages:
         --build-arg VENDOR=${VENDOR} \
         --build-arg RELEASE=${RELEASE} \
         --build-arg BASE_IMAGE=${BASE_IMAGE} \
-        --build-arg ARCH=${ARCH} \
+        --build-arg REGISTRY_NAMESPACE=${ARCH} \
         --arch "${ARCH}" \
         --tag ${IMAGE_NAME_WITH_TAG}
     - buildah push ${IMAGE_NAME_WITH_TAG} ${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}
