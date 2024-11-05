@@ -37,7 +37,9 @@ stages:
       # Set REGISTRY_NAMESPACE where BASE_IMAGE exists.
       case "${VENDOR}" in
         kali) REGISTRY_NAMESPACE=kalilinux ;;
-        *)    REGISTRY_NAMESPACE=${ARCH} ;;
+        # The `library` namespace is where Docker official images reside
+        # regardless of their architecture.
+        *)    REGISTRY_NAMESPACE=library ;;
       esac
     - IMAGE_NAME_WITH_TAG=${IMAGE_NAME}:${RELEASE}${STAGING_TAG}
     - |
@@ -45,6 +47,15 @@ stages:
       if [ "${ARCH}" != "amd64" ]; then
         ARCH_NAMESPACE=${ARCH}/
       fi
+    - |
+      # Salsa CI uses a different architecture naming scheme for the ARCH_NAMESPACE
+      # variable than the one used to specify image architecture pulled from
+      # Docker official container registry.
+      case "${ARCH}" in
+        arm/v5) ARCH_NAMESPACE=arm32v5/ ;;
+        arm/v7) ARCH_NAMESPACE=arm32v7/ ;;
+        arm64/v8) ARCH_NAMESPACE=arm64v8/ ;;
+      esac
     - IMAGE_URL=${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}
     - |
       # Render Containerfile.
