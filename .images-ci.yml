@@ -41,6 +41,13 @@ stages:
         # regardless of their architecture.
         *)    REGISTRY_NAMESPACE=library ;;
       esac
+    - |
+      # Use "arm32v5" namespace for Bullseye ARM/V5 image because this image
+      # doesn't currently exist on Docker registry's "library" namespace.
+      # Remove this part when the cause of it's existence no longer relevant.
+      if [ "${RELEASE}" = "bullseye" ] && [ "${ARCH}" = "arm/v5" ]; then
+        REGISTRY_NAMESPACE=arm32v5
+      fi
     - IMAGE_NAME_WITH_TAG=${IMAGE_NAME}:${RELEASE}${STAGING_TAG}
     - |
       # Non-amd64 images have their own namespace
