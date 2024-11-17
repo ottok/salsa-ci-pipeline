@@ -14,10 +14,8 @@ variables:
 
 .all-supported-releases: &all-supported-releases
   - stretch
-  - stretch-backports
   - buster
   - bullseye
-  - bullseye-backports
   - bookworm
   - bookworm-backports
   - trixie
@@ -50,10 +48,8 @@ images-prod:
         ARCH: amd64
         RELEASE:
           - stretch
-          - stretch-backports
           - buster
           - bullseye
-          - bullseye-backports
           - bookworm
           - bookworm-backports
           - trixie
@@ -94,9 +90,7 @@ images-prod-arm:
           - arm64v8
         RELEASE:
           - stretch
-          - stretch-backports
           - bullseye
-          - bullseye-backports
           - bookworm
           - bookworm-backports
           - trixie
