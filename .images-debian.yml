@@ -85,9 +85,9 @@ images-prod-arm:
       # Base image, all releases, all arches
       - IMAGE_NAME: base
         ARCH:
-          - arm32v5
-          - arm32v7
-          - arm64v8
+          - arm/v5
+          - arm/v7
+          - arm64/v8
         RELEASE:
           - stretch
           - bullseye
@@ -101,8 +101,8 @@ images-prod-arm:
       # Related issue: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/355#note_492936
       - IMAGE_NAME: base
         ARCH:
-          - arm32v7
-          - arm64v8
+          - arm/v7
+          - arm64/v8
         RELEASE:
           - buster
 
@@ -111,12 +111,12 @@ images-prod-arm:
           - blhc
           - piuparts
           - reprotest
-        ARCH: arm64v8
+        ARCH: arm64/v8
         RELEASE: sid
       # ci.debian.org runs stable + some packages from unstable
       - IMAGE_NAME:
           - autopkgtest
-        ARCH: arm64v8
+        ARCH: arm64/v8
         RELEASE: $STABLE
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
@@ -185,18 +185,18 @@ image-staging-arm:
           - blhc
           - piuparts
           - reprotest
-        ARCH: arm64v8
+        ARCH: arm64/v8
         RELEASE: sid
       - IMAGE_NAME:
           - autopkgtest
-        ARCH: arm64v8
+        ARCH: arm64/v8
         RELEASE: $STABLE
       - IMAGE_NAME:
           - base
         ARCH:
-          - arm32v5
-          - arm32v7
-          - arm64v8
+          - arm/v5
+          - arm/v7
+          - arm64/v8
         RELEASE: sid
   # While there isn't an ARM shared runner available, let's allow these images
   # to fail to don't block pipelines on MRs.

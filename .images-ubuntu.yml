@@ -53,8 +53,8 @@ ubuntu-images-prod-arm:
           - base
           - blhc
         ARCH:
-          - arm32v7
-          - arm64v8
+          - arm/v7
+          - arm64/v8
         RELEASE: *all-supported-releases
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
@@ -87,7 +87,7 @@ ubuntu-image-staging-arm:
     matrix:
       - IMAGE_NAME:
           - base
-        ARCH: arm64v8
+        ARCH: arm64/v8
         RELEASE: oracular
   # While there isn't an ARM shared runner available, let's allow these images
   # to fail to don't block pipelines on MRs.

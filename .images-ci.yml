@@ -37,14 +37,32 @@ stages:
       # Set REGISTRY_NAMESPACE where BASE_IMAGE exists.
       case "${VENDOR}" in
         kali) REGISTRY_NAMESPACE=kalilinux ;;
-        *)    REGISTRY_NAMESPACE=${ARCH} ;;
+        # The `library` namespace is where Docker official images reside
+        # regardless of their architecture.
+        *)    REGISTRY_NAMESPACE=library ;;
       esac
+    - |
+      # Use "arm32v5" namespace for Bullseye ARM/V5 image because this image
+      # doesn't currently exist on Docker registry's "library" namespace.
+      # Remove this part when the cause of it's existence no longer relevant.
+      if [ "${RELEASE}" = "bullseye" ] && [ "${ARCH}" = "arm/v5" ]; then
+        REGISTRY_NAMESPACE=arm32v5
+      fi
     - IMAGE_NAME_WITH_TAG=${IMAGE_NAME}:${RELEASE}${STAGING_TAG}
     - |
       # Non-amd64 images have their own namespace
       if [ "${ARCH}" != "amd64" ]; then
         ARCH_NAMESPACE=${ARCH}/
       fi
+    - |
+      # Salsa CI uses a different architecture naming scheme for the ARCH_NAMESPACE
+      # variable than the one used to specify image architecture pulled from
+      # Docker official container registry.
+      case "${ARCH}" in
+        arm/v5) ARCH_NAMESPACE=arm32v5/ ;;
+        arm/v7) ARCH_NAMESPACE=arm32v7/ ;;
+        arm64/v8) ARCH_NAMESPACE=arm64v8/ ;;
+      esac
     - IMAGE_URL=${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}
     - |
       # Render Containerfile.
