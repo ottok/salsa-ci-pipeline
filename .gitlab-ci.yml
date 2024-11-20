@@ -193,6 +193,15 @@ test-pipeline:
         PROJECT_TARGET_HEAD: debian/2.1.0-2
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
+      # iortcw is used to test enabling additional APT components (contrib,
+      # non-free) via SALSA_CI_COMPONENTS for packages with dependencies
+      # outside 'main'.
+      - PROJECT_URL: https://salsa.debian.org/games-team/iortcw
+        PROJECT_TARGET_HEAD: debian/latest
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+        SALSA_CI_ENABLE_PIUPARTS: 1
+        SALSA_CI_COMPONENTS: 'main contrib non-free'
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
