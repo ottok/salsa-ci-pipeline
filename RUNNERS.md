@@ -1,5 +1,13 @@
 # GitLab CI runners for Salsa
 
+This document explains how to setup and maintain your own GitLab CI runners.
+
+If you want to learn about the existing shared runners on salsa.debian.org or
+donate hardware of computing resources to Debian, see the [general Salsa
+FAq](https://wiki.debian.org/Salsa/FAQ#Donating_runners).
+
+## Types of runners
+
 In GitLab, there are [three
 types](https://salsa.debian.org/help/ci/runners/runners_scope) of CI runners:
 
@@ -124,8 +132,8 @@ shutdown_timeout = 0
 
 Each runner needs to adapt the configuration to suit each installation.
 
-For reference, see also the configuration of Salsa provided runners at
-[https://salsa.debian.org/salsa/salsa-ansible/-/tree/master/roles/gitlab-runner/].
+For reference, see also the [configuration of Salsa provided
+runners](https://salsa.debian.org/salsa/salsa-ansible/-/tree/master/roles/gitlab-runner/.)
 
 To restart the runner and see the systemd logs run:
 
