@@ -106,7 +106,7 @@ variables:
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
   SALSA_CI_DISABLE_BUILD_DBGSYM: 1
   SALSA_CI_DISABLE_WRAP_AND_SORT: 1
-  SALSA_CI_WRAP_AND_SORT_ARGS: ''
+  SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
   # Use fastzip to fix https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/177
   FF_USE_FASTZIP: 'true'
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 0
@@ -910,6 +910,7 @@ stages:
   stage: test
   image: $SALSA_CI_IMAGES_GENERIC_TESTS
   rules:
+    - if: $RELEASE =~ /^(unstable|experimental)$/
     - if: $SALSA_CI_ENABLE_WRAP_AND_SORT =~ /^(1|yes|true)$/
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
