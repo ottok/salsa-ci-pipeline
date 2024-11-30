@@ -169,16 +169,12 @@ test-pipeline:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         PROJECT_TARGET_HEAD: debian/master
         SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
-        SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
-        SALSA_CI_ENABLE_WRAP_AND_SORT: 1
-        SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
         BUILD_PROFILES:
           - nocheck,nodoc
       # curl is used to test calling reprotest and passing an --append-build-command
       - PROJECT_URL: https://salsa.debian.org/debian/curl
         PROJECT_TARGET_HEAD: debian/bookworm
-        SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_ENABLE_REPROTEST: 1
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
@@ -191,7 +187,6 @@ test-pipeline:
       # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/187
       - PROJECT_URL: https://salsa.debian.org/tachi/cloudflare-ddns/
         PROJECT_TARGET_HEAD: debian/2.1.0-2
-        SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
