@@ -911,6 +911,7 @@ stages:
   image: $SALSA_CI_IMAGES_GENERIC_TESTS
   rules:
     - if: $RELEASE =~ /^(unstable|experimental)$/
+    - if: $RELEASE_FROM_CHANGELOG =~ /^(unstable|experimental)$/
     - if: $SALSA_CI_ENABLE_WRAP_AND_SORT =~ /^(1|yes|true)$/
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
