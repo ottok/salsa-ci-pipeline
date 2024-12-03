@@ -34,6 +34,7 @@ include:
   * [Set build timeout](#set-build-timeout)
   * [Disabling building on i386](#disabling-building-on-i386)
   * [Enable building on ARM and RISC-V](#enable-building-on-arm-and-risc-v)
+  * [Add more architectures or CI runners](#add-more-architectures-or-ci-runners)
   * [Testing build of arch=any and arch=all packages](#testing-build-of-archany-and-archall-packages)
   * [Testing build profiles](#testing-build-profiles)
   * [Enable building packages twice in a row](#enable-building-packages-twice-in-a-row)
@@ -171,7 +172,7 @@ trigger:
 
 ## Customize Salsa CI
 
-Salsa CI is designed to as-is for the vast majority of Debian packages. In most
+Salsa CI is designed to run as-is for the vast majority of Debian packages. In most
 cases Salsa CI should be used without any customizations. However, for packages
 that need it, Salsa CI offers many ways to customize how it runs and what it
 runs.
@@ -253,7 +254,8 @@ behaviour can sometimes be a slightly flaky and fail randomly on packages that
 aren't totally reproducible (yet!). In such case, you can allow `reprotest` to
 fail by adding this variable in your salsa-ci.yml manifest:
 
-```
+```yaml
+---
 include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
@@ -322,7 +324,7 @@ commit is pushed.
 Alternatively, one can pass the `ci.skip` [Git push](https://git-scm.com/docs/git-push#Documentation/git-push.txt--oltoptiongt)
 option if using Git 2.10 or newer:
 
-```
+```shell
 git push --push-option=ci.skip    # using git 2.10+
 git push -o ci.skip               # using git 2.18+
 ```
@@ -387,23 +389,35 @@ NOT to do define all jobs manually**. Most of the time it is better to simply
 
 ## Customize builds and build dependencies
 
-### Set build timeout
+### Extend the job timeout
 
-At times your job may fail because it reached its max duration (either job
-timeout, or runner timeout). In that case, the job would stop immediately
+To prevent runaway jobs from reserving CI runners, jobs have a default timeout
+that is typically 1h or 3h. There can also be maximum default value defined in
+the GitLab instance configuration.
+
+If a CI job has a valid reason to run beyond the default limits, a custom value
+can be defined with the [timeout
+keyword](https://docs.gitlab.com/ee/ci/yaml/#timeout keyword for individual
+jobs. The primary way to fix slow CI jobs should however use other means, for
+example by optimizing how the build cache works.
+
+### Decrease build timeout to leave margin for cache upload
+
+When a job runs longer than allowed and times out, the job will stop immediately
 without entering the `after_script` phase, and without saving the cache and
 without saving the artifacts.
 
 To prevent this, the build phase of the build job and the build phase of the
-reprotest job have a timeout of `2.75h` (the runner's timeout is 3h). This
-permits also saving the cache of `ccache`. That way, on the next run, there is
-more chance to finish the job since it can use ccache's cache.
+reprotest job have a timeout of `2.75h` (typically the runner's timeout is 3h).
+This permits also saving the cache of `ccache`. That way, on the next run, there
+is more chance to finish the job since it can use ccache's cache.
 
 You can set the `SALSA_CI_BUILD_TIMEOUT_ARGS` variable to override this. The
-arguments can be any valid argument used by the `timeout` command. For example,
-you may set:
+arguments can be any valid argument used by the [timeout
+command](https://manpages.debian.org/unstable/coreutils/timeout.1.en.html) . For
+example, you may set:
 
-```
+```yaml
 variables:
   SALSA_CI_BUILD_TIMEOUT_ARGS: "0.75h"
 ```
@@ -415,7 +429,6 @@ any reason you need to skip this job, set the `SALSA_CI_DISABLE_BUILD_PACKAGE_I3
 in the variables' block to `1`, '`yes`' or '`true`'.  i.e;
 
 ```yaml
-
 variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
 ```
@@ -467,8 +480,10 @@ build riscv64:
     - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
 ```
 
+### Add more architectures or CI runners
+
 If you want to add more architectures or for other reasons have your own
-runners, see [Adding new runners for Salsa CI](RUNNERS.md).
+runners, see [RUNNERS.md](RUNNERS.md).
 
 ### Testing build of arch=any and arch=all packages
 
@@ -1031,9 +1046,9 @@ Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
 
 ## General Salsa information
 
-The GitLab instance salsa.debian.org is maintained by the
-[Debian Salsa admin team](https://wiki.debian.org/Salsa), which is separate from
-the Salsa CI team.
+The GitLab instance [salsa.debian.org](https://salsa.debian.org-) is maintained
+by the [Debian Salsa admin team](https://wiki.debian.org/Salsa), which is
+separate from the Salsa CI team.
 
 
 ## Support for Salsa CI use
