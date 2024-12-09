@@ -87,9 +87,11 @@ check license + contributor:
   script:
     - PROBLEMS=0
     # check files without any license
+    # Example licensecheck output that is filtered with grep:
+    #   ./README.md: *No copyright* UNKNOWN
     - |
       BAD_FILES=$(licensecheck -r . | \
-      grep -Ev '(images/files)|(images/patches)|(README.md)|(CONTRIBUTING.md)|(CONTRIBUTORS)|(STRUCTURE.md)|(RUNNERS.md)|(screenshots)'| \
+      grep -Ev '(recipes/)|(images/files/)|(images/patches/)|(screenshots/)|CONTRIBUTORS|(\.md:)' | \
       grep UNKNOWN) || true
     - |
       [ -z "$BAD_FILES" ] || \
