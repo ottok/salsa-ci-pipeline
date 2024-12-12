@@ -85,7 +85,8 @@ the `build-script` anchor/alias:
     - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
     - *build-before-script
     - *build-script
-    - mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
+  after_script:
+    - *build-after-script
     ...
 ```
 
