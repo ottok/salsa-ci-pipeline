@@ -461,21 +461,10 @@ stages:
   # Build package as user salsaci
   - su salsaci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} ${BUILD_COMMAND} && if [ "${BUILD_TWICE}" = "true" ]; then ${BUILD_COMMAND}; fi" |& OUTPUT_FILENAME=${BUILD_LOGFILE} filter-output
 
-  # Restore PWD to ${WORKING_DIR}
-  - cd ${WORKING_DIR}
-  - rm -rf ${WORKING_DIR}/${SOURCE_DIR}
-
-  # Print ccache stats on job log
-  - ccache -s
-
-  # Print size of artifacts after build
-  - du -sh
-
-  # Warn if job artifacts size limit exceeded
-  - |
-    if [ "$(du -s | cut -f1)" -gt ${SALSA_CI_MAX_ARTIFACTS_SIZE} ]; then
-      echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MB which may prevent the job to succeed.\e[39m"
-    fi
+  # NOTE! If the build fails (or timeouts) the remainder of this 'script' will
+  # no be executed. Any diagnostics or cleanup must be put in the 'after_script'
+  # section instead, which will run on failed jobs as well (but not on cancelled
+  # jobs).
 
 .build-definition: &build-definition
   stage: build
@@ -494,6 +483,22 @@ stages:
     - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
     - *build-before-script
     - *build-script
+  # The above 'script' section will stop executing on failure. Anything that
+  # needs to run even if the build fails needs to be placed in the
+  # 'after_script' section below
+  after_script:
+    # Restore PWD to ${WORKING_DIR}
+    - cd ${WORKING_DIR}
+    - rm -rf ${WORKING_DIR}/${SOURCE_DIR}
+    # Print ccache stats on job log
+    - ccache -s
+    # Print size of artifacts after build
+    - du -sh
+    # Warn if job artifacts size limit exceeded
+    - |
+      if [ "$(du -s | cut -f1)" -gt ${SALSA_CI_MAX_ARTIFACTS_SIZE} ]; then
+        echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MB which may prevent the job to succeed.\e[39m"
+      fi
     - mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
   dependencies:
     - extract-source
