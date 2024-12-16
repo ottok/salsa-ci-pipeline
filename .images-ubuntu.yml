@@ -17,6 +17,7 @@ variables:
   UBUNTU_MIRROR: "http://archive.ubuntu.com/ubuntu"
 
 .all-supported-releases: &all-supported-releases
+  - plucky
   - oracular
   - noble
   - jammy
@@ -72,7 +73,7 @@ ubuntu-image-staging:
       - IMAGE_NAME:
           - base
         ARCH: amd64
-        RELEASE: oracular
+        RELEASE: plucky
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
@@ -88,7 +89,7 @@ ubuntu-image-staging-arm:
       - IMAGE_NAME:
           - base
         ARCH: arm64/v8
-        RELEASE: oracular
+        RELEASE: plucky
   # While there isn't an ARM shared runner available, let's allow these images
   # to fail to don't block pipelines on MRs.
   allow_failure: true

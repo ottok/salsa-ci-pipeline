@@ -153,13 +153,13 @@ stages:
 .get-target-distribution: &get-target-distribution
   - dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED)
   # if dist is UNRELEASED, try to use 'dch' to guess a sane default.
-  # Use oracular by default if VENDOR's value is `ubuntu`.
+  # Use plucky by default if VENDOR's value is `ubuntu`.
   - clbak="/tmp/debian.changelog"
   - cp debian/changelog "${clbak}"
   - |
     if [ "$VENDOR" = ubuntu ] && [ "${dist}" = UNRELEASED ]
     then
-      dist=oracular
+      dist=plucky
     elif [ "${dist}" = UNRELEASED ]
     then
       dch --release foo || true; dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED); cat "${clbak}" >debian/changelog;
