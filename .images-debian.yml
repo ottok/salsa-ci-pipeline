@@ -109,6 +109,7 @@ images-prod-arm:
       # Images in sid only arm64
       - IMAGE_NAME:
           - blhc
+          - lintian
           - piuparts
           - reprotest
         ARCH: arm64/v8
@@ -183,6 +184,7 @@ image-staging-arm:
     matrix:
       - IMAGE_NAME:
           - blhc
+          - lintian
           - piuparts
           - reprotest
         ARCH: arm64/v8
