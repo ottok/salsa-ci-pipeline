@@ -386,7 +386,7 @@ stages:
       ;;
     esac
 
-  # Before attemping apt-get satisfy usage, check that it is working - it
+  # Before attempting apt-get satisfy usage, check that it is working - it
   # doesn't exist on buster and older. Also check aspcud version as it doesn't
   # work well on versions before the mentioned one.
   # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/387

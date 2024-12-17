@@ -94,7 +94,7 @@ stages:
           ;;
         esac
       fi
-    # TOOD: test using cache. We had some issues with the cache used by kaniko.
+    # TODO: test using cache. We had some issues with the cache used by kaniko.
     # See 7788516d, but we could give it a try with buildah.
     - |
       buildah build \

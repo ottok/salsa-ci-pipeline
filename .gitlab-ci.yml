@@ -32,7 +32,7 @@ variables:
     description: "Set this to 1 if you want to build the full set of images, even in staging branches"
     value: 0
   BUILD_UBUNTU_IMAGES:
-    description: "Set this to 1 if you want to build ubuntu images on GitLab instaces other than Salsa"
+    description: "Set this to 1 if you want to build ubuntu images on GitLab instances other than Salsa"
     value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"

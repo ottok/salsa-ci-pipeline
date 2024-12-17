@@ -247,7 +247,7 @@ image-staging-riscv:
         ARCH:
           - riscv64
         RELEASE: sid
-  # While there isn't an RISC-V shared runner avilable, let's allow these
+  # While there isn't an RISC-V shared runner available, let's allow these
   # images to fail to not block pipelines on MRs.
   allow_failure: true
   when: manual
