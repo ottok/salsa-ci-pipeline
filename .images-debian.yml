@@ -188,7 +188,19 @@ image-staging:
           - build
         ARCH: i386
         RELEASE: sid
-      - IMAGE_NAME: autopkgtest
+      - IMAGE_NAME: base
+        ARCH:
+          - amd64
+          - i386
+        RELEASE:
+          - $STABLE
+          - $OLDSTABLE
+          - experimental
+      - IMAGE_NAME:
+          - autopkgtest
+          - lintian
+          - blhc
+          - generic_tests
         ARCH: amd64
         RELEASE: $STABLE
   rules:

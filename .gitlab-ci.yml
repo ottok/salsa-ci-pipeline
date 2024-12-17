@@ -37,8 +37,9 @@ variables:
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
   # Used by .images-debian.yml to define the base for the
-  # autopkgtest image
+  # various images
   STABLE: "bookworm"
+  OLDSTABLE: "bullseye"
   # enable full command logging in job logs
   FF_SCRIPT_SECTIONS: "true"
 
@@ -196,6 +197,37 @@ test-pipeline:
         SALSA_CI_DISABLE_APTLY: 1
         SALSA_CI_ENABLE_PIUPARTS: 1
         SALSA_CI_COMPONENTS: 'main contrib non-free'
+      # galera-4 is another small package
+      - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
+        PROJECT_TARGET_HEAD: debian/latest
+        SALSA_CI_BUILD_TIMEOUT_ARGS: 1m
+        SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
+        SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE: 0
+        SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
+        BUILD_PROFILES: nocheck,nodoc
+        SALSA_CI_ENABLE_ATOMIC_REPROTEST: 0
+        SALSA_CI_DISABLE_MISSING_BREAKS: 0
+        SALSA_CI_DISABLE_RC_BUGS: 0
+      # Test regressions in pipelines running in Bookworm
+      - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
+        PROJECT_TARGET_HEAD: debian/12-bookworm
+        RELEASE: bookworm
+      # Test regressions in pipelines running in Bullseye
+      - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
+        PROJECT_TARGET_HEAD: debian/11-bullseye
+        RELEASE: bullseye
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
+      # Test regressions in pipelines running in experimental
+      - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
+        RELEASE: experimental
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
