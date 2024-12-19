@@ -792,6 +792,27 @@ variables:
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
 ```
 
+### Sbuild verbosity and additional arguments
+
+By default, the build jobs run `sbuild` with verbose enabled, so all the
+information goes to the `.build` logs as well to stdout. To disable verbosity,
+set the `$SALSA_CI_SBUILD_VERBOSE` variable to something different than 1,
+'yes' or 'true':
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+  SALSA_CI_SBUILD_VERBOSE: 0
+```
+
+If needed, additional arguments can be be passed to sbuild with the
+`SALSA_CI_SBUILD_ARGS` variable. Options given with this variable are included
+after all the other `sbuild` arguments.
+
 ### Customize reprotest
 
 The `reprotest` job runs with the `time` (see below) and `build_path`
