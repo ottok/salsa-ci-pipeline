@@ -112,6 +112,12 @@ test-crossbuild-arm64:
     - cd repo_test
   allow_failure: true
 
+wrap-and-sort:
+  extends: .test-wrap-and-sort
+  before_script:
+    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
+    - cd repo_test
+
 aptly with passphrase:
   extends: .publish-aptly
   variables:
