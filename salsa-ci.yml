@@ -277,7 +277,17 @@ stages:
   - *get-target-distribution
 
   - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
-  - su salsa-ci -c "mmdebstrap --variant=buildd --include=ccache --customize-hook='chroot \"\$1\" update-ccache-symlinks' ${dist} ~/.cache/sbuild/${dist}-amd64.tar ${SALSA_CI_MIRROR}"
+
+  - export MMDEBSTRAP_COMPONENTS="main"
+
+  - |
+    if [ "$VENDOR" = ubuntu ] ;
+    then
+      eatmydata apt-get install -y gpg distro-info-data ubuntu-keyring
+      export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS},universe"
+    fi
+
+  - su salsa-ci -c "mmdebstrap --variant=buildd --include=${MMDEBSTRAP_INCLUDE_PACKAGES}ccache --customize-hook='chroot \"\$1\" update-ccache-symlinks' --components=${MMDEBSTRAP_COMPONENTS} ${dist} ~/.cache/sbuild/${dist}-amd64.tar ${SALSA_CI_MIRROR}"
 
   - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
 

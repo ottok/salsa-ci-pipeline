@@ -253,6 +253,11 @@ test-pipeline-non-default-archs:
   allow_failure: true
 
 ubuntu-test-pipeline:
+  variables:
+    # gitlab doesn't pass these variables from var/ubuntu.yml
+    VENDOR: 'ubuntu'
+    DEFAULT_RELEASE: 'plucky'
+    SALSA_CI_MIRROR: 'http://archive.ubuntu.com/ubuntu'
   trigger:
     include:
       - local: .pipeline-test-ubuntu.yml

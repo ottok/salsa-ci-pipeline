@@ -12,7 +12,7 @@
 variables:
   VENDOR: 'ubuntu'
   DEFAULT_RELEASE: 'questing'
-  SALSA_CI_MIRROR: 'archive.ubuntu.com/ubuntu'
+  SALSA_CI_MIRROR: 'http://archive.ubuntu.com/ubuntu'
   SALSA_CI_IMAGES_LINTIAN: '${SALSA_CI_IMAGES}/lintian:${RELEASE}'
   SALSA_CI_DISABLE_BLHC: 1
   SALSA_CI_DISABLE_LINTIAN: 1
