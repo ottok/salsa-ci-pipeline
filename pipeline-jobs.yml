@@ -42,7 +42,6 @@ test-build-profiles:
 
 test-crossbuild-arm64:
   extends: .test-crossbuild-package-arm64
-  allow_failure: true
 
 reprotest:
   extends: .test-reprotest

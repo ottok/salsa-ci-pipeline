@@ -100,6 +100,11 @@ variables:
   # And likewise for the RISC-V build job:
   SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_PROFILES: 1
+  # Disable cross-builds by default due to high failure rate that is not
+  # suitable for CI that is expected to be green and gatekeep commits
+  SALSA_CI_DISABLE_CROSSBUILD_ARM64:
+    description: "Set this to 0 to enable the test that cross-builds the package (read more at crossqa.debian.net)"
+    value: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE:
     description: "Set this to 0 to enable the test that builds the package twice in a row"
     value: 1

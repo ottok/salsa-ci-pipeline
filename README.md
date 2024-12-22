@@ -226,7 +226,6 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_ALL: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ANY: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
-  SALSA_CI_DISABLE_CROSSBUILD_ARM64: 1
 ```
 
 Alternatively, it is possible to disable all tests, and then enable only the
@@ -545,6 +544,19 @@ test-build-profiles:
     matrix:
       - BUILD_PROFILES: nocheck
       - BUILD_PROFILES: nodoc
+```
+
+### Enable cross-builds
+
+The job `test-crossbuild-arm64` can be used to check whether it is possible to
+[cross-build](https://crossqa.debian.net/) the package. To enable this check,
+either run your pipeline manually with `SALSA_CI_DISABLE_CROSSBUILD_ARM64` set
+to anything different than 1, 'yes' or 'true' or by adding the following to your
+`debian/salsaci.yml`:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_CROSSBUILD_ARM64: 0
 ```
 
 ### Enable building packages twice in a row
