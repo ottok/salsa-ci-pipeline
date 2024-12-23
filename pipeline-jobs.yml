@@ -39,6 +39,9 @@ test-build-all:
 test-build-twice:
   extends: .test-build-package-twice
 
+test-build-validate-cleanup:
+  extends: .test-build-validate-cleanup
+
 test-build-profiles:
   extends: .test-build-package-profiles
 

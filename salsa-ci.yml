@@ -44,6 +44,7 @@ variables:
   BUILD_ARCH: 'amd64'
   # only set this for cross-compiling
   HOST_ARCH: ''
+  # TODO: remove BUILD_TWICE support once its obsolescence has been well known.
   # Set to true to build the package twice
   BUILD_TWICE: 'false'
   SALSA_CI_MIRROR: 'http://deb.debian.org/debian'
@@ -139,6 +140,13 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE:
     description: "Set this to 0 to enable the test that builds the package twice in a row"
     value: 1
+  SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP:
+    description: "Set this to 0 to validate if the clean target of debian/rules
+      does not restore the source directory to its initial state. This option
+      will make sbuild to help to detect modifications that will prevent the
+      package to build twice in a row."
+    value: 1
+  SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_RC_BUGS: 1
   SALSA_CI_IGNORED_BRANCHES: ''
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
@@ -350,6 +358,63 @@ stages:
 
   - gbp pull --ignore-branch --pristine-tar --track-missing
 
+  # configure sbuild to use ccache
+  - |
+    cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
+    $build_environment = { "CCACHE_DIR" => "/build/ccache" };
+    $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
+    $build_path = "/build/package/";
+    $dsc_dir = "package";
+    $unshare_bind_mounts = [ { directory => "%CCACHE_DIR%", mountpoint => "/build/ccache" } ];
+    EOF
+
+  - |
+    if echo "${BUILD_TWICE} ${SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP}" | grep -qE '^(1|yes|true)$' ; then
+      cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
+      $external_commands = {
+        "starting-build-commands" => [
+          'bash -c \'find %SBUILD_PKGBUILD_DIR -print0 |
+                      sort -z |
+                      while read -d $\'\\\'\'\0\'\\\'\' file; do
+                          echo -n "$(stat -c "%n %F %%s" "${file}") "
+                          if [ -f "${file}" ]; then
+                              sha256sum "${file}" |
+                                  cut -d " " -f 1
+                          else
+                                  echo
+                          fi
+                      done > /tmp/file-list.pre-build\''
+        ],
+        "chroot-cleanup-commands" => [
+          'cd %SBUILD_PKGBUILD_DIR && ./debian/rules clean',
+          'bash -c \'find %SBUILD_PKGBUILD_DIR -print0 |
+                    sort -z |
+                    while read -d $\'\\\'\'\0\'\\\'\' file; do
+                        echo -n "$(stat -c "%n %F %%s" "${file}") "
+                        if [ -f "${file}" ]; then
+                            sha256sum "${file}" |
+                                cut -d " " -f 1
+                        else
+                                echo
+                        fi
+                    done > /tmp/file-list.post-build\'',
+          'diff /tmp/file-list.pre-build /tmp/file-list.post-build'
+        ]
+      };
+    EOF
+    fi
+
+  - sed -i -e "s#%CCACHE_DIR%#${CCACHE_DIR}#" ~salsa-ci/.config/sbuild/config.pl
+
+  - chown -R salsa-ci ~salsa-ci/.config/sbuild/
+
+  # Show ccache stats before building
+  - su salsa-ci -c "ccache -vv -s"
+
+  - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
+
+  - gbp pull --ignore-branch --pristine-tar --track-missing
+
   # add target architecture if cross-compiling
   - test -z "${HOST_ARCH}" || export HOST_ARCH_ARG="--host=${HOST_ARCH}"
   # when cross-compiling, add 'nocheck' to the DEB_BUILD_OPTIONS
@@ -427,9 +492,6 @@ stages:
       DATESTAMP=$(date +"%Y%m%d")
       sed -i -e "1 s/)/+${SALSA_CI_VERSION_BUMP_SUFFIX_NAME}+${DATESTAMP}+${CI_PIPELINE_IID})/" debian/changelog
     fi
-
-  # TODO: handle build twice (https://lists.debian.org/debian-devel/2023/08/msg00031.html)
-  # https://wiki.debian.org/sbuild#Validate_package_cleanup
 
   # Define buildlog filename
   - BUILD_LOGFILE_SOURCE=$(dpkg-parsechangelog -S Source)
@@ -643,6 +705,7 @@ stages:
     - *build-script
   after_script:
     - *build-after-script
+    - echo -e "\e[31m WARNING, the build package twice job is obsolete since the pipeline moved to\n sbuild, in favor of validating if the package correctly cleans up the source\n tree. The build twice test support will be removed in the future. To get an\n equivalent functionality, set the SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP\n to 0 instead.\e[0m"
   variables:
     BUILD_TWICE: 'true'
   rules:
@@ -650,6 +713,19 @@ stages:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE !~ /^(1|yes|true)$/
+
+.test-build-validate-cleanup: &test-build-validate-cleanup
+  extends:
+    - .build-definition
+  stage: test
+  variables:
+    SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP: 'true'
+  rules:
+    - if: $SALSA_CI_ENABLE_VALIDATE_PACKAGE_CLEAN_UP =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP !~ /^(1|yes|true)$/
+  needs: []
 
 .check-build-package-profiles: &check-build-package-profiles
   - |

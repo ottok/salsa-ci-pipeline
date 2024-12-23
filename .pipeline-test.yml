@@ -99,6 +99,12 @@ test-build-twice:
     - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
     - cd repo_test
 
+test-build-validate-cleanup:
+  extends: .test-build-validate-cleanup
+  before_script:
+    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
+    - cd repo_test
+
 test-build-profiles:
   extends: .test-build-package-profiles
   before_script:

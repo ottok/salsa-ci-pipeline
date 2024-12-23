@@ -628,7 +628,12 @@ variables:
   SALSA_CI_DISABLE_CROSSBUILD_ARM64: 0
 ```
 
-### Enable building packages twice in a row
+### Enable building packages twice in a row (Obsolete)
+
+This test job has been replaced and will be removed in the future. Instead of
+testing if a package builds twice in a row, the pipeline makes it possible to
+validate if the `clean` target of `debian/rules` correctly restores the source
+directory to its initial state (See the next test job documentation).
 
 The job `test-build-twice` can be used to check whether it is possible to run
 `dpkg-buildpackage` twice in a row. To enable this check, either run your
@@ -639,6 +644,20 @@ different than 1, 'yes' or 'true' or by adding the following to your
 ```yaml
 variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE: 0
+```
+
+### Validate if debian/rules clean correctly cleans up the source tree
+
+The job `test-build-validate-cleanup` can be used to check whether the `clean`
+target of `debian/rules` correctly restores the source tree directory to its
+initial state. This generally means that a package is able to build twice in a
+row. To enable this check, either run your pipeline manually with
+`SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP` set to anything different than 1,
+'yes' or 'true' or by adding the following to your `debian/salsaci.yml`:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP: 0
 ```
 
 ### Enable generation of dbgsym packages
