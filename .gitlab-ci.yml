@@ -196,6 +196,20 @@ test-pipeline:
         SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
         BUILD_PROFILES:
           - nocheck,nodoc
+      # test building the grep bookworm version
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/3.8-5
+        # d/changelog targets unstable, so we need to manually define the RELEASE
+        RELEASE: bookworm
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
+      # test building the grep bullseye version
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/3.6-1+deb11u1
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
       # curl is used to test calling reprotest and passing an --append-build-command
       - PROJECT_URL: https://salsa.debian.org/debian/curl
         PROJECT_TARGET_HEAD: debian/bookworm
