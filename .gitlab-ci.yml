@@ -217,6 +217,7 @@ test-pipeline:
         SALSA_CI_ENABLE_REPROTEST: 1
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
+        SALSA_CI_DISABLE_CCACHE: 1
       # boxes is used to test gbp setup-gitattributes (#322)
       # - PROJECT_URL: https://salsa.debian.org/otto/boxes
       #   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1

@@ -832,6 +832,23 @@ If needed, additional arguments can be be passed to sbuild with the
 `SALSA_CI_SBUILD_ARGS` variable. Options given with this variable are included
 after all the other `sbuild` arguments.
 
+### Disable ccache
+
+By default, the build jobs use `ccache(1)` to speed up recompilation of C/C++
+code by caching the results from previous jobs. To
+disable the use of `ccache`, set the `SALSA_CI_DISABLE_CCACHE` variable to 1,
+'yes' or 'true':
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+  SALSA_CI_DISABLE_CCACHE: 1
+```
+
 ### Customize reprotest
 
 The `reprotest` job runs with the `time` (see below) and `build_path`

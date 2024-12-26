@@ -173,6 +173,9 @@ variables:
   SALSA_CI_SBUILD_VERBOSE:
     description: "Enable sbuild verbosity so all the information goes to stdout as well as to the build log files."
     value: 1
+  SALSA_CI_DISABLE_CCACHE:
+    description: "Disable using ccache(1) in the build job."
+    value: 0
   # GitLab runners execute `umask 0000` command by default which may lead to
   # failure of build jobs due to everything being world writeable.
   # This feature flag disables execution of `umask 0000`.
@@ -280,7 +283,13 @@ stages:
 .build-before-script: &build-before-script
   - apt-get update && eatmydata apt-get upgrade -y
 
-  - export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
+  - |
+    export ENABLE_CCACHE=1
+    if echo "${SALSA_CI_DISABLE_CCACHE}" | grep -qE '^(1|yes|true)$'; then
+      ENABLE_CCACHE=0
+    fi
+
+  - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
 
   - *get-target-distribution
 
@@ -295,13 +304,9 @@ stages:
       export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS},universe"
     fi
 
-  - su salsa-ci -c "mmdebstrap --variant=buildd --include=${MMDEBSTRAP_INCLUDE_PACKAGES}ccache --customize-hook='chroot \"\$1\" update-ccache-symlinks' --components=${MMDEBSTRAP_COMPONENTS} ${dist} ~/.cache/sbuild/${dist}-amd64.tar ${SALSA_CI_MIRROR}"
-
-  - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
-
   - test -z "${MMDEBSTRAP_INCLUDE_PACKAGES}" || export MMDEBSTRAP_INCLUDE_PACKAGES_ARGS="--include=${MMDEBSTRAP_INCLUDE_PACKAGES}"
 
-  - export MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS="--customize-hook='chroot \"\$1\" update-ccache-symlinks'"
+  - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS="--customize-hook='chroot \"\$1\" update-ccache-symlinks'"
 
   - su salsa-ci -c "mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=${MMDEBSTRAP_COMPONENTS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${dist} ~/.cache/sbuild/${dist}-amd64.tar ${SALSA_CI_MIRROR}"
 
@@ -309,11 +314,14 @@ stages:
 
   # https://salsa.debian.org/salsa-ci-team/pipeline/-/merge_requests/230
   - (set -o pipefail; rm -vrf ${CCACHE_TMP_DIR} | tail)
-  - mkdir -vp ${CCACHE_WORK_DIR}
-  - mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
-  - find ${CCACHE_TMP_DIR} -type d | xargs chmod g+s
+  - |
+    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    then
+      mkdir -vp ${CCACHE_WORK_DIR}
+      mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
+      find ${CCACHE_TMP_DIR} -type d | xargs chmod g+s
+    fi
 
-  - mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
   - add_extra_repository.sh -v
     -e "${SALSA_CI_EXTRA_REPOSITORY}" -k "${SALSA_CI_EXTRA_REPOSITORY_KEY}"
     -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
@@ -332,41 +340,25 @@ stages:
 
   # setup environment required for ccache
   - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
-  - export CCACHE_DIR=${CCACHE_TMP_DIR}
-  # fix permissions
-  - chmod a+X ${CI_PROJECT_DIR} ${CI_PROJECT_DIR}/.ccache
-  - chmod -R a+rwX ${CCACHE_DIR} ${CCACHE_WORK_DIR}
+  - |
+    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    then
+      export CCACHE_DIR=${CCACHE_TMP_DIR}
+      # fix permissions
+      chmod a+X ${CI_PROJECT_DIR} ${CI_PROJECT_DIR}/.ccache
+      chmod -R a+rwX ${CCACHE_DIR} ${CCACHE_WORK_DIR}
+    fi
 
   # configure sbuild to use ccache
   - |
+    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    then
     cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
     $build_environment = { "CCACHE_DIR" => "/build/ccache" };
     $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
-    $build_path = "/build/package/";
-    $dsc_dir = "package";
     $unshare_bind_mounts = [ { directory => "%CCACHE_DIR%", mountpoint => "/build/ccache" } ];
     EOF
-
-  - sed -i -e "s#%CCACHE_DIR%#${CCACHE_DIR}#" ~salsa-ci/.config/sbuild/config.pl
-
-  - chown -R salsa-ci ~salsa-ci/.config/sbuild/
-
-  # Show ccache stats before building
-  - su salsa-ci -c "ccache -vv -s"
-
-  - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
-
-  - gbp pull --ignore-branch --pristine-tar --track-missing
-
-  # configure sbuild to use ccache
-  - |
-    cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
-    $build_environment = { "CCACHE_DIR" => "/build/ccache" };
-    $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
-    $build_path = "/build/package/";
-    $dsc_dir = "package";
-    $unshare_bind_mounts = [ { directory => "%CCACHE_DIR%", mountpoint => "/build/ccache" } ];
-    EOF
+    fi
 
   - |
     if echo "${BUILD_TWICE} ${SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP}" | grep -qE '^(1|yes|true)$' ; then
@@ -404,12 +396,12 @@ stages:
     EOF
     fi
 
-  - sed -i -e "s#%CCACHE_DIR%#${CCACHE_DIR}#" ~salsa-ci/.config/sbuild/config.pl
+  - test ! "${ENABLE_CCACHE}" != "0" || sed -i -e "s#%CCACHE_DIR%#${CCACHE_DIR}#" ~salsa-ci/.config/sbuild/config.pl
 
   - chown -R salsa-ci ~salsa-ci/.config/sbuild/
 
   # Show ccache stats before building
-  - su salsa-ci -c "ccache -vv -s"
+  - test ! "${ENABLE_CCACHE}" != "0" || su salsa-ci -c "ccache -vv -s"
 
   - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
 
@@ -529,17 +521,16 @@ stages:
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
   # Print ccache stats on job log and move it to location that will be saved
-  - |
-    if [ -x /usr/bin/ccache ]; then
-      # Older ccache does not support '-vv' but will print stats anyway,
-      # followed by error in stderr and exit code 1. Newer ccache 4.0+
-      # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
-      # to show any cache hit stats at all.
-      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
-      mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
-    fi
+  #
+  # Older ccache does not support '-vv' but will print stats anyway,
+  # followed by error in stderr and exit code 1. Newer ccache 4.0+
+  # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
+  # to show any cache hit stats at all.
+  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
+  - test ! "${ENABLE_CCACHE}" != "0" || mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
+
   # Print size of artifacts after build
   - du -sh
   # Warn if job artifacts size limit exceeded
