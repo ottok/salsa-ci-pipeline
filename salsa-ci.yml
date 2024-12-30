@@ -308,7 +308,22 @@ stages:
 
   - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS="--customize-hook='chroot \"\$1\" update-ccache-symlinks'"
 
-  - su salsa-ci -c "mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=${MMDEBSTRAP_COMPONENTS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${dist} ~/.cache/sbuild/${dist}-amd64.tar ${SALSA_CI_MIRROR}"
+  # Experimental chroots should be based on unstable, and backports chroots on
+  # their target release.
+  - |
+    case "${RELEASE}" in
+    experimental)
+      mmdebstrap_dist=${DEFAULT_RELEASE}
+      ;;
+    *-backports)
+      mmdebstrap_dist=${RELEASE%-backports}
+      ;;
+    *)
+      mmdebstrap_dist=${RELEASE}
+      ;;
+    esac
+
+  - su salsa-ci -c "mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=${MMDEBSTRAP_COMPONENTS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-amd64.tar ${SALSA_CI_MIRROR}"
 
   - mkdir -vp ${WORKING_DIR}
 
@@ -424,8 +439,6 @@ stages:
   - test "$DB_BUILD_TYPE" != "source" || BUILD_TYPE_ARG="--source --no-arch-all --no-arch-any"
   - test "$DB_BUILD_TYPE" != "full" || BUILD_TYPE_ARG="--source --arch-all --arch-any"
 
-  # TODO: how to handle experimental and backports, namely: do we need a specific resolver?
-
   # gbp setup-gitattributes needs to be called after gbp pull to avoid having
   # staging commits (See #322)
   - if echo "$SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES" | grep -qvE '^(1|yes|true)$'; then test -r .gitattributes && gbp setup-gitattributes ; fi
@@ -502,6 +515,24 @@ stages:
     fi
   # Set architecture to correct in case it is i386 to avoid pitfalls (See #284)
   - test "${BUILD_ARCH}" = "i386" && export BUILD_COMMAND="/usr/bin/setarch i686 ${BUILD_COMMAND}"
+
+  # handle experimental and backports
+  - |
+    case "${RELEASE}" in
+    experimental | *-backports)
+      # minimize number of packages from experimental and backports
+      case "${RELEASE}" in
+      experimental)
+        apt_solver_opts="${apt_solver_opts}-count(solution,APT-Release:=/a=experimental/),"
+        ;;
+       *-backports)
+        apt_solver_opts="${apt_solver_opts}-count(solution,APT-Release:~/a=.*-backports/),"
+        ;;
+      esac
+      apt_solver_opts="${apt_solver_opts}-removed,-changed,-new"
+      export BUILD_COMMAND="${BUILD_COMMAND} --build-dep-resolver=aspcud --aspcud-criteria \"${apt_solver_opts}\""
+      ;;
+    esac
 
   - test -z "${SALSA_CI_SBUILD_ARGS}" || export BUILD_COMMAND="${BUILD_COMMAND} ${SALSA_CI_SBUILD_ARGS}"
 
