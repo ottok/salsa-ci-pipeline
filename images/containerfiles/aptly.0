@@ -11,6 +11,7 @@ apt-get upgrade --assume-yes --quiet; \
 eatmydata apt-get install --no-install-recommends --assume-yes \
     aptly \
     gettext-base \
+    gnupg \
     rng-tools \
     ; \
 rm -rf /var/lib/apt
