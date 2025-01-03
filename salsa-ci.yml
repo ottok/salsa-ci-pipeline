@@ -297,6 +297,8 @@ stages:
 
   - export MMDEBSTRAP_COMPONENTS="main"
 
+  - test -z "${SALSA_CI_COMPONENTS}" || export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS} ${SALSA_CI_COMPONENTS}"
+
   - |
     if [ "$VENDOR" = ubuntu ] ;
     then
@@ -323,7 +325,7 @@ stages:
       ;;
     esac
 
-  - su salsa-ci -c "mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=${MMDEBSTRAP_COMPONENTS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-amd64.tar ${SALSA_CI_MIRROR}"
+  - su salsa-ci -c "mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-amd64.tar ${SALSA_CI_MIRROR}"
 
   - mkdir -vp ${WORKING_DIR}
 

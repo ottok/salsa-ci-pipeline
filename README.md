@@ -688,10 +688,10 @@ variables:
     SALSA_CI_COMPONENTS: 'main contrib non-free'
 ```
 
-This is currently used for `piuparts`, but is likely to be used for
-other stages in future.
+This is currently used for the `build` and `piuparts` jobs, but is likely to be
+used for other stages in future.
 
-It is possible to use the `SALSA_CI_EXTRA_REPOSITORY` support to add a
+It is also possible to use the `SALSA_CI_EXTRA_REPOSITORY` support to add a
 suitable apt source to the build environment and allow builds to access
 build-dependencies from contrib and non-free. You will need permission
 to modify the Salsa Settings for the project.
