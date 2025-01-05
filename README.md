@@ -60,6 +60,9 @@ include:
 * [Distribution and release selection](#distribution-and-release-selection)
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
+* [Testing Salsa CI \(and GitLab CI in general\) pipeline definitions locally](#testing-salsa-ci-and-gitlab-ci-in-general-pipeline-definitions-locally)
+  * [Testing definitiion file for correctness](#testing-definitiion-file-for-correctness)
+  * [Running the pipeline locally](#running-the-pipeline-locally)
 * [General Debian packaging support and resources](#general-debian-packaging-support-and-resources)
 * [General Salsa information](#general-salsa-information)
 * [Support for Salsa CI use](#support-for-salsa-ci-use)
@@ -1090,6 +1093,41 @@ Currently autopkgtest is the only test job enabled by default (see
 and
 [2](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/327#note_523235)).
 Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
+
+
+## Testing Salsa CI (and GitLab CI in general) pipeline definitions locally
+
+### Testing definitiion file for correctness
+
+The `salsa-ci.yml` file contents can be pasted into the embedded editor on the
+project page _Build > Pipeline editor_. In addition to the interactive feedback,
+the tabs _Visualize_, _Validate_ and _Full configuration_ can help in
+understanding how the pipeline definition will be interpreted by the GitLab CI
+runner. The _Validate_ functionality is also available in the [glab command-line
+client](https://manpages.debian.org/unstable/glab/glab.1.en.html):
+
+```shell
+$ glab ci lint debian/salsa-ci.yml
+Validating...
+debian/salsa-ci.yml is invalid.
+1 (<unknown>): could not find expected ':' while scanning a simple key at line 7 column 5
+
+# After fix
+$ glab ci lint debian/salsa-ci.yml
+Validating...
+✓ CI/CD YAML is valid!
+```
+
+As the pipeline definition file is plain YAML, the generic `yamllint debian/` is
+also useful to detect syntax issues.
+
+### Running the pipeline locally
+
+There are various efforts to provide tooling to allow individual developers to
+run the full pipeline or individual jobs locally for debugging purposes, with
+the most notable being
+[gitlab-ci-local](https://github.com/firecow/gitlab-ci-local). These are still
+under development and usefulness will vary depending on pipeline complexity.
 
 
 ## General Debian packaging support and resources
