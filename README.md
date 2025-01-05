@@ -738,12 +738,6 @@ The `reprotest` job runs with the `time` (see below) and `build_path`
 variations disabled by default. To save memory usage, it also runs with
 `diffoscope` disabled. This behaviour can be modified as explained here below.
 
-#### Faketime is currently disabled
-
-Note that reprotest's faketime support is currently disabled, as it causes false
-positives on files touched by quilt. It will be re-enabled once this is fixed.
-https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/251
-
 #### Add extra arguments to reprotest
 
 Sometimes it is desirable to disable (or enable) some `reprotest` validations
