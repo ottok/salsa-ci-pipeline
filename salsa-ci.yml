@@ -246,8 +246,6 @@ stages:
     - if: $SALSA_CI_DISABLE_EXTRACT_SOURCE !~ /^(1|yes|true)$/
 
 .check-architecture-is-buildable: &check-architecture-is-buildable
-  # TODO: handle projects that would need an extract-source job
-  # - cd ${WORKING_DIR}/${SOURCE_DIR}
   - |
     if [ "${DB_BUILD_TYPE}" = all ]; then
       pattern="all"
@@ -277,8 +275,6 @@ stages:
       exit 0
     fi
   - unset pattern
-  # TODO: handle projects that would need an extract-source job
-  # - cd ${OLDPWD}
 
 .build-before-script: &build-before-script
   - apt-get update && eatmydata apt-get upgrade -y
@@ -343,7 +339,7 @@ stages:
     -e "${SALSA_CI_EXTRA_REPOSITORY}" -k "${SALSA_CI_EXTRA_REPOSITORY_KEY}"
     -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
 
-.build-script: &build-script
+.build-script-setup-environment: &build-script-setup-environment
   # setup sbuild+unshare support
   - mkdir -p ~salsa-ci/.config/sbuild/
   - |
@@ -422,6 +418,7 @@ stages:
 
   - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
 
+.build-script-extract-source: &build-script-extract-source
   - gbp pull --ignore-branch --pristine-tar --track-missing
 
   # add target architecture if cross-compiling
@@ -507,6 +504,7 @@ stages:
   - BUILD_LOGFILE_ARCH=${HOST_ARCH:-${BUILD_ARCH}}
   - BUILD_LOGFILE="${WORKING_DIR}/${BUILD_LOGFILE_SOURCE}_${BUILD_LOGFILE_VERSION}_${BUILD_LOGFILE_ARCH}.build"
 
+.build-script-setup-build-command: &build-script-setup-build-command
   # Define the build command
   - export BUILD_COMMAND="sbuild --dist=${RELEASE} --no-clean-source ${HOST_ARCH_ARG} ${BUILD_TYPE_ARG} --build-dir=${WORKING_DIR}"
   - test -z "${DB_BUILD_PARAM}" || export BUILD_COMMAND="${BUILD_COMMAND} --debbuildopts=${DB_BUILD_PARAM}"
@@ -538,6 +536,8 @@ stages:
 
   - test -z "${SALSA_CI_SBUILD_ARGS}" || export BUILD_COMMAND="${BUILD_COMMAND} ${SALSA_CI_SBUILD_ARGS}"
 
+
+.build-script-run-build-command: &build-script-run-build-command
   # Print the build environment
   - printenv | sort
 
@@ -549,6 +549,12 @@ stages:
   #
   # But let's copy the (orig) *tar* files to the artifacts dir
   - test -z "$(find ../ -maxdepth 1 -name '*.tar.*')" || cp -vn ../*tar* ${WORKING_DIR}
+
+.build-script: &build-script
+  - *build-script-setup-environment
+  - *build-script-extract-source
+  - *build-script-setup-build-command
+  - *build-script-run-build-command
 
 # Place all diagnostics or cleanup in the 'after_script' section, as it will run
 # on both successful and failed jobs (but not on cancelled jobs).
@@ -684,13 +690,7 @@ stages:
     - .build-definition
   script:
     - *check-architecture-is-buildable
-
-    # TODO
-    #- cd "${WORKING_DIR}/${SOURCE_DIR}"
     - *get-target-distribution
-    # TODO
-    #- cd "${OLDPWD}"
-
     - *build-before-script
     - *build-script
   after_script:
