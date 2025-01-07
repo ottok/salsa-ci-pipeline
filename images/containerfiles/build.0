@@ -1,0 +1,34 @@
+# Copyright salsa-ci-team and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+
+# Add deb-src entries
+RUN if [ -f /etc/apt/sources.list ]; then \
+      sed -n '/^deb\s/s//deb-src /p' /etc/apt/sources.list > /etc/apt/sources.list.d/deb-src.list; \
+    fi
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources; \
+    fi
+
+# iproute2 is required by sbuild-usernsexec to disable the network.
+# distro-info-data is needed by mmdebstrap to map keyrings and distribution
+# suites, especially for ubuntu
+RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-install-recommends -y \
+    ccache \
+    git-buildpackage \
+    pristine-tar \
+    curl \
+    unzip \
+    sbuild \
+    mmdebstrap \
+    uidmap \
+    iproute2 \
+    distro-info-data && \
+    rm -rf /var/lib/apt
+
+# Ideally, to replicate as close as possible the buildd environment,
+# a non-privileged user (as salsa-ci) should run sbuild to build the package
+# in the build job.
+RUN useradd --gid 100 -G sbuild -m salsa-ci

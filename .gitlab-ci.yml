@@ -270,6 +270,12 @@ clean images:
       i386/base
       riscv64/base
       blhc
+      build
+      arm32v5/build
+      arm32v7/build
+      arm64v8/build
+      i386/build
+      riscv64/build
       gbp
       piuparts
       reprotest
