@@ -581,7 +581,9 @@ stages:
   # Keep in mind that this last diagnostics line will run only if all lines
   # above returned exit code zero.
 
-.build-definition: &build-definition
+# This is the common build definition, so third party projects customize/extend
+# .build-definition, without creating circular dependencies in the pipeline.
+.build-definition-common: &build-definition-common
   stage: build
   image: $SALSA_CI_IMAGES_BUILD
   cache:
@@ -604,6 +606,13 @@ stages:
   artifacts:
     reports:
       dotenv: salsa.env
+
+# Third party projects should redefine .build-defintion, extending
+# .build-definition-common, if they need to customize the {test-,}build jobs,
+# in a common place.
+.build-definition: &build-definition
+  extends:
+    - .build-definition-common
 
 .build-package: &build-package
   extends:
