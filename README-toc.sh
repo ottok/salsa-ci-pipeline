@@ -4,13 +4,15 @@
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
-
 #
 # This script generates a Markdown table-of-contents from a README.html file,
 # in order to update the README.md documentation source file.
 #
-# Generating a README.html is out of scope for this script. Use your code editor
-# or the GitLab UI to render the HTML version from the Markdown source.
+# Generating a README.html is not possible by simply downloading
+# https://salsa.debian.org/salsa-ci-team/pipeline/-/blob/master/README.md. One
+# needs to open the page in a browser window so that the JavaScript can run and
+# render the contents, and only then in developer console copy the outerHTML to
+# get the HTML rendered README.md.
 #
 # Note that only headers on level 1-3 are included in the table-of-contents
 # for the sake of brevity. Also note that for a header to be included, the `sed`

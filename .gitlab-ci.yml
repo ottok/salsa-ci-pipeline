@@ -32,14 +32,15 @@ variables:
     description: "Set this to 1 if you want to build the full set of images, even in staging branches"
     value: 0
   BUILD_UBUNTU_IMAGES:
-    description: "Set this to 1 if you want to build ubuntu images on GitLab instaces other than Salsa"
+    description: "Set this to 1 if you want to build ubuntu images on GitLab instances other than Salsa"
     value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
   STABLE: "bookworm"
-  FF_SCRIPT_SECTIONS: "true" # enables full command logging in job logs
+  # enable full command logging in job logs
+  FF_SCRIPT_SECTIONS: "true"
 
 stages:
   - images
@@ -87,9 +88,11 @@ check license + contributor:
   script:
     - PROBLEMS=0
     # check files without any license
+    # Example licensecheck output that is filtered with grep:
+    #   ./README.md: *No copyright* UNKNOWN
     - |
       BAD_FILES=$(licensecheck -r . | \
-      grep -Ev '(images/files)|(images/patches)|(README.md)|(CONTRIBUTING.md)|(CONTRIBUTORS)|(STRUCTURE.md)|(RUNNERS.md)|(screenshots)'| \
+      grep -Ev '(recipes/)|(images/files/)|(images/patches/)|(screenshots/)|CONTRIBUTORS|(\.md:)' | \
       grep UNKNOWN) || true
     - |
       [ -z "$BAD_FILES" ] || \
@@ -183,8 +186,8 @@ test-pipeline:
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
       # boxes is used to test gbp setup-gitattributes (#322)
-      #- PROJECT_URL: https://salsa.debian.org/otto/boxes
-      #  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
+      # - PROJECT_URL: https://salsa.debian.org/otto/boxes
+      #   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
       #
       # cloudflare-ddns is used to verify that the build source job only
       # satisfies Build-Depends and Build-Conflicts See:

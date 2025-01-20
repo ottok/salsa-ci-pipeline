@@ -1,12 +1,13 @@
-# Salsa CI – Quality Assurance for Debian packaging
+# Salsa Continuous Integration (CI) – Quality Assurance for Debian packaging
 
-## TL;DR
+TL;DR
 
-This Salsa CI pipeline increases the quality of Debian packages by providing
-[Continuous Integration](https://about.gitlab.com/product/continuous-integration/)
-that can be run on every commit on any Debian package.
+This Salsa Continuous Integration
+([CI](https://about.gitlab.com/product/continuous-integration/)) pipeline
+increases the quality of Debian packages by automatically testing every commit
+on a Debian package.
 
-To activate Salsa CI, open settings at `https://salsa.debian.org/TEAM/PROJECT/-/settings/ci_cd`,
+To activate Salsa CI, open settings at `https://salsa.debian.org/%{project_path}/-/settings/ci_cd`,
 and in _General pipelines_ set the project _CI/CD configuration file_ to
 `debian/salsa-ci.yml`, and on the Debian packaging git branch create the file
 containing:
@@ -31,12 +32,14 @@ include:
   * [Setting variables on pipeline creation](#setting-variables-on-pipeline-creation)
   * [Run only selected jobs](#run-only-selected-jobs)
 * [Customize builds and build dependencies](#customize-builds-and-build-dependencies)
-  * [Set build timeout](#set-build-timeout)
+  * [Extend the job timeout](#extend-the-job-timeout)
+  * [Decrease build timeout to leave margin for cache upload](#decrease-build-timeout-to-leave-margin-for-cache-upload)
   * [Disabling building on i386](#disabling-building-on-i386)
   * [Enable building on ARM and RISC-V](#enable-building-on-arm-and-risc-v)
   * [Add more architectures or CI runners](#add-more-architectures-or-ci-runners)
   * [Testing build of arch=any and arch=all packages](#testing-build-of-archany-and-archall-packages)
   * [Testing build profiles](#testing-build-profiles)
+  * [Enable cross-builds](#enable-cross-builds)
   * [Enable building packages twice in a row](#enable-building-packages-twice-in-a-row)
   * [Enable generation of dbgsym packages](#enable-generation-of-dbgsym-packages)
   * [Build with non-free dependencies](#build-with-non-free-dependencies)
@@ -57,6 +60,9 @@ include:
 * [Distribution and release selection](#distribution-and-release-selection)
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
+* [Testing Salsa CI \(and GitLab CI in general\) pipeline definitions locally](#testing-salsa-ci-and-gitlab-ci-in-general-pipeline-definitions-locally)
+  * [Testing definitiion file for correctness](#testing-definitiion-file-for-correctness)
+  * [Running the pipeline locally](#running-the-pipeline-locally)
 * [General Debian packaging support and resources](#general-debian-packaging-support-and-resources)
 * [General Salsa information](#general-salsa-information)
 * [Support for Salsa CI use](#support-for-salsa-ci-use)
@@ -65,19 +71,25 @@ include:
 
 ## Benefits – Why use Salsa CI?
 
-The official building and testing performed by Debian QA is run asynchronously
-and takes a long time to provide feedback because it is only accessible after
-pushing a release to the archive. Any issues with the package will be flagged,
-but remain broken and may cause havoc until a fixed version is uploaded.
+**Salsa CI provides anyone working on Debian packaging with instant feedback about
+the package quality.** The Salsa CI pipeline mimics various Debian quality
+assurance tools that run for every new Debian package revision uploaded to
+the Debian archive, but instead of requiring a new upload, Salsa CI can run on
+every commit pushed to Salsa, making the feedback cycle significantly faster.
 
-The Salsa CI pipeline mimics the tests that are run after each upload to Debian,
-but instead of having to wait for results or risk the health of the Debian
-repositories, Salsa CI provides you with instant feedback about any problems the
-changes you made may have created or solved.
+While the official Debian QA tools will flag issues with a package, any package
+already uploaded to the Debian archives will continue to exist in a broken
+state, potentially causing havoc, until a fixed version is uploaded. **Ensuring
+every package fully passed Salsa CI before upload to Debian archives will help
+prevent archive-wide effects of broken packages.**
+
+In addition to catching machine detectable regressions, **Salsa CI can also be
+used to validate that new fixes are correct** and that previously detected
+issues are no longer present.
 
 Salsa CI currently offers:
 
-* Building the package from the source using
+* Building the package using
   [git-buildpackage](https://manpages.debian.org/unstable/git-buildpackage/git-buildpackage.1.en.html)
   with multiple build profiles and architectures
 * Static analysis for Debian packages using [Lintian](https://lintian.debian.org)
@@ -106,15 +118,25 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 ```
 
-If creating a new file is too much hassle, and there is no need to modify it,
-the alternative way is to just set `recipes/debian.yml@salsa-ci-team/pipeline`
-as the config path, which refers to a file kept in the `salsa-ci-team/pipeline`
-repository.
-
 > :warning: **Note:** The pipeline is not run automatically after configuring
 > it. You can either trigger it by
 > [running the pipeline manually](https://salsa.debian.org/help/ci/pipelines/index.md#run-a-pipeline-manually)
 > or pushing something.
+
+#### Activating Salsa CI without using the salsa-ci.yml file not recommended
+
+While technically possible, it is not recommended to activate Salsa CI by simply
+setting `recipes/debian.yml@salsa-ci-team/pipeline` as the CI config path. This
+refers directly to a file kept in the `salsa-ci-team/pipeline` repository
+without creating a `debian/salsa-ci.yml`. This may initially save some effort,
+but in the long run it ends up causing more work as the CI will run
+indiscriminately on all branches no matter if they are intended for Debian
+packaging or not, and collaborators will not be able to see why and how the CI
+is triggered.
+
+Having an explicit `debian/salsa-ci.yml` on each branch, potentially augmented
+with branch-specific additions, is easier to reason about and causes less
+maintenance work in the long-term.
 
 ### Alternatively use command-line tools `salsa` or `glab`
 
@@ -123,8 +145,11 @@ If you wish to activate Salsa CI directly from the command-line, set up the
 and run this for all your projects:
 
 ```shell
-salsa update_projects $NAMESPACE/$PROJECT \
-  --jobs yes --ci-config-path recipes/debian.yml@salsa-ci-team/pipeline
+salsa update_projects $NAMESPACE/$PROJECT --jobs yes --ci-config-path debian/salsa-ci.yml
+cd $PROJECT/debian
+curl -LO https://salsa.debian.org/salsa-ci-team/pipeline/-/raw/master/recipes/salsa-ci.yml
+git commit -m "Enable Salsa CI using default template" salsa-ci.yml
+git push
 ```
 
 Alternatively, use the more generic command-line tool
@@ -302,17 +327,16 @@ You can set these and other similar variables when launching a new pipeline in d
 * Using the web interface under CI/CD, Run Pipeline, and setting the desired
   variables.
 * Using the [GitLab API](https://salsa.debian.org/help/api/index.md). For
-  example,  check the script
+  example, check the script
   [salsa_drive_build.py](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py),
   in particular the function
   [launch_pipelines](https://salsa.debian.org/maxy/qt-kde-ci/blob/tooling/salsa_drive_build.py#L568).
 * Setting them as part of a pipeline-triggered build.
 
-### Skip pipeline temporairly when running a `git push`
+### Skip pipeline temporarily when running a `git push`
 
-There may be reasons to skip the whole pipeline for a `git push`, for example
-when you are adding `salsa-ci.yml` to hundreds of repositories or doing other
-mass changes.
+There may be reasons to skip the whole pipeline for a single commit, for example
+when updating a README in a large package with a long-running CI.
 
 You can achieve this in two ways:
 
@@ -320,12 +344,12 @@ You can insert `[ci skip]` or `[skip ci]`, using any capitalization, in the
 commit message. With this marker, GitLab will not run the pipeline when the
 commit is pushed.
 
-Alternatively, one can pass the `ci.skip` [Git push](https://git-scm.com/docs/git-push#Documentation/git-push.txt--oltoptiongt)
-option if using Git 2.10 or newer:
+Alternatively, you can skip CI on all commits on a single [git push
+option](https://git-scm.com/docs/git-push#Documentation/git-push.txt--oltoptiongt)
+by passing a git option:
 
-```shell
-git push --push-option=ci.skip    # using git 2.10+
-git push -o ci.skip               # using git 2.18+
+```
+git push -o ci.skip
 ```
 
 See also https://salsa.debian.org/help/ci/pipelines/index.md#skip-a-pipeline
@@ -396,9 +420,17 @@ the GitLab instance configuration.
 
 If a CI job has a valid reason to run beyond the default limits, a custom value
 can be defined with the [timeout
-keyword](https://docs.gitlab.com/ee/ci/yaml/#timeout keyword for individual
-jobs. The primary way to fix slow CI jobs should however use other means, for
-example by optimizing how the build cache works.
+keyword](https://docs.gitlab.com/ee/ci/yaml/#timeout) for individual jobs.
+However, the primary way to address slow CI jobs should by optimizing the build
+to run faster, for example by ensuring that the build cache works. For C/C++
+programs ensure the build is compatible with
+[ccache](https://manpages.debian.org/unstable/ccache/ccache.1.en.html).
+
+```yaml
+build:
+  extends: .build-package
+  timeout: 3h
+```
 
 ### Decrease build timeout to leave margin for cache upload
 
@@ -610,7 +642,7 @@ to modify the Salsa Settings for the project.
 
 The CI/CD settings are at a URL like:
 
-`https://salsa.debian.org/<team>/<project>/-/settings/ci_cd`
+`https://salsa.debian.org/%{project_path}/-/settings/ci_cd`
 Expand the section on Variables and add a **File** type variable:
 
 > Key: SALSA_CI_EXTRA_REPOSITORY
@@ -708,12 +740,6 @@ variables:
 The `reprotest` job runs with the `time` (see below) and `build_path`
 variations disabled by default. To save memory usage, it also runs with
 `diffoscope` disabled. This behaviour can be modified as explained here below.
-
-#### Faketime is currently disabled
-
-Note that reprotest's faketime support is currently disabled, as it causes false
-positives on files touched by quilt. It will be re-enabled once this is fixed.
-https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/251
 
 #### Add extra arguments to reprotest
 
@@ -962,18 +988,18 @@ the `variables` section
 
 ```yaml
 before_script:
-  - echo "deb [trusted=yes] https://salsa.debian.org/${TEAM}/${PROJECT}/-/jobs/${JOB_ID}/artifacts/raw/aptly unstable main" | tee /etc/apt/sources.list.d/pkga.list
+  - echo "deb [trusted=yes] https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly unstable main" | tee /etc/apt/sources.list.d/pkga.list
   - apt-get update
 ```
 
-Replace `{TEAM}`, `${PROJECT}` with appropriate `team` and `project` name
-respectively and `${JOB_ID}` with the aptly job number of `src:pkgA` pipeline.
+Replace `%{CI_PROJECT_PATH_SLUG}` with complete path to project,
+and `${CI_JOB_ID}` with the aptly job number of `src:pkgA` pipeline.
 Now you can use the binary packages produced by `src:pkgA` in `src:pkgB`.
 
 **Note:** When you make changes to `src:pkgA`, `src:pkgB` will continue using
 the old repository that the job number points to. If you want `src:pkgB` to use
 the updated binary packages, you have to retrieve the job number of the `aptly`
-job from `src:pkgA` and update the `${JOB_ID}` of `src:pkgB`.
+job from `src:pkgA` and update the `${CI_JOB_ID}` of `src:pkgB`.
 
 See also howto
 [add private repositories to the builds](#add-private-repositories-to-the-builds).
@@ -1069,6 +1095,41 @@ and
 Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
 
 
+## Testing Salsa CI (and GitLab CI in general) pipeline definitions locally
+
+### Testing definitiion file for correctness
+
+The `salsa-ci.yml` file contents can be pasted into the embedded editor on the
+project page _Build > Pipeline editor_. In addition to the interactive feedback,
+the tabs _Visualize_, _Validate_ and _Full configuration_ can help in
+understanding how the pipeline definition will be interpreted by the GitLab CI
+runner. The _Validate_ functionality is also available in the [glab command-line
+client](https://manpages.debian.org/unstable/glab/glab.1.en.html):
+
+```shell
+$ glab ci lint debian/salsa-ci.yml
+Validating...
+debian/salsa-ci.yml is invalid.
+1 (<unknown>): could not find expected ':' while scanning a simple key at line 7 column 5
+
+# After fix
+$ glab ci lint debian/salsa-ci.yml
+Validating...
+✓ CI/CD YAML is valid!
+```
+
+As the pipeline definition file is plain YAML, the generic `yamllint debian/` is
+also useful to detect syntax issues.
+
+### Running the pipeline locally
+
+There are various efforts to provide tooling to allow individual developers to
+run the full pipeline or individual jobs locally for debugging purposes, with
+the most notable being
+[gitlab-ci-local](https://github.com/firecow/gitlab-ci-local). These are still
+under development and usefulness will vary depending on pipeline complexity.
+
+
 ## General Debian packaging support and resources
 
 * The [Debian Policy](https://www.debian.org/doc/debian-policy/): packages must conform to it.
@@ -1078,7 +1139,7 @@ Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
 
 ## General Salsa information
 
-The GitLab instance [salsa.debian.org](https://salsa.debian.org-) is maintained
+The GitLab instance [salsa.debian.org](https://salsa.debian.org) is maintained
 by the [Debian Salsa admin team](https://wiki.debian.org/Salsa), which is
 separate from the Salsa CI team.
 
