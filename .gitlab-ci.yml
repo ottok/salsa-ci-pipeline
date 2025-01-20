@@ -39,7 +39,8 @@ variables:
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
   STABLE: "bookworm"
-  FF_SCRIPT_SECTIONS: "true" # enables full command logging in job logs
+  # enable full command logging in job logs
+  FF_SCRIPT_SECTIONS: "true"
 
 stages:
   - images
@@ -185,8 +186,8 @@ test-pipeline:
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
       # boxes is used to test gbp setup-gitattributes (#322)
-      #- PROJECT_URL: https://salsa.debian.org/otto/boxes
-      #  SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
+      # - PROJECT_URL: https://salsa.debian.org/otto/boxes
+      #   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
       #
       # cloudflare-ddns is used to verify that the build source job only
       # satisfies Build-Depends and Build-Conflicts See:
