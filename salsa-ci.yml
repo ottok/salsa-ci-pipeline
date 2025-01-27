@@ -469,7 +469,7 @@ stages:
   # Print ccache stats on job log and move it to location that will be saved
   - |
     if [ -x /usr/bin/ccache ]; then
-      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -s
+      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv
       mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
     fi
   # Restore PWD to ${WORKING_DIR}
