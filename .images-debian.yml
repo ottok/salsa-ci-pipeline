@@ -151,9 +151,12 @@ images-prod-riscv:
       - IMAGE_NAME: base
         ARCH:
           - riscv64
-        # As of today, 2024-07, pre-trixie, riscv64 is only supported on
-        # unstable
-        RELEASE: sid
+        # As of today, 2025-04, riscv64 is only supported
+        # from trixie onwards
+        RELEASE:
+          - trixie
+          - sid
+          - experimental
       - IMAGE_NAME: build
         ARCH:
           - riscv64
