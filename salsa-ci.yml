@@ -108,7 +108,6 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE:
     description: "Set this to 0 to enable the test that builds the package twice in a row"
     value: 1
-  SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_RC_BUGS: 1
   SALSA_CI_IGNORED_BRANCHES: ''
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"

@@ -16,10 +16,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-'''
+"""
 Check the produced binary packages and checks if there are conflicting files
 against packages that are not declared with breaks and replaces.
-'''
+
+Note that the results depend on what apt repositories are enabled. If you want
+prevent upgrade issues across Debian releases, you need to have both unstable
+and the previous release repositories enabled in the apt sources configuration.
+"""
 
 import argparse
 import collections

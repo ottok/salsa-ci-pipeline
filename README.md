@@ -95,6 +95,7 @@ Salsa CI currently offers:
 * Static analysis for Debian packages using [Lintian](https://lintian.debian.org)
 * Functional testing using [Autopkgtest](https://salsa.debian.org/ci-team/autopkgtest/raw/master/doc/README.package-tests.rst)
 * Package installation and removal testing using [Piuparts](https://piuparts.debian.org)
+* Conflicting file path check against packages that are not declared with Breaks and Replaces
 * Checking proper use of secure build flags etc using [Buildd Log Scanner](https://qa.debian.org/bls/)
 * Build reproducibility testing using [Reprotest](https://reproducible-builds.org/tools)
 
@@ -248,6 +249,7 @@ variables:
   SALSA_CI_DISABLE_LINTIAN: 1
   SALSA_CI_DISABLE_PIUPARTS: 1
   SALSA_CI_DISABLE_REPROTEST: 1
+  SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ALL: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ANY: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
