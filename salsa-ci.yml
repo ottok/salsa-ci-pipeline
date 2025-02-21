@@ -468,8 +468,11 @@ stages:
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
   # Print ccache stats on job log and move it to location that will be saved
-  - CCACHE_DIR=${CCACHE_TMP_DIR} ccache -s
-  - mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
+  - |
+    if [ -x /usr/bin/ccache ]; then
+      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -s
+      mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
+    fi
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
   # Clean away sources from artifact directory
