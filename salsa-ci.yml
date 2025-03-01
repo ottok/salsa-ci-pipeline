@@ -108,7 +108,6 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE:
     description: "Set this to 0 to enable the test that builds the package twice in a row"
     value: 1
-  SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_RC_BUGS: 1
   SALSA_CI_IGNORED_BRANCHES: ''
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
@@ -936,15 +935,25 @@ stages:
     - if: $SALSA_CI_DISABLE_MISSING_BREAKS !~ /^(1|yes|true)$/
   script:
     - apt-get update && eatmydata apt-get upgrade -y
+    - echo "$NOTICE_MESSAGE"
     - check_for_missing_breaks_replaces.py -o ${WORKING_DIR}/missing_breaks.xml --changes-file ${WORKING_DIR}/*.changes
   artifacts:
     reports:
       junit: ${WORKING_DIR}/missing_breaks.xml
   variables:
     GIT_STRATEGY: none
+    NOTICE_MESSAGE: |
+      ***********************************************************************************************************
+      NOTICE! The Salsa CI job 'missing-breaks' has been enabled by default for all pipelines on March 1st, 2025.
+
+      The job is temporarily in 'allow_failures' mode until March 31st, 2025, to give maintainers time to notice
+      that the new job exists, review the results before and fix issues before if affects the pipeline status.
+      ***********************************************************************************************************
   needs:
     - job: build
       artifacts: true
+  # @TODO: Remove this and the NOTICE_MESSAGE on March 31st, 2025:
+  allow_failure: true
 
 .test-wrap-and-sort: &test-wrap-and-sort
   stage: test
