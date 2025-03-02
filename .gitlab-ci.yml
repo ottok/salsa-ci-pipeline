@@ -76,12 +76,19 @@ ubuntu-images:
     - if: $SALSA_CI_DISABLE_BUILD_IMAGES !~ /^(1|yes|true)$/
       when: always
 
-check license + contributor:
+.self-checks:
   stage: test
   image: ${CI_REGISTRY_IMAGE}/base:${IMAGE_VERSION}
   dependencies: []
   variables:
     RELEASE: sid
+  rules:
+    - if: $CI_SERVER_URL != "https://salsa.debian.org"
+      when: never
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+
+check license + contributor:
+  extends: .self-checks
   before_script:
     - apt-get update && apt-get upgrade -y
     - apt-get install -y licensecheck
@@ -106,17 +113,9 @@ check license + contributor:
       (echo "ERROR: ${GITLAB_USER_NAME} <${GITLAB_USER_EMAIL}> missing in the CONTRIBUTORS file"; exit 1) || \
       PROBLEMS=$(($PROBLEMS + 1))
     - exit $PROBLEMS
-  rules:
-    - if: $CI_SERVER_URL != "https://salsa.debian.org"
-      when: never
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
 check gpg signature:
-  stage: test
-  image: ${CI_REGISTRY_IMAGE}/base:${IMAGE_VERSION}
-  dependencies: []
-  variables:
-    RELEASE: sid
+  extends: .self-checks
   before_script:
     - apt-get update && apt-get upgrade -y
     - apt-get install -y --no-install-recommends debian-keyring dirmngr git gpg gpg-agent ca-certificates
@@ -140,17 +139,9 @@ check gpg signature:
     - >
       GIT_TRACE2=true git verify-commit HEAD --raw --verbose ||
       (echo "ERROR: Signature is invalid. Please sign your commits correctly. See CONTRIBUTING.md for details." && exit 1)
-  rules:
-    - if: $CI_SERVER_URL != "https://salsa.debian.org"
-      when: never
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
 check yaml lint:
-  stage: test
-  image: ${CI_REGISTRY_IMAGE}/base:${IMAGE_VERSION}
-  dependencies: []
-  variables:
-    RELEASE: sid
+  extends: .self-checks
   before_script:
     - apt-get update && apt-get upgrade -y
     - apt-get install -y yamllint
