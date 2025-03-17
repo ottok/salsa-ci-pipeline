@@ -469,7 +469,11 @@ stages:
   # Print ccache stats on job log and move it to location that will be saved
   - |
     if [ -x /usr/bin/ccache ]; then
-      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv
+      # Older ccache does not support '-vv' but will print stats anyway,
+      # followed by error in stderr and exit code 1. Newer ccache 4.0+
+      # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
+      # to show any cache hit stats at all.
+      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
       mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
     fi
   # Restore PWD to ${WORKING_DIR}
