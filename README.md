@@ -46,6 +46,7 @@ include:
   * [Add private repositories to the builds](#add-private-repositories-to-the-builds)
   * [Add extra arguments to dpkg-buildpackage](#add-extra-arguments-to-dpkg-buildpackage)
   * [Adding extra arguments to gbp-buildpackage](#adding-extra-arguments-to-gbp-buildpackage)
+  * [Disabling gbp exportorig fallback](#disabling-gbp-exportorig-fallback)
   * [Git attributes](#git-attributes)
   * [Customize reprotest](#customize-reprotest)
 * [Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs](#lintian-autopkgtests-piuparts-and-other-quality-assurance-ci-jobs)
@@ -714,6 +715,20 @@ include:
 
 variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: --your-option
+```
+
+### Disabling gbp exportorig fallback
+
+By default, if gbp export-orig fails it tries to use `origtargz`. If `SALSA_CI_DISABLE_EXPORTORIG_FALLBACK` is set to 1 it fails instead of trying to use `origtargz`.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+
+variables:
+  SALSA_CI_DISABLE_EXPORTORIG_FALLBACK: 1
 ```
 
 ### Git attributes
