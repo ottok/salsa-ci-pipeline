@@ -54,6 +54,7 @@ include:
   * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
   * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
+  * [Add extra arguments to piuparts](#add-extra-arguments-to-piuparts)
   * [Using automatically built apt repository](#using-automatically-built-apt-repository)
   * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
   * [Debian release bump](#debian-release-bump)
@@ -897,6 +898,20 @@ include:
 
 variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
+```
+
+### Add extra arguments to piuparts
+
+Sometimes it is desirable to add arguments to piuparts. Note that these arguments are prepended to the arguments that the pipeline uses by default.
+
+You can do this by setting the arguments in the `SALSA_CI_PIUPARTS_ARGS` variable.
+
+```
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_PIUPARTS_ARGS: '--fail-if-inadequate'
 ```
 
 ### Avoid autopkgtest failures on systemd masked tmp
