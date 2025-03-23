@@ -188,7 +188,9 @@ image-staging:
           - build
         ARCH: i386
         RELEASE: sid
-      - IMAGE_NAME: base
+      - IMAGE_NAME:
+          - base
+          - gbp
         ARCH:
           - amd64
           - i386
@@ -197,10 +199,13 @@ image-staging:
           - $OLDSTABLE
           - experimental
       - IMAGE_NAME:
+          - aptly
           - autopkgtest
           - lintian
           - blhc
           - generic_tests
+          - piuparts # Bookworm: E: Unable to locate package docker-cli
+          - reprotest
         ARCH: amd64
         RELEASE: $STABLE
   rules:

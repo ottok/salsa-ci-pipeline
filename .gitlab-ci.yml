@@ -200,21 +200,24 @@ test-pipeline:
       # galera-4 is another small package
       - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
         PROJECT_TARGET_HEAD: debian/latest
-        SALSA_CI_BUILD_TIMEOUT_ARGS: 1m
-        SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS: 0
-        SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
-        SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
-        SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
+        SALSA_CI_BUILD_TIMEOUT_ARGS: 15m
+        # Superficial tests result in exit code 8
+        SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS: '0,8'
+        # SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
+        # SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
+        # SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE: 0
         SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
         BUILD_PROFILES: nocheck,nodoc
-        SALSA_CI_ENABLE_ATOMIC_REPROTEST: 0
+        # runs out of disk space
+        #SALSA_CI_ENABLE_ATOMIC_REPROTEST: 0
         SALSA_CI_DISABLE_MISSING_BREAKS: 0
         SALSA_CI_DISABLE_RC_BUGS: 0
       # Test regressions in pipelines running in Bookworm
       - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
         PROJECT_TARGET_HEAD: debian/12-bookworm
         RELEASE: bookworm
+        # Lintian fails with 'E: galera-4 changes: bad-distribution-in-changes-file bookworm'
       # Test regressions in pipelines running in Bullseye
       - PROJECT_URL: https://salsa.debian.org/mariadb-team/galera-4
         PROJECT_TARGET_HEAD: debian/11-bullseye
