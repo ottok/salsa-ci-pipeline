@@ -1182,11 +1182,17 @@ The Salsa CI developers and users can be found at:
 
 * Mailing list: [debian-salsa-ci_at_alioth-lists.debian.net](mailto:debian-salsa-ci_at_alioth-lists.debian.net)
 * Matrix: [#salsaci:matrix.debian.social](https://matrix.to/#/#salsaci:matrix.debian.social)
-* IRC: [#salsaci @ OFTC](ircs://irc.oftc.net/salsa) ([webchat](https://webchat.oftc.net/?channels=salsaci))
 * Issue tracker: [salsa-ci-team/pipeline/issues](https://salsa.debian.org/salsa-ci-team/pipeline/issues)
 
+Most of the discussions in this project take place in Issue and Merge Requests
+comments. Feel free to participate!
 
 ## Contributing
+
+[Merge Requests](https://salsa.debian.org/salsa-ci-team/pipeline/-/merge_requests)
+are welcome! We very much also appreciate people who help review Merge Requests
+and provide comments and insights that help us keep a high bar and avoid
+regressions.
 
 The success of this project comes from meaningful contributions that are made by
 interested contributors like you. If you want to contribute to this project,
