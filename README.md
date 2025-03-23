@@ -46,6 +46,7 @@ include:
   * [Add private repositories to the builds](#add-private-repositories-to-the-builds)
   * [Add extra arguments to dpkg-buildpackage](#add-extra-arguments-to-dpkg-buildpackage)
   * [Adding extra arguments to gbp-buildpackage](#adding-extra-arguments-to-gbp-buildpackage)
+  * [Disabling gbp exportorig fallback](#disabling-gbp-exportorig-fallback)
   * [Git attributes](#git-attributes)
   * [Customize reprotest](#customize-reprotest)
 * [Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs](#lintian-autopkgtests-piuparts-and-other-quality-assurance-ci-jobs)
@@ -54,6 +55,7 @@ include:
   * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
   * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
+  * [Add extra arguments to piuparts](#add-extra-arguments-to-piuparts)
   * [Using automatically built apt repository](#using-automatically-built-apt-repository)
   * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
   * [Debian release bump](#debian-release-bump)
@@ -715,6 +717,20 @@ variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: --your-option
 ```
 
+### Disabling gbp exportorig fallback
+
+By default, if gbp export-orig fails it tries to use `origtargz`. If `SALSA_CI_DISABLE_EXPORTORIG_FALLBACK` is set to 1 it fails instead of trying to use `origtargz`.
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+
+variables:
+  SALSA_CI_DISABLE_EXPORTORIG_FALLBACK: 1
+```
+
 ### Git attributes
 
 Some upstream projects ship a `.gitattributes` file to set up special
@@ -897,6 +913,20 @@ include:
 
 variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
+```
+
+### Add extra arguments to piuparts
+
+Sometimes it is desirable to add arguments to piuparts. Note that these arguments are prepended to the arguments that the pipeline uses by default.
+
+You can do this by setting the arguments in the `SALSA_CI_PIUPARTS_ARGS` variable.
+
+```
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  SALSA_CI_PIUPARTS_ARGS: '--fail-if-inadequate'
 ```
 
 ### Avoid autopkgtest failures on systemd masked tmp

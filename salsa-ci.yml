@@ -85,7 +85,9 @@ variables:
   SALSA_CI_LINTIAN_ARGS:
     description: "Arguments appended to lintian's generated arguments"
     value: ''
-  SALSA_CI_PIUPARTS_ARGS: ''
+  SALSA_CI_PIUPARTS_ARGS:
+    description: "Arguments prepended to piuparts's generated arguments"
+    value: ''
   SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT: ''
   SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT: ''
   SALSA_CI_DPKG_BUILDPACKAGE_ARGS: ''
