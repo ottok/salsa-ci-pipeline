@@ -267,7 +267,7 @@ stages:
     # Warn if job artifacts size limit exceeded
     - |
       if [ "$(du -s | cut -f1)" -gt ${SALSA_CI_MAX_ARTIFACTS_SIZE} ]; then
-        echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MB which may prevent the job to succeed.\e[39m"
+        echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MiB which may prevent the job to succeed.\e[39m"
       fi
 
 .check-architecture-is-buildable: &check-architecture-is-buildable
@@ -488,7 +488,7 @@ stages:
   - |
     if [ "$(du -s | cut -f1)" -gt ${SALSA_CI_MAX_ARTIFACTS_SIZE} ]
     then
-      echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MB which may prevent the job to succeed.\e[39m"
+      echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MiB which may prevent the job to succeed.\e[39m"
     fi
   # Keep in mind that this last diagnostics line will run only if all lines
   # above returned exit code zero.

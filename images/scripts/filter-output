@@ -15,8 +15,8 @@ use IO::Select;
 
 my $DOT_EVERY_S = $ENV{DOT_EVERY_S} // 60;
 
-# The maximum output in the salsa environment is 4 MB, but we usually have some
-# output that is not covered by this script. Let's reserve 200 KB for that.
+# The maximum output in the salsa environment is 4 MiB, but we usually have some
+# output that is not covered by this script. Let's reserve 200 KiB for that.
 my $MAX_STDOUT_BYTES = $ENV{MAX_STDOUT_BYTES} // ((4 * 1024 * 1024) - (200 * 1024));
 my $HEAD_TAIL_PROPORTION = $ENV{HEAD_TAIL_PROPORTION} // 0.8;
 my $OUTPUT_PATH = $ENV{WORKING_DIR} // '.';
