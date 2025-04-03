@@ -279,7 +279,8 @@ clean images:
     UBUNTU_IMAGES_LIST: |
       arm64v8/base
       base
-    UBUNTU_RELEASE: oracular
+      generic_tests
+    UBUNTU_RELEASE: plucky
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - wget -O /usr/bin/reg https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64
