@@ -19,7 +19,7 @@ RUN \
     set -eux; \
     apt-get update; \
     apt-get upgrade -y; \
-    eatmydata apt-get install -y apt-file python3-debian; \
+    eatmydata apt-get install -y apt-file python3-debian zstd; \
     if [ -z "$(apt-cache search --names-only ^python3-junit\\.xml\$)" ]; then \
         eatmydata apt-get -y install python3-pip; \
         pip3 install junit-xml; \
