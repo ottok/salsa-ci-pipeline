@@ -151,6 +151,8 @@ variables:
       package to build twice in a row."
     value: 1
   SALSA_CI_DISABLE_MISSING_BREAKS: 1
+  SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME: 1
+  SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME_I386: 1
   SALSA_CI_DISABLE_RC_BUGS: 1
   SALSA_CI_IGNORED_BRANCHES: ''
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
@@ -158,6 +160,15 @@ variables:
   SALSA_CI_DISABLE_WRAP_AND_SORT: 1
   SALSA_CI_WRAP_AND_SORT_ARGS: ''
   SALSA_CI_DISABLE_EXTRACT_SOURCE: 1
+  SALSA_CI_FAKETIME_DATE:
+    description: "Simulated system date/time used when faketime injection is
+      enabled, defaults to one second past the Y2038 cutoff"
+    value: '2038-01-19 03:14:08'
+  SALSA_CI_FAKETIME_DATE_I386:
+    description: "Simulated system date/time used for i386 faketime jobs,
+      defaults to a pre-cutoff diagnostic date"
+    value: '2037-03-03 00:00:00'
+  SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION: 'false'
   # Use fastzip to fix https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/177
   FF_USE_FASTZIP: 'true'
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 0
@@ -397,6 +408,25 @@ stages:
     EOF
     fi
 
+  - |
+    if [ "$SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION" = 'true' ]; then
+      SALSA_CI_EFFECTIVE_FAKETIME_DATE="${SALSA_CI_FAKETIME_DATE}"
+      if [ "${BUILD_ARCH}" = 'i386' ] && [ -n "${SALSA_CI_FAKETIME_DATE_I386}" ]; then
+        SALSA_CI_EFFECTIVE_FAKETIME_DATE="${SALSA_CI_FAKETIME_DATE_I386}"
+      fi
+      SALSA_CI_LIBFAKETIME_SO_PATH="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/faketime/libfaketime.so.1"
+      cat <<EOF >> ~salsa-ci/.config/sbuild/config.pl
+      \$build_environment = {} if !defined \$build_environment;
+      \$build_environment->{'LD_PRELOAD'} = '${SALSA_CI_LIBFAKETIME_SO_PATH}';
+      \$build_environment->{'FAKETIME'} = '@${SALSA_CI_EFFECTIVE_FAKETIME_DATE}';
+    EOF
+      if [ -n "$SALSA_CI_BUILD_FAKETIME_NO_FAKE_STAT" ]; then
+        cat <<EOF >> ~salsa-ci/.config/sbuild/config.pl
+      \$build_environment->{'NO_FAKE_STAT'} = '${SALSA_CI_BUILD_FAKETIME_NO_FAKE_STAT}';
+    EOF
+      fi
+    fi
+
   - chown -R salsa-ci ~salsa-ci/.config/sbuild/
 
   - chown -R 'salsa-ci:' ${WORKING_DIR}
@@ -487,6 +517,10 @@ stages:
 .build-script-setup-build-command: &build-script-setup-build-command
   # Define the build command
   - export BUILD_COMMAND="sbuild --dist=${RELEASE} --no-clean-source ${HOST_ARCH_ARG} ${BUILD_TYPE_ARG} --build-dir=${WORKING_DIR}"
+  - |
+    if [ "$SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION" = 'true' ]; then
+      export BUILD_COMMAND="${BUILD_COMMAND} --add-depends=libfaketime"
+    fi
   - test -z "${DB_BUILD_PARAM}" || export BUILD_COMMAND="${BUILD_COMMAND} --debbuildopts=${DB_BUILD_PARAM}"
   - export BUILD_COMMAND="${BUILD_COMMAND} --no-run-lintian"
   - |
@@ -519,7 +553,10 @@ stages:
 .build-script-run-build-command: &build-script-run-build-command
   # Print the build environment
   - printenv | sort
-
+  - |
+    if [ "$SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION" = 'true' ]; then
+      eatmydata apt-get install --no-install-recommends -y libfaketime
+    fi
   # Build the package as user salsa-ci
   - su salsa-ci -c "${BUILD_COMMAND}" |& filter-output
   # Do not append any diagnostics or cleanup code here. The above build line
@@ -650,6 +687,24 @@ stages:
     - $SALSA_CI_RISCV_RUNNER_TAG
   rules:
     - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64 !~ /^(1|yes|true)$/
+
+.build-package-faketime: &build-package-faketime
+  extends:
+    - .build-package
+  variables:
+    SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION: 'true'
+  rules:
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME !~ /^(1|yes|true)$/
+
+.build-package-faketime-i386: &build-package-faketime-i386
+  extends:
+    - .build-package
+  image: $SALSA_CI_IMAGES_BUILD_I386
+  variables:
+    SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION: 'true'
+    BUILD_ARCH: 'i386'
+  rules:
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME_I386 !~ /^(1|yes|true)$/
 
 .build-source-only: &build-source-only
   before_script:

@@ -27,6 +27,12 @@ build ppc64el:
 build riscv64:
   extends: .build-package-riscv64
 
+"build (faketime)":
+  extends: .build-package-faketime
+
+"build i386 (faketime)":
+  extends: .build-package-faketime-i386
+
 build source:
   extends: .build-source-only
 
