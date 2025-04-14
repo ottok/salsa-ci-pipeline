@@ -253,7 +253,6 @@ clean images:
   services:
     - docker:20.10.12-dind
   variables:
-    # TODO: include here the arm64v8/ missing images
     IMAGES_LIST: |
       aptly
       autopkgtest
@@ -275,6 +274,11 @@ clean images:
       reprotest
       lintian
       generic_tests
+      arm64v8/blhc
+      arm64v8/lintian
+      arm64v8/piuparts
+      arm64v8/reprotest
+      arm64v8/autopkgtest
     RELEASE: sid
     UBUNTU_IMAGES_LIST: |
       arm64v8/base
