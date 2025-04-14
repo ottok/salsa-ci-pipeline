@@ -602,6 +602,11 @@ stages:
     - *build-script
   after_script:
     - *build-after-script
+  needs:
+    - job: extract-source
+      artifacts: true
+    - job: build
+      artifacts: true
 
 .test-build-package-any: &test-build-package-any
   extends:
