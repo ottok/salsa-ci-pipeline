@@ -367,8 +367,9 @@ stages:
   - apt_solver_opts=""
   - aspcud_version="1:0.0.0-0"
   # use aspcud solver for experimental and backports
+  # but not when cross building
   - |
-    case "$RELEASE" in
+    test -n "${HOST_ARCH}" || case "$RELEASE" in
     experimental | *-backports)
       eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
       apt_solver_opts="$apt_solver_opts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
