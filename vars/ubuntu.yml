@@ -11,7 +11,7 @@
 # Required variables overrides to run the tests on Ubuntu
 variables:
   VENDOR: 'ubuntu'
-  DEFAULT_RELEASE: 'plucky'
+  DEFAULT_RELEASE: 'questing'
   SALSA_CI_MIRROR: 'archive.ubuntu.com/ubuntu'
   SALSA_CI_IMAGES_LINTIAN: '${SALSA_CI_IMAGES}/lintian:${RELEASE}'
   SALSA_CI_DISABLE_BLHC: 1

@@ -237,11 +237,11 @@ ubuntu-test-pipeline:
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: plucky
+        IMAGE_VERSION: questing
         DEBIAN_IMAGE_VERSION: sid
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: plucky_${CI_COMMIT_REF_SLUG}
+        IMAGE_VERSION: questing_${CI_COMMIT_REF_SLUG}
         DEBIAN_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
   parallel:
     matrix:
@@ -285,7 +285,7 @@ clean images:
       arm64v8/base
       base
       generic_tests
-    UBUNTU_RELEASE: plucky
+    UBUNTU_RELEASE: questing
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - wget -O /usr/bin/reg https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64
