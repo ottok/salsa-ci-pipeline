@@ -889,7 +889,7 @@ stages:
     - mknod -m 666 ${CHROOT_PATH}/dev/urandom c 1 9
     - mkdir -vp /srv/local-apt-repository/ && cp -av ${WORKING_DIR}/*.deb /srv/local-apt-repository/ && /usr/lib/local-apt-repository/rebuild
     - mkdir -vp ${CHROOT_PATH}/etc-target/apt/sources.list.d ${CHROOT_PATH}/etc-target/apt/preferences.d
-    - cp -Hv /etc/apt/sources.list.d/local-apt-repository.list ${CHROOT_PATH}/etc-target/apt/sources.list.d/
+    - cp -Hv /etc/apt/sources.list.d/local-apt-repository.* ${CHROOT_PATH}/etc-target/apt/sources.list.d/
     - cp -aTLv /etc/apt/preferences.d  ${CHROOT_PATH}/etc-target/apt/preferences.d
     - cp -aTLv /srv/local-apt-repository ${CHROOT_PATH}/srv/local-apt-repository
     - cp -aTLv /var/lib/local-apt-repository/ ${CHROOT_PATH}/var/lib/local-apt-repository/
