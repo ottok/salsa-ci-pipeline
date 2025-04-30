@@ -907,7 +907,7 @@ stages:
     - PIUPARTS_DISTRIBUTION_ARG="--keep-sources-list";
     - |
       (for PACKAGE in $(ls ${WORKING_DIR}/*.deb); do
-        piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge --hard-link -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}
+        piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}
       done) | filter-output
   variables:
     # To make the repository available in this job,
