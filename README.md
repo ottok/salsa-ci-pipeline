@@ -55,6 +55,7 @@ include:
   * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
   * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
+  * [Piuparts arguments](#piuparts-arguments)
   * [Add extra arguments to piuparts](#add-extra-arguments-to-piuparts)
   * [Using automatically built apt repository](#using-automatically-built-apt-repository)
   * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
@@ -914,6 +915,16 @@ include:
 variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
 ```
+
+### Piuparts arguments
+
+The arguments used by the pipeline in the piuparts job relevant to testing the package are the same as used by https://piuparts.debian.org/ for the `sid` profile: `--scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge`.
+
+Note that https://piuparts.debian.org has different profiles with different arguments. The results for the profile `sid` are the ones exported to the release team for gating testing migrations. Arguments for other profiles can be found in the [piuparts.conf-template.pejacevic](https://salsa.debian.org/debian/piuparts/-/blob/develop/instances/piuparts.conf-template.pejacevic) file.
+
+For example, `sid-strict` (linked from the DDPO pages) has an [extra argument](https://salsa.debian.org/debian/piuparts/-/blob/develop/instances/piuparts.conf-template.pejacevic#L333) `--install-remove-install`.
+
+If you want to add arguments use the variable `SALSA_CI_PIUPARTS_ARGS`.
 
 ### Add extra arguments to piuparts
 
