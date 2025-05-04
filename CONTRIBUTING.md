@@ -32,9 +32,12 @@ For that:
    [salsa.debian.org/help/topics/authentication](https://salsa.debian.org/help/topics/authentication/index.md).
 
 1. After cloning, run [`git config --local commit.gpgsign true`](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work#_everyone_must_sign)
-   to ensure all your commits in this project are automatically signed. Debian
-   relies on OpenPGP to guarantee the authenticity and integrity of contributions
-   and code submissions to Salsa-CI will not be accepted if unsigned.
+   to ensure all your commits in this project are automatically signed. You are
+   also required to export/upload your public key to either the
+   [OpenPGP](https://keys.openpgp.org) or [Ubuntu](https://keyserver.ubuntu.com)
+   keyserver. Debian relies on OpenPGP to guarantee the authenticity and
+   integrity of contributions, and code submissions to Salsa-CI will not be
+   accepted if unsigned.
 
 1. Branch off to the default branch to work on a meaningfully named branch (e.g.
    `git checkout -b 193-build-twice`). If you are addressing an issue, it is
