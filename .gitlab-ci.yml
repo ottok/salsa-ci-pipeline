@@ -253,6 +253,13 @@ test-pipeline:
         SALSA_CI_DISABLE_APTLY: 1
         SALSA_CI_ENABLE_PIUPARTS: 1
         SALSA_CI_COMPONENTS: 'main contrib non-free'
+      # systemd's test-cgroup test fails during build time on unshare.
+      # Its pipeline definition for bookworm runs with DEB_BUILD_OPTIONS:
+      # "nocheck"
+      - PROJECT_URL: https://salsa.debian.org/systemd-team/systemd
+        PROJECT_TARGET_HEAD: debian/bookworm
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
