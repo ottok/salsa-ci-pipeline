@@ -831,11 +831,21 @@ stages:
     - /etc/init.d/lxc start
     - chown -R 'debci:' ${WORKING_DIR}
     - export debci_autopkgtest_args="${SALSA_CI_AUTOPKGTEST_ARGS}"
+
+    # Find the non-source .change files from artifacts from previous build job
+    - AUTOPKGTEST_INPUT_FILES=$(find $WORKING_DIR/ -regex ".*changes" ! -regex ".*_source.changes")
+    # Look out if the binary changes files contain the source package (at
+    # least, the .dsc)
+    - DSC_IN_CHANGES=$(grep -q -E '(\w+\s+){2,3}\w+\s[[:alnum:].+~\-]+_[[:alnum:].+~\-]+\.dsc$' ${AUTOPKGTEST_INPUT_FILES} ; echo $?)
+    # And include the .dsc file as input for autopkgtest
+    - if [ "${DSC_IN_CHANGES}" == 1 ] ; then AUTOPKGTEST_INPUT_FILES="${AUTOPKGTEST_INPUT_FILES} ${WORKING_DIR}/*.dsc" ; fi
+    - echo "${AUTOPKGTEST_INPUT_FILES}"
+
     - |
       ret=0
       # su's -P is required to have ownership over /dev/stderr, /dev/stdout and
       # /dev/stdin, and then fix #256
-      su -P debci -c "debci localtest $WORKING_DIR/*.changes --suite ${RELEASE} --logs-dir ${DEBCI_LOG_PATH}" || ret=$?
+      su -P debci -c "debci localtest ${AUTOPKGTEST_INPUT_FILES} --suite ${RELEASE} --logs-dir ${DEBCI_LOG_PATH}" || ret=$?
       case ",$SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS," in *",$ret,"*) exit 0;; esac
       exit $ret
     - rm -vrf ${WORKING_DIR}/debci/binaries
