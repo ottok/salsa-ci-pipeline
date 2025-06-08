@@ -980,7 +980,17 @@ stages:
       -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
     - apt-get update && eatmydata apt-get upgrade -y
     - echo "$NOTICE_MESSAGE"
-    - check_for_missing_breaks_replaces.py -o ${WORKING_DIR}/missing_breaks.xml --changes-file ${WORKING_DIR}/*.changes
+    - |
+      case "$RELEASE" in
+        # NOTE: Releases with devscripts >= 2.25.10 update this list as needed
+        experimental|unstable|trixie|questing)
+          eatmydata apt-get install --no-install-recommends -y devscripts
+          deb-check-file-conflicts -o ${WORKING_DIR}/missing_breaks.xml --changes-file ${WORKING_DIR}/*.changes
+          ;;
+        *)
+          check_for_missing_breaks_replaces.py -o ${WORKING_DIR}/missing_breaks.xml --changes-file ${WORKING_DIR}/*.changes
+          ;;
+      esac
   artifacts:
     reports:
       junit: ${WORKING_DIR}/missing_breaks.xml
