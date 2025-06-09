@@ -256,7 +256,6 @@ clean images:
   variables:
     IMAGES_LIST: |
       aptly
-      autopkgtest
       base
       arm32v5/base
       arm32v7/base
@@ -279,6 +278,8 @@ clean images:
       arm64v8/lintian
       arm64v8/piuparts
       arm64v8/reprotest
+    AUTOPKGTEST_IMAGES_LIST: |
+      autopkgtest
       arm64v8/autopkgtest
     RELEASE: sid
     UBUNTU_IMAGES_LIST: |
@@ -299,6 +300,10 @@ clean images:
     - |
       for IMAGE in $IMAGES_LIST; do
         reg --registry ${CI_REGISTRY} rm ${CI_PROJECT_PATH}/${IMAGE}:${RELEASE}${STAGING_TAG} || true
+      done
+    - |
+      for IMAGE in $AUTOPKGTEST_IMAGES_LIST; do
+        reg --registry ${CI_REGISTRY} rm ${CI_PROJECT_PATH}/${IMAGE}:${STABLE}${STAGING_TAG} || true
       done
     - |
       for IMAGE in $UBUNTU_IMAGES_LIST; do
