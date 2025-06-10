@@ -18,6 +18,8 @@ workflow:
         IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_SLUG}
         AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_SLUG}
     - when: always
+  auto_cancel:
+    on_new_commit: interruptible
 
 variables:
   DOCKER_TLS_CERTDIR: ""
@@ -253,6 +255,7 @@ clean images:
   image: docker:latest
   services:
     - docker:20.10.12-dind
+  interruptible: true
   variables:
     IMAGES_LIST: |
       aptly
