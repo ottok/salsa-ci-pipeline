@@ -115,6 +115,7 @@ variables:
   SALSA_CI_DPKG_BUILDPACKAGE_ARGS: ''
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: ''
   SALSA_CI_SBUILD_ARGS: ''
+  SALSA_CI_SBUILD_EXTRA_PACKAGE: ''
   DOCKER_TLS_CERTDIR: ""
   SALSA_CI_DISABLE_APTLY: 1
   SALSA_CI_DISABLE_AUTOPKGTEST_I386: 1
@@ -535,6 +536,8 @@ stages:
     esac
 
   - test -z "${SALSA_CI_SBUILD_ARGS}" || export BUILD_COMMAND="${BUILD_COMMAND} ${SALSA_CI_SBUILD_ARGS}"
+  # TODO: handle multiple (space separated) extra packages
+  - test -z "${SALSA_CI_SBUILD_EXTRA_PACKAGE}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-package=${SALSA_CI_SBUILD_EXTRA_PACKAGE}"
 
 
 .build-script-run-build-command: &build-script-run-build-command
