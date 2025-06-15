@@ -498,12 +498,6 @@ stages:
       sed -i -e "1 s/)/+${SALSA_CI_VERSION_BUMP_SUFFIX_NAME}+${DATESTAMP}+${CI_PIPELINE_IID})/" debian/changelog
     fi
 
-  # Define buildlog filename
-  - BUILD_LOGFILE_SOURCE=$(dpkg-parsechangelog -S Source)
-  - BUILD_LOGFILE_VERSION=$(dpkg-parsechangelog -S Version)
-  - BUILD_LOGFILE_VERSION=${BUILD_LOGFILE_VERSION#*:}
-  - BUILD_LOGFILE_ARCH=${HOST_ARCH:-${BUILD_ARCH}}
-  - BUILD_LOGFILE="${WORKING_DIR}/${BUILD_LOGFILE_SOURCE}_${BUILD_LOGFILE_VERSION}_${BUILD_LOGFILE_ARCH}.build"
 
 .build-script-setup-build-command: &build-script-setup-build-command
   # Define the build command
@@ -545,7 +539,7 @@ stages:
   - printenv | sort
 
   # Build the package as user salsa-ci
-  - su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} ${BUILD_COMMAND}" |& OUTPUT_FILENAME=${BUILD_LOGFILE} filter-output
+  - su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} ${BUILD_COMMAND}" |& filter-output
   # Do not append any diagnostics or cleanup code here. The above build line
   # often fails or timeouts, and the remaining 'script' section will not be
   # executed.
