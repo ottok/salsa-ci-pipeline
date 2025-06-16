@@ -130,6 +130,7 @@ variables:
   SALSA_CI_DISABLE_EXPORTORIG_FALLBACK:
     description: "Disable origtargz fallback when gbp export-orig has failed. Stop CI when gbp export-orig has failed."
     value: 0
+  SALSA_CI_VERSION_BUMP_SUFFIX_NAME: "salsaci"
   # GitLab runners execute `umask 0000` command by default which may lead to
   # failure of build jobs due to everything being world writeable.
   # This feature flag disables execution of `umask 0000`.
@@ -419,7 +420,7 @@ stages:
   - |
     if ! echo "$SALSA_CI_DISABLE_VERSION_BUMP" | grep -qE '^(1|yes|true)$'; then
       DATESTAMP=$(date +"%Y%m%d")
-      sed -i -e "1 s/)/+salsaci+${DATESTAMP}+${CI_PIPELINE_IID})/" debian/changelog
+      sed -i -e "1 s/)/+${SALSA_CI_VERSION_BUMP_SUFFIX_NAME}+${DATESTAMP}+${CI_PIPELINE_IID})/" debian/changelog
     fi
 
   # Generate ccache links

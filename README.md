@@ -1079,9 +1079,15 @@ as they encourage a minimal, consistent and deterministic style.
 
 ### Debian release bump
 
-By default, the build job will increase the release number using the +salsaci
-suffix. To disable this behavior set the `SALSA_CI_DISABLE_VERSION_BUMP` to 1,
-'yes' or 'true'.
+By default, the build job will increase the release number using the
+`+<suffix-name>+<datestamp>+<pipelineIID>` suffix (e.g.
+`+salsaci+20250616+23`).
+
+To disable this behavior set the `SALSA_CI_DISABLE_VERSION_BUMP` to `1`,
+`'yes'` or `'true'`.
+
+To change the suffix name used in the automatic version bump, set
+`SALSA_CI_VERSION_BUMP_SUFFIX_NAME` to the desired one.
 
 
 ## Distribution and release selection
