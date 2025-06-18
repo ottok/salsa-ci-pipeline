@@ -65,7 +65,9 @@ images-prod:
       # ci.debian.org runs stable + some packages from unstable
       - IMAGE_NAME:
           - autopkgtest
-        ARCH: amd64
+        ARCH:
+          - i386
+          - amd64
         RELEASE: $STABLE
       # build image, only on sid, all arches
       - IMAGE_NAME: build
@@ -196,7 +198,9 @@ image-staging:
         ARCH: i386
         RELEASE: sid
       - IMAGE_NAME: autopkgtest
-        ARCH: amd64
+        ARCH:
+          - i386
+          - amd64
         RELEASE: $STABLE
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
