@@ -260,6 +260,14 @@ test-pipeline:
         PROJECT_TARGET_HEAD: debian/bookworm
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
+      # hello 2.10-3 should be built for bookworm, even if its debian/changelog
+      # targets unstable. This test helps to verify that the RELEASE variable
+      # is honored by the pipeline.
+      - PROJECT_URL: https://salsa.debian.org/sanvila/hello
+        PROJECT_TARGET_HEAD: debian/2.10-3
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+        RELEASE: bookworm
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
