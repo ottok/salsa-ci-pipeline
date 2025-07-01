@@ -947,6 +947,9 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_MISSING_BREAKS !~ /^(1|yes|true)$/
   script:
+    - add_extra_repository.sh -v
+      -e "${SALSA_CI_EXTRA_REPOSITORY}" -k "${SALSA_CI_EXTRA_REPOSITORY_KEY}"
+      -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
     - apt-get update && eatmydata apt-get upgrade -y
     - echo "$NOTICE_MESSAGE"
     - check_for_missing_breaks_replaces.py -o ${WORKING_DIR}/missing_breaks.xml --changes-file ${WORKING_DIR}/*.changes
