@@ -833,6 +833,7 @@ stages:
       if dpkg --compare-versions "$timeout_version" ge 8.29; then
         export SALSA_CI_BUILD_TIMEOUT_ARGS=" -v ${SALSA_CI_BUILD_TIMEOUT_ARGS}"
       fi
+    # disable user_group and domain_host variations due to reprotest bug #1108550
     - |
       su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} reprotest \
         --min-cpus $(nproc --all) \
@@ -840,7 +841,7 @@ stages:
         --verbosity=2  \
         --vary=-time \
         --vary=-build_path \
-        --vary=user_group.available+=salsa-ci,domain_host.use_sudo=1 \
+        --vary=-user_group,-domain_host \
         ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS:+--append-build-command=${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}} \
         ${SALSA_CI_REPROTEST_ARGS} \
         ${WORKING_DIR}/*.dsc \
