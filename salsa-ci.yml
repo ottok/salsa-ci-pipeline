@@ -749,9 +749,13 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_BLHC !~ /^(1|yes|true)$/
   script:
-    - blhc --debian --line-numbers --color ${SALSA_CI_BLHC_ARGS} ${WORKING_DIR}/*.build || [ $? -eq 1 ]
+    - blhc --debian --line-numbers --color ${SALSA_CI_BLHC_ARGS} ${WORKING_DIR}/*.build |& OUTPUT_FILENAME=${WORKING_DIR}/blhc.log filter-output || [ $? -eq 1 ]
   variables:
     GIT_STRATEGY: none
+  artifacts:
+    when: always
+    paths:
+      - ${WORKING_DIR}/blhc.log
   needs:
     - job: build
       artifacts: true
@@ -910,12 +914,16 @@ stages:
     - |
       (for PACKAGE in $(ls ${WORKING_DIR}/*.deb); do
         piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}
-      done) | filter-output
+      done) |& OUTPUT_FILENAME=${WORKING_DIR}/piuparts.log filter-output
   variables:
     # To make the repository available in this job,
     # so SALSA_CI_PIUPARTS_{PRE,POST}_INSTALL_SCRIPT
     # can refer to committed scripts
     GIT_STRATEGY: fetch
+  artifacts:
+    when: always
+    paths:
+      - ${WORKING_DIR}/piuparts.log
   needs:
     - job: build
       artifacts: true
