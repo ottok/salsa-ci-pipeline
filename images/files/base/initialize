@@ -14,7 +14,7 @@ set -xe
 fix_apt_sources_for_archived_releases() {
     # Only for Debian's archived releases
     # This is used by the LTS/ELTS team fork
-    if ! grep -E -q "^deb .* (jessie|stretch) " /etc/apt/sources.list; then
+    if ! grep -E -q "^deb .* (jessie|stretch|buster) " /etc/apt/sources.list; then
 	return
     fi
 
