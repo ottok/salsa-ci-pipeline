@@ -852,7 +852,10 @@ stages:
         ${SALSA_CI_REPROTEST_ARTIFACT_PATTERN:+\"$SALSA_CI_REPROTEST_ARTIFACT_PATTERN\"} \
         -- null" |& OUTPUT_FILENAME=reprotest.log filter-output
   variables:
-    GIT_STRATEGY: none
+    # Make source available in this job,
+    # So SALSA_CI_EXTRA_REPOSITORY, SALSA_CI_EXTRA_REPOSITORY_KEY
+    # can refer to files located in the source tree
+    GIT_STRATEGY: fetch
   needs:
     - job: build
       artifacts: true
