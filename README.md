@@ -656,6 +656,12 @@ Expand the section on Variables and add a **File** type variable:
 
 The apt source should reference `sid` or `unstable`.
 
+Repositories can be also be added by defining the repos in files inside the debian folder and reference them with
+
+> Key: SALSA_CI_EXTRA_REPOSITORY
+
+> Value: '${CI_PROJECT_DIR}/debian/salsa-ci-extra-repos.list'
+
 Many `contrib` and `non-free` packages only build on `amd64`, so the
 32-bit x86 build (`build i386`) should be disabled. (refer to the
 [Disabling building on i386](#Disabling-building-on-i386) Section).
