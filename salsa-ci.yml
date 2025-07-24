@@ -140,6 +140,9 @@ variables:
   # changelog, use this release. This var is added to enable changing the default
   # release to an ubuntu release in the Ubuntu pipeline.
   DEFAULT_RELEASE: 'unstable'
+  SALSA_CI_ENABLE_STATS:
+    description: "Experimental feature to send statistics to https://44yu5h.pages.debian.net/ci-dashboard"
+    value: 0
 
 stages:
   - provisioning
@@ -197,6 +200,20 @@ stages:
     max: 1
     when:
       - script_failure
+  before_script:
+    # Experimental: Salsa CI statistics (See #413)
+    - |
+      if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && [ "$CI_PROJECT_VISIBILITY" = 'public' ]; then
+        curl --connect-timeout 30 --max-time 90 -X PUT 'https://salsa-ci-dashboard-backend.onrender.com/pipelines' \
+          -H 'Content-Type: application/json' \
+          -d @- << EOF || true
+        {
+          "id": $CI_PIPELINE_ID,
+          "project_id": $CI_PROJECT_ID,
+          "created_at": "$CI_PIPELINE_CREATED_AT"
+        }
+        EOF
+      fi
   script:
     - mkdir -vp ${WORKING_DIR}
 

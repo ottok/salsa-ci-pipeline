@@ -31,6 +31,7 @@ include:
   * [Allow pipeline to run when git tags are pushed](#allow-pipeline-to-run-when-git-tags-are-pushed)
   * [Setting variables on pipeline creation](#setting-variables-on-pipeline-creation)
   * [Run only selected jobs](#run-only-selected-jobs)
+  * [Experimental: Enable Salsa CI statistics](#experimental-enable-salsa-ci-statistics)
 * [Customize builds and build dependencies](#customize-builds-and-build-dependencies)
   * [Extend the job timeout](#extend-the-job-timeout)
   * [Decrease build timeout to leave margin for cache upload](#decrease-build-timeout-to-leave-margin-for-cache-upload)
@@ -413,6 +414,24 @@ jobs by deleting any of the definitions above.
 As new changes are expected to happen from time to time, we **firmly recommend
 NOT to do define all jobs manually**. Most of the time it is better to simply
 [select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline).
+
+### Experimental: Enable Salsa CI statistics
+
+To help monitor and improve Salsa CI, you can configure the pipeline to report basic
+pipeline identifiers, such as the pipeline ID, project ID, and creation timestamp for
+public projects. This is done by setting the `SALSA_CI_ENABLE_STATS` variable:
+
+```yaml
+variables:
+  SALSA_CI_ENABLE_STATS: 1
+```
+
+This data is sent to the Salsa CI Dashboard backend and helps monitor the pipeline
+usage, health, and long-term trends. The statistics will show up at
+[GitLab Pages at 44yu5h/ci-dashboard](https://44yu5h.pages.debian.net/ci-dashboard),
+which currently hosts the proof-of-concept dashboard.
+
+For more details, see [#413](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/413)
 
 
 ## Customize builds and build dependencies
