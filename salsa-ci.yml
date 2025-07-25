@@ -206,13 +206,13 @@ stages:
       if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && [ "$CI_PROJECT_VISIBILITY" = 'public' ]; then
         curl --connect-timeout 30 --max-time 90 -X PUT 'https://salsa-ci-dashboard-backend.onrender.com/pipelines' \
           -H 'Content-Type: application/json' \
-          -d @- << EOF || true
+          -d @- <<-EOF || true
         {
           "id": $CI_PIPELINE_ID,
           "project_id": $CI_PROJECT_ID,
           "created_at": "$CI_PIPELINE_CREATED_AT"
         }
-        EOF
+      EOF
       fi
   script:
     - mkdir -vp ${WORKING_DIR}
