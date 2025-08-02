@@ -28,5 +28,13 @@ RUN \
     fi; \
     :
 
+# install licenserecon
+RUN \
+    set -eux; \
+    apt-get update; \
+    apt-get upgrade -y; \
+    eatmydata apt-get install -y licenserecon; \
+    :
+
 COPY scripts/check_rc_bugs.py /usr/local/bin/
 COPY scripts/check_for_missing_breaks_replaces.py /usr/local/bin/

@@ -60,6 +60,7 @@ include:
   * [Add extra arguments to piuparts](#add-extra-arguments-to-piuparts)
   * [Using automatically built apt repository](#using-automatically-built-apt-repository)
   * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
+  * [Add extra arguments to licenserecon](#add-extra-arguments-to-licenserecon)
   * [Debian release bump](#debian-release-bump)
 * [Distribution and release selection](#distribution-and-release-selection)
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
@@ -1101,6 +1102,36 @@ change over time
 We suggest to consider `-a --wrap-always`, `-s --short-indent`, `-b
 --sort-binary-packages`, `-k --keep-first`, and `-t --trailing-comma`
 as they encourage a minimal, consistent and deterministic style.
+
+### Enable licenserecon job
+
+The [licenserecon](https://salsa.debian.org/debian/licenserecon) checks for
+mismatches between `debian/copyright` and detected licenses using
+`licensecheck`.
+
+To enable this check, either run your pipeline manually with
+`SALSA_CI_DISABLE_LICENSERECON` set to anything different than 1, 'yes' or
+'true', or by adding the following to your `debian/salsa-ci.yml`:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_LICENSERECON: 0
+```
+
+You also can customize the behavior of licenserecon by setting the
+`SALSA_CI_LICENSERECON_ARGS` variable:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_LICENSERECON: 0
+  SALSA_CI_LICENSERECON_ARGS: '--spdx'
+```
+
+False positives may occur (e.g., due to spelling differences or complex
+licensing). To exclude files or directories, create a `debian/lrc.config` file.
+See
+[lrc.config](https://salsa.debian.org/debian/licenserecon/-/blob/main/lrc.config)
+for reference.
 
 ### Debian release bump
 
