@@ -36,7 +36,7 @@ include:
   * [Extend the job timeout](#extend-the-job-timeout)
   * [Decrease build timeout to leave margin for cache upload](#decrease-build-timeout-to-leave-margin-for-cache-upload)
   * [Disabling building on i386](#disabling-building-on-i386)
-  * [Enable building on ARM and RISC-V](#enable-building-on-arm-and-risc-v)
+  * [Enable building on ARM, RISC-V and PPC64EL](#enable-building-on-arm-risc-v-and-ppc64el)
   * [Add more architectures or CI runners](#add-more-architectures-or-ci-runners)
   * [Testing build of arch=any and arch=all packages](#testing-build-of-archany-and-archall-packages)
   * [Testing build profiles](#testing-build-profiles)
@@ -491,15 +491,17 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
 ```
 
-### Enable building on ARM and RISC-V
+### Enable building on ARM, RISC-V and PPC64EL
 
-Salsa CI includes builds jobs for armel, armhf, arm64 and riscv64. They are
-disabled by default, but can be enabled if a project has a GitLab runner on
-arm64 hardware available and tagged `arm64`, or on RISC-V tagged `riscv64`.
+Salsa CI includes builds jobs for armel, armhf, arm64, riscv64 and
+ppc64el. They are disabled by default, but can be enabled if a project
+has a GitLab runner for corresponding hardware and tag.  Runners on
+arm64 hardware should be tagged `arm64`, RISC-V runners tagged
+`riscv64`, and PPC64EL runners tagged `ppc64el`.
 
-If you know you have such a runner available, you can activate ARM or RISC-V
-build respectively by setting the related variables to anything different than
-1, 'yes' or 'true':
+If you know you have such a runner available, you can activate these
+builds respectively by setting the related variables to anything
+different than 1, 'yes' or 'true':
 
 ```yaml
 variables:
@@ -507,14 +509,15 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
   SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 0
+  SALSA_CI_DISABLE_BUILD_PACKAGE_PPC64EL: 0
 ```
 
 All Debian Developers can enable `salsaci-arm64-runner-01.debian.net` or
 `salsaci riscv64 runner 01` in any project.
 
-Contributors who fork the project might not have runners tagged `arm64` or
-`riscv64` in their project. The example below illustrates how to limit the
-special build jobs to the `debian` project name space with extra `rules`:
+Contributors who fork the project might not have these runners in
+their project. The example below illustrates how to limit the special
+build jobs to the `debian` project name space with extra `rules`:
 
 ```yaml
 build arm64:

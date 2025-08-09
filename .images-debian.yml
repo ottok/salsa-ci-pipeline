@@ -146,6 +146,34 @@ images-prod-arm:
       when: always
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
+# PPC64EL images built on main branch
+# We need a separate matrix. If we place these build jobs on images-prod,
+# we exceed the maximum jobs limit by matrix (50)
+images-prod-ppc64el:
+  stage: build
+  extends: .build_template
+  tags:
+    - $SALSA_CI_PPC64EL_RUNNER_TAG
+  parallel:
+    matrix:
+      - IMAGE_NAME: base
+        ARCH:
+          - ppc64le
+        RELEASE:
+          - trixie
+          - bookworm
+          - sid
+          - experimental
+      - IMAGE_NAME: build
+        ARCH:
+          - ppc64le
+        RELEASE: sid
+  when: manual
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
 # RISC-V images built on main branch
 # We need a separate matrix. If we place the RISC-V build jobs on images-prod,
 # we exceed the maximum jobs limit by matrix (50)
@@ -242,6 +270,30 @@ image-staging-arm:
         RELEASE: sid
   # While there isn't an ARM shared runner available, let's allow these images
   # to fail to don't block pipelines on MRs.
+  allow_failure: true
+  when: manual
+  rules:
+    - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/ && $BUILD_ALL_IMAGES !~ /^(1|yes|true)$/
+      when: always
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: never
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+image-staging-ppc64el:
+  extends: .build_template
+  stage: build
+  tags:
+    - $SALSA_CI_PPC64EL_RUNNER_TAG
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - base
+          - build
+        ARCH:
+          - ppc64le
+        RELEASE: sid
+  # While there isn't an PPC64EL shared runner available, let's allow these
+  # images to fail to not block pipelines on MRs.
   allow_failure: true
   when: manual
   rules:
