@@ -40,7 +40,7 @@ variables:
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
-  STABLE: "bookworm"
+  STABLE: "trixie"
   # enable full command logging in job logs
   FF_SCRIPT_SECTIONS: "true"
 
