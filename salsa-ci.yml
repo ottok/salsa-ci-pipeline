@@ -1098,3 +1098,6 @@ stages:
     - job: build arm64
       artifacts: true
       optional: true
+    - job: build riscv64
+      artifacts: true
+      optional: true
