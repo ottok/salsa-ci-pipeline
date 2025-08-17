@@ -98,14 +98,13 @@ images-prod-arm:
           - arm64/v8
         RELEASE:
           - stretch
-          - bullseye
           - bookworm
           - bookworm-backports
           - trixie
           - sid
           - experimental
 
-      # Temporarily disable base:buster armel(arm32v5).
+      # Dont't build for armel(arm32v5).
       # Related issue: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/355#note_492936
       - IMAGE_NAME: base
         ARCH:
@@ -113,6 +112,7 @@ images-prod-arm:
           - arm64/v8
         RELEASE:
           - buster
+          - bullseye
 
       # Images in sid only arm64
       - IMAGE_NAME:
