@@ -309,7 +309,7 @@ stages:
       echo "### No binary package matched: '${pattern}'."
       echo "### Stopping ${CI_JOB_NAME} test."
       echo "###########################################"
-      echo "You should disable this job via:"
+      echo "This is harmless (the job succeeds), but if you prefer hiding this job, you could disable it via:"
       echo "variables:"
       if [ -n "${HOST_ARCH}" ]; then
         echo "  SALSA_CI_DISABLE_CROSSBUILD_${HOST_ARCH^^}: '1'"
