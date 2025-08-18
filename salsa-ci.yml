@@ -211,6 +211,7 @@ stages:
 
 # try to autodetect the target distribution
 .get-target-distribution: &get-target-distribution
+  - export RELEASE_FROM_CHANGELOG
   - dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED)
   # if dist is UNRELEASED, try to use 'dch' to guess a sane default.
   # Use questing by default if VENDOR's value is `ubuntu`.
@@ -233,7 +234,6 @@ stages:
   - test -n "${dist}" || dist=$DEFAULT_RELEASE
 
   - echo "RELEASE_FROM_CHANGELOG=${dist}" | tee ${CI_PROJECT_DIR}/salsa.env
-
 
 .provisioning-extract-source: &provisioning-extract-source
   stage: provisioning
@@ -279,6 +279,11 @@ stages:
   - unset pattern
 
 .build-before-script: &build-before-script
+  # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
+  - export RELEASE_FROM_CHANGELOG=$(grep RELEASE_FROM_CHANGELOG ${CI_PROJECT_DIR}/salsa.env | awk -F '=' '{print $2}')
+  - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
+  - test -n "${RELEASE}" || RELEASE=${RELEASE_FROM_CHANGELOG}
+
   - apt-get update && eatmydata apt-get upgrade -y
 
   - |
@@ -288,8 +293,6 @@ stages:
     fi
 
   - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
-
-  - *get-target-distribution
 
   - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
 
@@ -597,8 +600,7 @@ stages:
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
   script:
-    # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
-    - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
+    - *get-target-distribution
     - *build-before-script
     - *build-script
   after_script:
@@ -732,6 +734,7 @@ stages:
     - .build-definition
   stage: test
   script:
+    - *get-target-distribution
     - *build-before-script
     - LOCAL_ARCH=$(dpkg --print-architecture)
     - *build-script
@@ -771,6 +774,7 @@ stages:
     - .build-definition
   script:
     - *check-build-package-profiles
+    - *get-target-distribution
     - *build-before-script
     - *build-script
   after_script:
