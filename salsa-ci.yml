@@ -142,7 +142,7 @@ variables:
   DEFAULT_RELEASE: 'unstable'
   SALSA_CI_ENABLE_STATS:
     description: "Experimental feature to send statistics to https://44yu5h.pages.debian.net/ci-dashboard"
-    value: 0
+    value: 1
 
 stages:
   - provisioning
