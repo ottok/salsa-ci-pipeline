@@ -1140,6 +1140,8 @@ The following releases are available:
 * bullseye
 * bookworm
 * bookworm-backports
+* trixie
+* trixie-backports
 * stable
 * testing
 * unstable

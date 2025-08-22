@@ -19,6 +19,7 @@ variables:
   - bookworm
   - bookworm-backports
   - trixie
+  - trixie-backports
   - sid
   - experimental
 
@@ -53,6 +54,7 @@ images-prod:
           - bookworm
           - bookworm-backports
           - trixie
+          - trixie-backports
           - sid
       # Images in sid only amd64
       - IMAGE_NAME:
@@ -101,6 +103,7 @@ images-prod-arm:
           - bookworm
           - bookworm-backports
           - trixie
+          - trixie-backports
           - sid
           - experimental
 
