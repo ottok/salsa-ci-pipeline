@@ -49,6 +49,7 @@ variables:
   # Set to true to build the package twice
   BUILD_TWICE: 'false'
   SALSA_CI_MIRROR: 'http://deb.debian.org/debian'
+  SALSA_CI_SECURITY_MIRROR: 'http://deb.debian.org/debian-security'
   SALSA_CI_DEBIAN_ARCHIVE_MIRROR: 'http://archive.debian.org/debian'
   SALSA_CI_COMPONENTS: ''
   SALSA_CI_IMAGES: 'registry.salsa.debian.org/salsa-ci-team/pipeline'
@@ -1232,6 +1233,59 @@ stages:
   variables:
     GIT_STRATEGY: none
   needs: []
+
+.setup_chdist: &setup_chdist
+  - apt-get update && eatmydata apt-get install --no-install-recommends -y distro-info
+  - CHDIST_NAME="archive-${RELEASE}"
+  - |
+    STABLE="$(distro-info --stable)"
+    OLDSTABLE="$(distro-info --oldstable)"
+    EXTRAS=""
+
+    case "$RELEASE" in
+      experimental)
+        BASE="unstable"
+        EXTRAS="experimental"
+        ;;
+      *-backports)
+        BASE="${RELEASE%-backports}"   # strip suffix
+        EXTRAS="${BASE}-updates ${BASE}-security ${BASE}-backports"
+        ;;
+      *)
+        BASE="$RELEASE"
+        # for (old)stable codenames, include updates/security
+        if [ "$BASE" = "$STABLE" ] || [ "$BASE" = "$OLDSTABLE" ]; then
+          EXTRAS="${BASE}-updates ${BASE}-security"
+        fi
+        ;;
+    esac
+
+    chdist create "$CHDIST_NAME" "$SALSA_CI_MIRROR" "$BASE" main
+
+    for SUITE in $EXTRAS; do
+      REPO="$SALSA_CI_MIRROR"
+      case "$SUITE" in
+        *-security)
+          type=security
+          REPO="$SALSA_CI_SECURITY_MIRROR"
+          ;;
+        *-updates)
+          type=updates
+          ;;
+        *-backports)
+          type=backports
+          ;;
+        experimental)
+          type=experimental
+          ;;
+      esac
+
+      cat > "${HOME}/.chdist/${CHDIST_NAME}/etc/apt/sources.list.d/${type}.list" <<EOF
+    deb ${REPO} ${SUITE} main
+    deb-src ${REPO} ${SUITE} main
+    EOF
+    done
+  - chdist "$CHDIST_NAME" apt-get update
 
 .publish-aptly: &publish-aptly
   stage: publish
