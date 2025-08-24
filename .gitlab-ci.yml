@@ -274,6 +274,12 @@ test-pipeline:
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
         SALSA_CI_DISABLE_APTLY: 1
+      - PROJECT_URL: https://salsa.debian.org/ruby-team/ruby-graphql
+        PROJECT_TARGET_HEAD: debian/latest
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+        SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
+        SALSA_CI_ENABLE_BUILD_REVERSE_DEPENDENCIES: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
