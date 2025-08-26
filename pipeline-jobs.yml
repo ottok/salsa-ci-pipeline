@@ -67,6 +67,9 @@ rc-bugs:
 wrap-and-sort:
   extends: .test-wrap-and-sort
 
+licenserecon:
+  extends: .test-licenserecon
+
 aptly:
   extends: .publish-aptly
 

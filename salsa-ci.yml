@@ -94,6 +94,7 @@ variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: ''
   DOCKER_TLS_CERTDIR: ""
   SALSA_CI_DISABLE_APTLY: 1
+  SALSA_CI_DISABLE_LICENSERECON: 1
   # These three ARM-related build jobs are disabled by default while there
   # isn't an ARM shared runner available
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 1
@@ -1024,6 +1025,23 @@ stages:
     - cp -av ${SOURCE_DIR}/debian wrap-and-sort/
     - (cd wrap-and-sort && wrap-and-sort ${SALSA_CI_WRAP_AND_SORT_ARGS})
     - diff -ur ${SOURCE_DIR}/debian/ wrap-and-sort/debian/
+  variables:
+    GIT_STRATEGY: none
+  needs:
+    - job: extract-source
+      artifacts: true
+
+.test-licenserecon: &test-licenserecon
+  stage: test
+  image: $SALSA_CI_IMAGES_GENERIC_TESTS
+  rules:
+    - if: $SALSA_CI_ENABLE_LICENSERECON =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_LICENSERECON !~ /^(1|yes|true)$/
+  script:
+    - cd ${WORKING_DIR}/${SOURCE_DIR}
+    - lrc ${SALSA_CI_LICENSERECON_ARGS}
   variables:
     GIT_STRATEGY: none
   needs:
