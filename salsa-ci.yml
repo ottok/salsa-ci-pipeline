@@ -59,7 +59,12 @@ variables:
   SALSA_CI_IMAGES_GENERIC_TESTS: ${SALSA_CI_IMAGES}/generic_tests:${RELEASE}
   SALSA_CI_IMAGES_BLHC: ${SALSA_CI_IMAGES}/blhc:${RELEASE}
   SALSA_CI_IMAGES_GBP: ${SALSA_CI_IMAGES}/gbp:latest
-  SALSA_CI_IMAGES_LINTIAN: ${SALSA_CI_IMAGES}/lintian:latest
+  # Lintian evolves in lockstep with the Debian release it is published in, i.e.
+  # the Lintian version in Debian Trixie specifically tests requirements that a
+  # package in Trixie is expected to meet. When preparing updates to older
+  # Debian releases, the Lintian version from those releases should be used.
+  # See also Bug#1100539.
+  SALSA_CI_IMAGES_LINTIAN: ${SALSA_CI_IMAGES}/lintian:${RELEASE}
   SALSA_CI_IMAGES_PIUPARTS: ${SALSA_CI_IMAGES}/piuparts:latest
   SALSA_CI_IMAGES_REPROTEST: ${SALSA_CI_IMAGES}/reprotest:latest
   SALSA_CI_ENABLE_ATOMIC_REPROTEST:
