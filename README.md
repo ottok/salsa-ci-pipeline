@@ -429,8 +429,8 @@ variables:
 
 This data is sent to the Salsa CI Dashboard backend and helps monitor the pipeline
 usage, health, and long-term trends. The statistics will show up at
-[GitLab Pages at 44yu5h/ci-dashboard](https://44yu5h.pages.debian.net/ci-dashboard),
-which currently hosts the proof-of-concept dashboard.
+[salsa-status.debian.net](https://salsa-status.debian.net),
+where the dashboard is hosted.
 
 For more details, see [#413](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/413)
 

@@ -142,7 +142,7 @@ variables:
   # release to an ubuntu release in the Ubuntu pipeline.
   DEFAULT_RELEASE: 'unstable'
   SALSA_CI_ENABLE_STATS:
-    description: "Experimental feature to send statistics to https://44yu5h.pages.debian.net/ci-dashboard"
+    description: "Experimental feature to send statistics to https://salsa-status.debian.net"
     value: 1
 
 stages:
@@ -205,7 +205,7 @@ stages:
     # Experimental: Salsa CI statistics (See #413)
     - |
       if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && [ "$CI_PROJECT_VISIBILITY" = 'public' ]; then
-        curl --connect-timeout 30 --max-time 90 -X PUT 'https://salsa-ci-dashboard-backend.onrender.com/pipelines' \
+        curl --connect-timeout 30 --max-time 90 -X PUT 'https://salsa-status.debian.net/api/v1/pipelines' \
           -H 'Content-Type: application/json' \
           -d @- <<-EOF || true
         {
