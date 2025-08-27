@@ -1033,13 +1033,14 @@ stages:
 
 .test-licenserecon: &test-licenserecon
   stage: test
-  image: $SALSA_CI_IMAGES_GENERIC_TESTS
+  image: ${SALSA_CI_IMAGES}/generic_tests:unstable
   rules:
     - if: $SALSA_CI_ENABLE_LICENSERECON =~ /^(1|yes|true)$/
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_LICENSERECON !~ /^(1|yes|true)$/
   script:
+    - apt-get update && eatmydata apt-get install --no-install-recommends -y licenserecon
     - cd ${WORKING_DIR}/${SOURCE_DIR}
     - lrc ${SALSA_CI_LICENSERECON_ARGS}
   variables:
