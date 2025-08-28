@@ -55,6 +55,7 @@ include:
   * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
   * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
   * [Disabling autopkgtest on i386](#disabling-autopkgtest-on-i386)
+  * [Enable autopkgtest on ARM](#enable-autopkgtest-on-arm)
   * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
   * [Piuparts arguments](#piuparts-arguments)
@@ -954,6 +955,26 @@ variables block. For example:
 variables:
   SALSA_CI_DISABLE_AUTOPKGTEST_I386: 1
 ```
+
+### Enable autopkgtest on ARM
+
+Salsa CI provides autopkgtest jobs for armel, armhf and arm64. These jobs are
+disabled by default, but can be enabled if your project has access to a GitLab
+runner on ARM hardware (typically arm64) tagged with `arm64`.
+
+To enable the ARM autopkgtest jobs, set the corresponding disable variables to
+any value other than 1, 'yes', or 'true':
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_AUTOPKGTEST_ARM64: 0
+  SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL: 0
+  SALSA_CI_DISABLE_AUTOPKGTEST_ARMHF: 0
+```
+
+Debian Maintainers (DMs) and Debian Developers (DDs) can also use the shared
+runner `salsaci-arm64-runner-01.debian.net`, which is available for any
+project.
 
 ### Piuparts arguments
 
