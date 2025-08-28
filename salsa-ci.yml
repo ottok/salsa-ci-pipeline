@@ -50,6 +50,7 @@ variables:
   # The autopkgtest:latest image is based on stable, but includes packages from
   # unstable. See images/containerfiles/autopkgtest.0
   SALSA_CI_IMAGES_AUTOPKGTEST: ${SALSA_CI_IMAGES}/autopkgtest
+  SALSA_CI_IMAGES_AUTOPKGTEST_I386: ${SALSA_CI_IMAGES}/i386/autopkgtest
   SALSA_CI_IMAGES_BASE: ${SALSA_CI_IMAGES}/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_I386: ${SALSA_CI_IMAGES}/i386/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_ARM32V5: ${SALSA_CI_IMAGES}/arm32v5/base:${RELEASE}
@@ -716,9 +717,8 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_CROSSBUILD_ARM64 !~ /^(1|yes|true)$/
 
-.test-autopkgtest: &test-autopkgtest
+.autopkgtest-definition: &autopkgtest-definition
   stage: test
-  image: $SALSA_CI_IMAGES_AUTOPKGTEST
   rules:
     - if: $SALSA_CI_ENABLE_AUTOPKGTEST =~ /^(1|yes|true)$/
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
@@ -762,6 +762,20 @@ stages:
   needs:
     - job: build
       artifacts: true
+
+.test-autopkgtest: &test-autopkgtest
+  extends: .autopkgtest-definition
+  image: $SALSA_CI_IMAGES_AUTOPKGTEST
+
+.test-autopkgtest-i386: &test-autopkgtest-i386
+  extends: .autopkgtest-definition
+  image: $SALSA_CI_IMAGES_AUTOPKGTEST_I386
+  rules:
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_I386 =~ /^(1|yes|true)$/
+      when: never
+    - when: on_success
 
 .test-blhc: &test-blhc
   stage: test

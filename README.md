@@ -54,6 +54,7 @@ include:
   * [Customize Lintian](#customize-lintian)
   * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
   * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
+  * [Disabling autopkgtest on i386](#disabling-autopkgtest-on-i386)
   * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
   * [Piuparts arguments](#piuparts-arguments)
@@ -940,6 +941,18 @@ include:
 
 variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
+```
+
+### Disabling autopkgtest on i386
+
+The `autopkgtest i386` job run the autopkgtest packages against the 32-bit x86
+architecture. If you need to skip this job, set the variable
+`SALSA_CI_DISABLE_AUTOPKGTEST_I386` to `1`, '`yes`' or '`true`' in the
+variables block. For example:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_AUTOPKGTEST_I386: 1
 ```
 
 ### Piuparts arguments

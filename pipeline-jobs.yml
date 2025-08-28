@@ -52,6 +52,9 @@ lintian:
 autopkgtest:
   extends: .test-autopkgtest
 
+autopkgtest i386:
+  extends: .test-autopkgtest-i386
+
 blhc:
   extends: .test-blhc
 
