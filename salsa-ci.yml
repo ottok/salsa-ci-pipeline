@@ -59,6 +59,7 @@ variables:
   SALSA_CI_IMAGES_BASE_ARM32V5: ${SALSA_CI_IMAGES}/arm32v5/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_ARM32V7: ${SALSA_CI_IMAGES}/arm32v7/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_ARM64: ${SALSA_CI_IMAGES}/arm64v8/base:${RELEASE}
+  SALSA_CI_IMAGES_BASE_PPC64LE: ${SALSA_CI_IMAGES}/ppc64le/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_RISCV64: ${SALSA_CI_IMAGES}/riscv64/base:${RELEASE}
   SALSA_CI_IMAGES_GENERIC_TESTS: ${SALSA_CI_IMAGES}/generic_tests:${RELEASE}
   SALSA_CI_IMAGES_BLHC: ${SALSA_CI_IMAGES}/blhc:${RELEASE}
@@ -109,7 +110,8 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 1
-  # And likewise for the RISC-V build job:
+  # And likewise for these build jobs:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_PPC64EL: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_PROFILES: 1
   # ARM autopkgtest jobs disabled by default (no shared runner)
@@ -140,6 +142,7 @@ variables:
   PYTHONIOENCODING: utf-8
   FF_SCRIPT_SECTIONS: "true"  # enable full command logging in job logs
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
+  SALSA_CI_PPC64EL_RUNNER_TAG: "ppc64el"
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
   SALSA_CI_DISABLE_EXPORTORIG_FALLBACK:
     description: "Disable origtargz fallback when gbp export-orig has failed. Stop CI when gbp export-orig has failed."
@@ -598,6 +601,17 @@ stages:
     - $SALSA_CI_ARM_RUNNER_TAG
   rules:
     - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64 !~ /^(1|yes|true)$/
+
+.build-package-ppc64el: &build-package-ppc64el
+  extends:
+    - .build-package
+  image: $SALSA_CI_IMAGES_BASE_PPC64LE
+  variables:
+    BUILD_ARCH: 'ppc64el'
+  tags:
+    - $SALSA_CI_PPC64EL_RUNNER_TAG
+  rules:
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_PPC64EL !~ /^(1|yes|true)$/
 
 .build-package-riscv64: &build-package-riscv64
   extends:
@@ -1192,6 +1206,9 @@ stages:
       artifacts: true
       optional: true
     - job: build arm64
+      artifacts: true
+      optional: true
+    - job: build ppc64el
       artifacts: true
       optional: true
     - job: build riscv64

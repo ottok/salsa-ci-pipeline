@@ -62,6 +62,7 @@ stages:
         arm/v5) ARCH_NAMESPACE=arm32v5/ ;;
         arm/v7) ARCH_NAMESPACE=arm32v7/ ;;
         arm64/v8) ARCH_NAMESPACE=arm64v8/ ;;
+        ppc64el) ARCH_NAMESPACE=ppc64le/ ;;
       esac
     - IMAGE_URL=${CI_REGISTRY_IMAGE}/${ARCH_NAMESPACE}${IMAGE_NAME_WITH_TAG}
     - |

@@ -38,6 +38,7 @@ variables:
     value: 0
   SALSA_CI_ARM_RUNNER_TAG: "arm64"
   SALSA_CI_RISCV_RUNNER_TAG: "riscv64"
+  SALSA_CI_PPC64EL_RUNNER_TAG: "ppc64el"
   # Used by .images-debian.yml to define the base for the
   # autopkgtest image
   STABLE: "trixie"
@@ -265,6 +266,7 @@ clean images:
       arm32v7/base
       arm64v8/base
       i386/base
+      ppc64el/base
       riscv64/base
       blhc
       build
@@ -272,6 +274,7 @@ clean images:
       arm32v7/build
       arm64v8/build
       i386/build
+      ppc64el/build
       riscv64/build
       gbp
       piuparts

@@ -22,6 +22,9 @@ build armhf:
 build arm64:
   extends: .build-package-arm64
 
+build ppc64el:
+  extends: .build-package-ppc64el
+
 build riscv64:
   extends: .build-package-riscv64
 
