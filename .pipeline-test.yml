@@ -38,91 +38,81 @@ variables:
   SALSA_CI_IMAGES_PIUPARTS: ${CI_REGISTRY_IMAGE}/piuparts:${IMAGE_VERSION}
   SALSA_CI_IMAGES_REPROTEST: ${CI_REGISTRY_IMAGE}/reprotest:${IMAGE_VERSION}
 
+.clone_repo_test: &clone_repo_test
+  - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
+  - cd repo_test
+  - test -z "${PROJECT_TARGET_HEAD}" || git checkout "${PROJECT_TARGET_HEAD}"
+
 build:
   extends: .build-package
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
-    - test -z "${PROJECT_TARGET_HEAD}" || git checkout "${PROJECT_TARGET_HEAD}"
+    - *clone_repo_test
 
 build i386:
   extends: .build-package-i386
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 build armel:
   extends: .build-package-armel
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 build armhf:
   extends: .build-package-armhf
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 build arm64:
   extends: .build-package-arm64
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 build riscv64:
   extends: .build-package-riscv64
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 build source:
   extends: .build-source-only
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 test-build-any:
   extends: .test-build-package-any
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 test-build-all:
   extends: .test-build-package-all
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 test-build-twice:
   extends: .test-build-package-twice
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 test-build-validate-cleanup:
   extends: .test-build-validate-cleanup
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 test-build-profiles:
   extends: .test-build-package-profiles
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 test-crossbuild-arm64:
   extends: .test-crossbuild-package-arm64
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
   allow_failure: true
 
 wrap-and-sort:
   extends: .test-wrap-and-sort
   before_script:
-    - test -d repo_test || ( apt-get update && apt-get upgrade -y && apt-get install -y git; git clone "${PROJECT_URL}" repo_test)
-    - cd repo_test
+    - *clone_repo_test
 
 aptly with passphrase:
   extends: .publish-aptly
