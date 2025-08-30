@@ -828,7 +828,7 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST =~ /^(1|yes|true)$/
       when: never
-    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMHF =~ /^(1|yes|true)$/
       when: never
     - when: on_success
   needs:
@@ -845,7 +845,7 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST =~ /^(1|yes|true)$/
       when: never
-    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARM64 =~ /^(1|yes|true)$/
       when: never
     - when: on_success
   needs:
