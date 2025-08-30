@@ -16,7 +16,7 @@ workflow:
         BUILD_IMAGE_VERSION: latest
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_SLUG}
+        IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
         AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_SLUG}
         BUILD_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
     - when: always
@@ -171,8 +171,6 @@ check yaml lint:
     - yamllint .
 
 test-pipeline:
-  variables:
-    RELEASE: sid
   trigger:
     include:
       - local: .pipeline-test.yml
