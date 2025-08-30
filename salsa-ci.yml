@@ -797,6 +797,9 @@ stages:
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST_I386 =~ /^(1|yes|true)$/
       when: never
     - when: on_success
+  needs:
+    - job: "build i386"
+      artifacts: true
 
 .test-autopkgtest-armel: &test-autopkgtest-armel
   extends: .autopkgtest-definition
@@ -811,6 +814,9 @@ stages:
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL =~ /^(1|yes|true)$/
       when: never
     - when: on_success
+  needs:
+    - job: "build armel"
+      artifacts: true
 
 .test-autopkgtest-armhf: &test-autopkgtest-armhf
   extends: .autopkgtest-definition
@@ -825,6 +831,9 @@ stages:
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL =~ /^(1|yes|true)$/
       when: never
     - when: on_success
+  needs:
+    - job: "build armhf"
+      artifacts: true
 
 .test-autopkgtest-arm64: &test-autopkgtest-arm64
   extends: .autopkgtest-definition
@@ -839,6 +848,9 @@ stages:
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL =~ /^(1|yes|true)$/
       when: never
     - when: on_success
+  needs:
+    - job: "build arm64"
+      artifacts: true
 
 .test-blhc: &test-blhc
   stage: test
