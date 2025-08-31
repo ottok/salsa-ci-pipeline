@@ -420,6 +420,8 @@ NOT to do define all jobs manually**. Most of the time it is better to simply
 
 ### Experimental: Enable Salsa CI statistics
 
+> :warning: This is currently non-operational
+
 To help monitor and improve Salsa CI, you can configure the pipeline to report basic
 pipeline identifiers, such as the pipeline ID, project ID, and creation timestamp for
 public projects. This is done by setting the `SALSA_CI_ENABLE_STATS` variable:

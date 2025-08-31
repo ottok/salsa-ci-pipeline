@@ -218,20 +218,6 @@ stages:
     max: 1
     when:
       - script_failure
-  before_script:
-    # Experimental: Salsa CI statistics (See #413)
-    - |
-      if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && [ "$CI_PROJECT_VISIBILITY" = 'public' ]; then
-        curl --connect-timeout 30 --max-time 90 -X PUT 'https://salsa-status.debian.net/api/v1/pipelines' \
-          -H 'Content-Type: application/json' \
-          -d @- <<-EOF || true
-        {
-          "id": $CI_PIPELINE_ID,
-          "project_id": $CI_PROJECT_ID,
-          "created_at": "$CI_PIPELINE_CREATED_AT"
-        }
-      EOF
-      fi
   script:
     - mkdir -vp ${WORKING_DIR}
 
