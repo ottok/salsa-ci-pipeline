@@ -1225,13 +1225,10 @@ stages:
     - if: $SALSA_CI_DISABLE_LICENSERECON !~ /^(1|yes|true)$/
   script:
     - apt-get update && eatmydata apt-get install --no-install-recommends -y licenserecon
-    - cd ${WORKING_DIR}/${SOURCE_DIR}
     - lrc ${SALSA_CI_LICENSERECON_ARGS}
   variables:
     GIT_STRATEGY: none
-  needs:
-    - job: extract-source
-      artifacts: true
+  needs: []
 
 .publish-aptly: &publish-aptly
   stage: publish

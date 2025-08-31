@@ -114,6 +114,11 @@ wrap-and-sort:
   before_script:
     - *clone_repo_test
 
+licenserecon:
+  extends: .test-licenserecon
+  before_script:
+    - *clone_repo_test
+
 aptly with passphrase:
   extends: .publish-aptly
   variables:
