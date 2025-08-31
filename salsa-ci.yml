@@ -340,9 +340,11 @@ stages:
       find ${CCACHE_TMP_DIR} -type d | xargs chmod g+s
     fi
 
-  - add_extra_repository.sh -v
-    -e "${SALSA_CI_EXTRA_REPOSITORY}" -k "${SALSA_CI_EXTRA_REPOSITORY_KEY}"
-    -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
+  - |
+    if ! [ -z "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}" ] ; then
+      echo -e "\e[91m Error: sbuild doesn't support deb822-style sources. Please move your settings to one-line-style format, until https://bugs.debian.org/1089735 gets fixed and supported by Salsa CI.\e[39m"
+      exit 1
+    fi
 
 .build-script-setup-environment: &build-script-setup-environment
   # setup sbuild+unshare support
@@ -537,6 +539,8 @@ stages:
   # TODO: handle multiple (space separated) extra packages
   - test -z "${SALSA_CI_SBUILD_EXTRA_PACKAGE}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-package=${SALSA_CI_SBUILD_EXTRA_PACKAGE}"
 
+  - test -z "${SALSA_CI_EXTRA_REPOSITORY}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-repository=\"${SALSA_CI_EXTRA_REPOSITORY}\""
+  - test -z "${SALSA_CI_EXTRA_REPOSITORY_KEY}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-repository-key=\"${SALSA_CI_EXTRA_REPOSITORY_KEY}\""
 
 .build-script-run-build-command: &build-script-run-build-command
   # Print the build environment
