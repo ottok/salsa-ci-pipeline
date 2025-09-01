@@ -522,8 +522,7 @@ stages:
     # minimize number of packages from experimental and backports
     case "${RELEASE}" in
     experimental)
-      apt_solver_opts="${apt_solver_opts}-count(solution,APT-Release:=/a=experimental/),"
-      apt_solver_opts="${apt_solver_opts}-removed,-changed,-new"
+      apt_solver_opts="${apt_solver_opts}-count(down),-count(changed,APT-Release:=/experimental/),-removed,-changed,-new"
       export BUILD_COMMAND="${BUILD_COMMAND} --build-dep-resolver=aspcud --aspcud-criteria \"${apt_solver_opts}\""
       ;;
      *-backports)
