@@ -794,6 +794,8 @@ stages:
   rules:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_I386 =~ /^(1|yes|true)$/
+      when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST_I386 =~ /^(1|yes|true)$/
       when: never
     - when: on_success
@@ -808,6 +810,8 @@ stages:
     - $SALSA_CI_ARM_RUNNER_TAG
   rules:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST =~ /^(1|yes|true)$/
       when: never
@@ -826,6 +830,8 @@ stages:
   rules:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF =~ /^(1|yes|true)$/
+      when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST_ARMHF =~ /^(1|yes|true)$/
@@ -842,6 +848,8 @@ stages:
     - $SALSA_CI_ARM_RUNNER_TAG
   rules:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64 =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_AUTOPKGTEST =~ /^(1|yes|true)$/
       when: never
