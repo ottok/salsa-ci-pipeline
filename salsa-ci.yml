@@ -519,19 +519,15 @@ stages:
 
   # handle experimental and backports
   - |
+    # minimize number of packages from experimental and backports
     case "${RELEASE}" in
-    experimental | *-backports)
-      # minimize number of packages from experimental and backports
-      case "${RELEASE}" in
-      experimental)
-        apt_solver_opts="${apt_solver_opts}-count(solution,APT-Release:=/a=experimental/),"
-        ;;
-       *-backports)
-        apt_solver_opts="${apt_solver_opts}-count(solution,APT-Release:~/a=.*-backports/),"
-        ;;
-      esac
+    experimental)
+      apt_solver_opts="${apt_solver_opts}-count(solution,APT-Release:=/a=experimental/),"
       apt_solver_opts="${apt_solver_opts}-removed,-changed,-new"
       export BUILD_COMMAND="${BUILD_COMMAND} --build-dep-resolver=aspcud --aspcud-criteria \"${apt_solver_opts}\""
+      ;;
+     *-backports)
+      export BUILD_COMMAND="${BUILD_COMMAND} --build-dep-resolver=aptitude"
       ;;
     esac
 
