@@ -869,7 +869,7 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_BLHC !~ /^(1|yes|true)$/
   script:
-    - blhc --debian --line-numbers --color ${SALSA_CI_BLHC_ARGS} ${WORKING_DIR}/*.build |& OUTPUT_FILENAME=${WORKING_DIR}/blhc.log filter-output || [ $? -eq 1 ]
+    - sh -c "exec blhc --debian --line-numbers --color ${SALSA_CI_BLHC_ARGS} ${WORKING_DIR}/*.build" blhc |& OUTPUT_FILENAME=${WORKING_DIR}/blhc.log filter-output || [ $? -eq 1 ]
   variables:
     GIT_STRATEGY: none
   artifacts:
@@ -1035,7 +1035,7 @@ stages:
     - PIUPARTS_DISTRIBUTION_ARG="--keep-sources-list";
     - |
       (for PACKAGE in $(ls ${WORKING_DIR}/*.deb); do
-        piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}
+        sh -c "exec piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}" piuparts
       done) |& OUTPUT_FILENAME=${WORKING_DIR}/piuparts.log filter-output
   variables:
     # To make the repository available in this job,
