@@ -69,6 +69,11 @@ include:
   * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
   * [Add extra arguments to licenserecon](#add-extra-arguments-to-licenserecon)
   * [Debian release bump](#debian-release-bump)
+* [Build and autopkgtest jobs with faketime testing](#build-and-autopkgtest-jobs-with-faketime-testing)
+  * [Enable build jobs with faketime](#enable-build-jobs-with-faketime)
+  * [Enable autopkgtest jobs with faketime](#enable-autopkgtest-jobs-with-faketime)
+  * [Choosing amd64 and i386 faketime lanes](#choosing-amd64-and-i386-faketime-lanes)
+  * [Important warning for faketime jobs](#warning-important-warning-for-faketime-jobs)
 * [Distribution and release selection](#distribution-and-release-selection)
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
@@ -1327,6 +1332,124 @@ It's enabled by default, and it can be disabled by setting '1' to the `SALSA_CI_
 variables:
   SALSA_CI_DISABLE_USCAN: 1
 ```
+
+## Build and autopkgtest jobs with faketime testing
+
+Faketime support using `libfaketime` is provided to exercise builds and
+autopkgtests at a simulated future date. This helps catch Y2038-related bugs
+and other time-sensitive issues. By default, **these jobs are disabled**. To
+enable them, set the **disable / enable** variables shown in the subsections
+below (for example `SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME: 0` for the `amd64`
+faketime build). The `SALSA_CI_FAKETIME_DATE` and `SALSA_CI_FAKETIME_DATE_I386`
+variables only choose the simulated date/time when those jobs run, they do not
+turn faketime jobs on or off.
+
+For general future-date regression testing, the `amd64` faketime jobs are the
+recommended lane. They usually provide the clearest package-level signal,
+including for dates beyond the Y2038 boundary.
+
+The `i386` faketime jobs remain available because the 32-bit `time_t` rollover
+matters most there. However, they should be treated as optional, best-effort
+diagnostic jobs rather than as strong general-purpose gating jobs. Once fake
+time crosses the 32-bit cutoff (`2038-01-19 03:14:07 UTC`), failures often come
+from the surrounding runtime, toolchain, or test environment (`tar`, `make`,
+`autoconf`, libc, and similar components), not necessarily from the package
+under test.
+
+For now, the pipeline only ships faketime **build** and **autopkgtest** jobs
+for `amd64` and `i386`. By default, Salsa CI uses one general faketime date for
+the `amd64` jobs and a separate `i386` override:
+
+* `SALSA_CI_FAKETIME_DATE` defaults to `2038-01-19 03:14:08`
+* `SALSA_CI_FAKETIME_DATE_I386` defaults to `2037-03-03 00:00:00`
+
+This keeps the `amd64` faketime lanes on a post-2038 date, while giving `i386`
+a safer pre-cutoff default that produces a cleaner package-level signal. If you
+want post-2038 runtime stress testing on `i386`, override
+`SALSA_CI_FAKETIME_DATE_I386` explicitly.
+
+### Enable build jobs with faketime
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME: 0        # enable the preferred amd64 faketime build
+  SALSA_CI_DISABLE_BUILD_PACKAGE_FAKETIME_I386: 0   # enable the optional i386 faketime build (best-effort / diagnostic)
+```
+
+To customize the simulated date per architecture:
+
+```yaml
+variables:
+  SALSA_CI_FAKETIME_DATE: '2038-01-19 03:14:08'
+  SALSA_CI_FAKETIME_DATE_I386: '2037-03-03 00:00:00'
+```
+
+### Enable autopkgtest jobs with faketime
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_AUTOPKGTEST_FAKETIME: 0       # enable the preferred amd64 faketime autopkgtest
+  SALSA_CI_DISABLE_AUTOPKGTEST_FAKETIME_I386: 0  # enable the optional i386 faketime autopkgtest (best-effort / diagnostic)
+```
+
+> :warning: **Note:** Faketime jobs do not all use the same default date.
+> `SALSA_CI_FAKETIME_DATE` defaults to `2038-01-19 03:14:08`, while
+> `SALSA_CI_FAKETIME_DATE_I386` defaults to `2037-03-03 00:00:00`. To use a
+> custom simulated date/time, set `SALSA_CI_FAKETIME_DATE` and, if needed,
+> override `SALSA_CI_FAKETIME_DATE_I386` separately.
+
+### Choosing amd64 and i386 faketime lanes
+
+* For general future-date regression testing, `amd64` is usually the better
+default, especially for dates beyond the Y2038 boundary.
+
+* Use `i386` when you specifically want diagnostic signal around 32-bit `time_t`
+rollover behavior.
+
+* If you want cleaner package-level signal on `i386`, it is often better to test
+just before the cutoff rather than after it.
+
+* By default, `i386` uses `SALSA_CI_FAKETIME_DATE_I386`. If you want the `i386`
+  jobs to cross the 32-bit cutoff, opt into that explicitly by setting
+  `SALSA_CI_FAKETIME_DATE_I386` to a post-2038 value.
+
+* Post-2038 results on `i386` should be treated as diagnostic, since failures may
+reflect limitations in the runtime, toolchain, or test environment as much as
+issues in the package under test.
+
+* If you only want a broad future-date check, enable the `amd64` faketime jobs
+and leave the `i386` variants disabled.
+
+### :warning: Important warning for faketime jobs
+
+`libfaketime` changes how time is perceived by programs, including file
+timestamps returned by `stat()`.
+
+This behavior can lead to **false positives or false negatives** in your builds
+and autopkgtests:
+
+* Some jobs may fail unexpectedly because they rely on real file timestamps.
+* Others may pass incorrectly because file time manipulation was skipped.
+
+You can control this behavior with the `NO_FAKE_STAT` option:
+
+For builds:
+
+```yaml
+variables:
+  SALSA_CI_BUILD_FAKETIME_NO_FAKE_STAT: 1
+```
+
+For autopkgtests:
+
+```yaml
+variables:
+  SALSA_CI_AUTOPKGTEST_FAKETIME_NO_FAKE_STAT: 1
+```
+
+:warning: Use with care: toggling this may cause unexpected build or test failures.
+For more details on how `libfaketime` works and available options, see the
+[libfaketime documentation](https://github.com/wolfcw/libfaketime/).
 
 ## Distribution and release selection
 
