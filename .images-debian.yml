@@ -40,22 +40,9 @@ images-prod:
           # A blhc image is required for all the supported releases. See #340
           - blhc
           - generic_tests
-        ARCH: amd64
-        RELEASE: *all-supported-releases
-      # Temporarily disable lintian:experimental.
-      # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1050344
-      - IMAGE_NAME:
           - lintian
         ARCH: amd64
-        RELEASE:
-          - stretch
-          - buster
-          - bullseye
-          - bookworm
-          - bookworm-backports
-          - trixie
-          - trixie-backports
-          - sid
+        RELEASE: *all-supported-releases
       # Images in sid only amd64
       - IMAGE_NAME:
           - aptly
