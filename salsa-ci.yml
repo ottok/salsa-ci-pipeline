@@ -136,6 +136,9 @@ variables:
   SALSA_CI_DISABLE_AUTOPKGTEST_ARMEL: 1
   SALSA_CI_DISABLE_AUTOPKGTEST_ARMHF: 1
   SALSA_CI_DISABLE_AUTOPKGTEST_ARM64: 1
+  # disable faketime by default
+  SALSA_CI_DISABLE_AUTOPKGTEST_FAKETIME: 1
+  SALSA_CI_DISABLE_AUTOPKGTEST_FAKETIME_I386: 1
   # Disable cross-builds by default due to high failure rate that is not
   # suitable for CI that is expected to be green and gatekeep commits
   SALSA_CI_DISABLE_CROSSBUILD_ARM64:
@@ -875,6 +878,32 @@ stages:
     - echo "${AUTOPKGTEST_INPUT_FILES}"
 
     - |
+      if [ "$SALSA_CI_AUTOPKGTEST_ENABLE_FAKETIME_INJECTION" = 'true' ]; then
+
+        SALSA_CI_EFFECTIVE_FAKETIME_DATE="${SALSA_CI_FAKETIME_DATE}"
+        if [ "$LOCAL_ARCH" = 'i386' ] && [ -n "${SALSA_CI_FAKETIME_DATE_I386}" ]; then
+          SALSA_CI_EFFECTIVE_FAKETIME_DATE="${SALSA_CI_FAKETIME_DATE_I386}"
+        fi
+
+        apt-get update && eatmydata apt-get install libfaketime --no-install-recommends -y
+        LIBFAKETIME_SO_PATH=$(dpkg -L libfaketime | grep 'libfaketime.so.1' | head -n1)
+
+        faketime_args="
+          --setup-commands-boot='apt-get update && eatmydata apt-get install -y libfaketime' \
+          --env=LD_PRELOAD='$LIBFAKETIME_SO_PATH' \
+          --env=FAKETIME='@$SALSA_CI_EFFECTIVE_FAKETIME_DATE'"
+
+        if [ -n "$SALSA_CI_AUTOPKGTEST_FAKETIME_NO_FAKE_STAT" ]; then
+          faketime_args="${faketime_args} --env=NO_FAKE_STAT='${SALSA_CI_AUTOPKGTEST_FAKETIME_NO_FAKE_STAT}'"
+        fi
+
+        if [ -n "$debci_autopkgtest_args" ]; then
+          export debci_autopkgtest_args="${debci_autopkgtest_args} ${faketime_args}"
+        else
+          export debci_autopkgtest_args="$faketime_args"
+        fi
+      fi
+
       ret=0
       # su's -P is required to have ownership over /dev/stderr, /dev/stdout and
       # /dev/stdin, and then fix #256
@@ -969,6 +998,34 @@ stages:
   needs:
     - job: "build arm64"
       artifacts: true
+
+.test-autopkgtest-faketime: &test-autopkgtest-faketime
+  extends: .autopkgtest-definition
+  image: $SALSA_CI_IMAGES_AUTOPKGTEST
+  variables:
+    SALSA_CI_AUTOPKGTEST_ENABLE_FAKETIME_INJECTION: 'true'
+  rules:
+    - if: $SALSA_CI_ENABLE_AUTOPKGTEST_FAKETIME =~ /^(1|yes|true)$/
+      when: on_success
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_FAKETIME =~ /^(1|yes|true)$/
+      when: never
+    - when: never
+
+.test-autopkgtest-faketime-i386: &test-autopkgtest-faketime-i386
+  extends: .autopkgtest-definition
+  image: $SALSA_CI_IMAGES_AUTOPKGTEST_I386
+  variables:
+    SALSA_CI_AUTOPKGTEST_ENABLE_FAKETIME_INJECTION: 'true'
+  rules:
+    - if: $SALSA_CI_ENABLE_AUTOPKGTEST_FAKETIME_I386 =~ /^(1|yes|true)$/
+      when: on_success
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_AUTOPKGTEST_FAKETIME_I386 =~ /^(1|yes|true)$/
+      when: never
+    - when: never
 
 .test-blhc: &test-blhc
   stage: test

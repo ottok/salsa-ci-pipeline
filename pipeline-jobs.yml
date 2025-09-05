@@ -78,6 +78,12 @@ autopkgtest armhf:
 autopkgtest arm64:
   extends: .test-autopkgtest-arm64
 
+"autopkgtest (faketime)":
+  extends: .test-autopkgtest-faketime
+
+"autopkgtest i386 (faketime)":
+  extends: .test-autopkgtest-faketime-i386
+
 blhc:
   extends: .test-blhc
 
