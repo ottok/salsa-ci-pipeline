@@ -168,7 +168,6 @@ images-prod-ppc64el:
         ARCH:
           - ppc64le
         RELEASE: sid
-  when: manual
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
