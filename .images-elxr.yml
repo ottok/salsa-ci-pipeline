@@ -1,0 +1,241 @@
+# Copyright salsa-ci-team and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+
+# Wind River is the founding member and leading contributor to the eLxr project,
+# and maintainer of the definitions found in this file (.images-elxr.yml). For
+# any issues, contact huiying.zhang.cn@windriver.com.
+
+---
+include:
+  - .images-ci.yml
+
+variables:
+  VENDOR: debian
+  DEBIAN_MIRROR: "http://deb.debian.org/debian"
+  DEBIAN_ARCHIVE_MIRROR: "http://archive.debian.org/debian"
+
+.all-supported-releases: &all-supported-releases
+  - bookworm
+  - sid
+
+# Images built on main branch
+images-prod:
+  stage: build
+  extends: .build_template
+  parallel:
+    matrix:
+      # Base image, all releases, all arches
+      - IMAGE_NAME: base
+        ARCH:
+          - amd64
+        RELEASE: *all-supported-releases
+      # All releases only amd64
+      - IMAGE_NAME:
+          # A blhc image is required for all the supported releases. See #340
+          - blhc
+          - generic_tests
+        ARCH: amd64
+        RELEASE: *all-supported-releases
+      # Temporarily disable lintian:experimental.
+      # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1050344
+      - IMAGE_NAME:
+          - lintian
+        ARCH: amd64
+        RELEASE:
+          - bookworm
+          - sid
+      # Images in sid only amd64
+      - IMAGE_NAME:
+          - aptly
+          - gbp
+          - piuparts
+          - reprotest
+        ARCH: amd64
+        RELEASE: sid
+      # ci.debian.org runs stable + some packages from unstable
+      - IMAGE_NAME:
+          - autopkgtest
+        ARCH: amd64
+        RELEASE: $STABLE
+      # build image, only on sid, all arches
+      - IMAGE_NAME: build
+        ARCH:
+          - amd64
+        RELEASE: sid
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# ARM images built on main branch
+# We need a separate matrix. If we place the ARM build jobs on images-prod, we
+# exceed the maximum jobs limit by matrix (50)
+images-prod-arm:
+  stage: build
+  extends: .build_template
+  tags:
+    - $SALSA_CI_ARM_RUNNER_TAG
+  parallel:
+    matrix:
+      # Base image, all releases, all arches
+      - IMAGE_NAME: base
+        ARCH:
+          - arm64/v8
+        RELEASE:
+          - bookworm
+          - sid
+
+      # Temporarily disable base:buster armel(arm32v5).
+      # Related issue: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/355#note_492936
+      - IMAGE_NAME: base
+        ARCH:
+          - arm64/v8
+        RELEASE:
+          - buster
+
+      # Images in sid only arm64
+      - IMAGE_NAME:
+          - blhc
+          - lintian
+          - piuparts
+          - reprotest
+          - build
+        ARCH: arm64/v8
+        RELEASE: sid
+      # ci.debian.org runs stable + some packages from unstable
+      - IMAGE_NAME:
+          - autopkgtest
+        ARCH: arm64/v8
+        RELEASE: $STABLE
+      # build image, only on sid, all arches
+      - IMAGE_NAME: build
+        ARCH:
+          - arm64/v8
+        RELEASE: sid
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# RISC-V images built on main branch
+# We need a separate matrix. If we place the RISC-V build jobs on images-prod,
+# we exceed the maximum jobs limit by matrix (50)
+images-prod-riscv:
+  stage: build
+  extends: .build_template
+  tags:
+    - $SALSA_CI_RISCV_RUNNER_TAG
+  parallel:
+    matrix:
+      - IMAGE_NAME: base
+        ARCH:
+          - riscv64
+        # As of today, 2025-04, riscv64 is only supported
+        # from trixie onwards
+        RELEASE:
+          - trixie
+          - sid
+          - experimental
+      - IMAGE_NAME: build
+        ARCH:
+          - riscv64
+        RELEASE: sid
+  # eLxr doesn't have riscv runners as this time, so allow this to fail
+  # and make this a manual triggered job.
+  allow_failure: true
+  when: manual  # disable riscv64 temporairly until runners are operational again
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: always
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# Images built on branches.
+# This is a subset of all the images, and are the only ones
+# built for branches != main.
+image-staging:
+  extends: .build_template
+  stage: build
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - aptly
+          - base
+          - blhc
+          - gbp
+          - generic_tests
+          - lintian
+          - piuparts
+          - reprotest
+          - build
+        ARCH: amd64
+        RELEASE: sid
+      - IMAGE_NAME: autopkgtest
+        ARCH: amd64
+        RELEASE: $STABLE
+  rules:
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: never
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+image-staging-arm:
+  extends: .build_template
+  stage: build
+  tags:
+    - $SALSA_CI_ARM_RUNNER_TAG
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - blhc
+          - lintian
+          - piuparts
+          - reprotest
+        ARCH: arm64/v8
+        RELEASE: sid
+      # TODO: is arm64v8 build image enough?
+      - IMAGE_NAME:
+          - autopkgtest
+        ARCH: arm64/v8
+        RELEASE: $STABLE
+      - IMAGE_NAME:
+          - base
+          - build
+        ARCH:
+          - arm64/v8
+        RELEASE: sid
+  # While there isn't an ARM shared runner available, let's allow these images
+  # to fail to don't block pipelines on MRs.
+  allow_failure: true
+  when: manual
+  rules:
+    - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/ && $BUILD_ALL_IMAGES !~ /^(1|yes|true)$/
+      when: always
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: never
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+image-staging-riscv:
+  extends: .build_template
+  stage: build
+  tags:
+    - $SALSA_CI_RISCV_RUNNER_TAG
+  parallel:
+    matrix:
+      - IMAGE_NAME:
+          - base
+          - build
+        ARCH:
+          - riscv64
+        RELEASE: sid
+  # While there isn't an RISC-V shared runner available, let's allow these
+  # images to fail to not block pipelines on MRs.
+  allow_failure: true
+  when: manual
+  rules:
+    - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/ && $BUILD_ALL_IMAGES !~ /^(1|yes|true)$/
+      when: always
+    - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
+      when: never
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH

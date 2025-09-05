@@ -44,6 +44,9 @@ variables:
   STABLE: "trixie"
   # enable full command logging in job logs
   FF_SCRIPT_SECTIONS: "true"
+  BUILD_ELXR_IMAGES:
+    # Build images used by the eLxr CI in https://gitlab.com/elxr/ci/pipeline/
+    value: 0
 
 stages:
   - images
@@ -76,6 +79,20 @@ ubuntu-images:
       when: always
     - if: $CI_SERVER_URL != "https://salsa.debian.org"
       when: never
+    - if: $SALSA_CI_DISABLE_BUILD_IMAGES !~ /^(1|yes|true)$/
+      when: always
+
+elxr-images:
+  stage: images
+  trigger:
+    include:
+      - local: .images-elxr.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $BUILD_ELXR_IMAGES =~ /^(1|yes|true)$/
+      when: always
     - if: $SALSA_CI_DISABLE_BUILD_IMAGES !~ /^(1|yes|true)$/
       when: always
 
