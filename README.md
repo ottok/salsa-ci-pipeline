@@ -50,6 +50,9 @@ include:
   * [Disabling gbp exportorig fallback](#disabling-gbp-exportorig-fallback)
   * [Git attributes](#git-attributes)
   * [Customize reprotest](#customize-reprotest)
+* [Build reverse dependencies](#build-reverse-dependencies)
+  * [Enable build reverse dependencies](#enable-build-reverse-dependencies)
+  * [Maximum of 100 reverse dependencies per pipeline](#maximum-of-100-reverse-dependencies-per-pipeline)
 * [Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs](#lintian-autopkgtests-piuparts-and-other-quality-assurance-ci-jobs)
   * [Customize Lintian](#customize-lintian)
   * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
@@ -939,6 +942,58 @@ variables:
 You can also set the `SALSA_CI_ENABLE_ATOMIC_REPROTEST` variable when
 triggering the pipeline, without the need of creating a specific commit.
 
+## Build reverse dependencies
+
+Build reverse dependencies jobs allow maintainers to automatically rebuild
+packages that build depend on their package.
+
+This is extremely valuable in many contexts, for example during transitions,
+library updates, or any change where you need confidence that reverse
+dependencies still build successfully. Running build reverse-dependencies jobs
+helps catch breakages early and provides stronger QA before uploads reach the
+archive.
+
+### Enable build reverse dependencies checking
+
+Build reverse dependencies jobs are **disabled**, by default. It is recommended
+to run these jobs **on demand** only, for specific pipelines. There are a
+couple of ways to do it:
+
+* From the Salsa web UI:
+
+  1. Open `https://salsa.debian.org/<project>/-/pipelines/new`
+  2. Scroll down to **Variables**
+  3. Find the entry for `SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES`
+  4. Change its value from `1` (default, disabled) to `0` (on-demand enabled)
+
+* From the command line when `git push`ing:
+
+  ```bash
+  git push -o ci.variable="SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES=0"
+  ```
+
+This way, build reverse dependencies jobs are enabled only when you choose to
+run them, avoiding unnecessary load on the Salsa infrastructure.
+
+:warning: **Please, avoid enabling build reverse dependencies jobs directly in
+`debian/salsa-ci.yml`:**
+
+Hard-coding the variable that enables this check will make build reverse
+dependencies jobs run on **every push**. Salsa admins have explicitly warned
+that this is considered **abuse of shared infrastructure**, see for example
+[this thread on
+debian-project@](https://lists.debian.org/debian-project/2025/08/msg00021.html).
+
+### Maximum of 100 reverse dependencies per pipeline
+
+Some packages (for example core libraries or popular node modules) have
+hundreds or even thousands of reverse dependencies. Rebuilding all of them in a
+single pipeline would overwhelm the shared CI infrastructure.
+
+To prevent this, Salsa CI limits build reverse dependencies to at most 100 per
+pipeline. This safeguard ensures that no single package consumes a
+disproportionate share of the available resources. The limit may be adjusted in
+the future when Salsa gains additional hardware and runner capacity.
 
 ## Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs
 
