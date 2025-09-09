@@ -104,6 +104,7 @@ variables:
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: ''
   DOCKER_TLS_CERTDIR: ""
   SALSA_CI_DISABLE_APTLY: 1
+  SALSA_CI_DISABLE_AUTOPKGTEST_I386: 1
   SALSA_CI_DISABLE_LICENSERECON: 1
   # These three ARM-related build jobs are disabled by default while there
   # isn't an ARM shared runner available
