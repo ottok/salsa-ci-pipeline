@@ -306,6 +306,9 @@ clean images:
       arm64v8/reprotest
     AUTOPKGTEST_IMAGES_LIST: |
       autopkgtest
+      i386/autopkgtest
+      arm32v5/autopkgtest
+      arm32v7/autopkgtest
       arm64v8/autopkgtest
     RELEASE: sid
     UBUNTU_IMAGES_LIST: |
