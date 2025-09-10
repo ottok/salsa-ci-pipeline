@@ -54,7 +54,7 @@ include:
   * [Customize Lintian](#customize-lintian)
   * [Make autopkgtest more strict](#make-autopkgtest-more-strict)
   * [Add extra arguments to autopkgtest](#add-extra-arguments-to-autopkgtest)
-  * [Disabling autopkgtest on i386](#disabling-autopkgtest-on-i386)
+  * [Enable autopkgtest on i386](#enable-autopkgtest-on-i386)
   * [Enable autopkgtest on ARM](#enable-autopkgtest-on-arm)
   * [Avoid autopkgtest failures on systemd masked tmp](#avoid-autopkgtest-failures-on-systemd-masked-tmp)
   * [Run a pre-install / post-install script in piuparts](#run-a-pre-install--post-install-script-in-piuparts)
@@ -947,16 +947,21 @@ variables:
   SALSA_CI_AUTOPKGTEST_ARGS: '--setup-commands=ci/pin-django-from-backports.sh'
 ```
 
-### Disabling autopkgtest on i386
+### Enable autopkgtest on i386
 
-The `autopkgtest i386` job run the autopkgtest packages against the 32-bit x86
-architecture. If you need to skip this job, set the variable
-`SALSA_CI_DISABLE_AUTOPKGTEST_I386` to `1`, '`yes`' or '`true`' in the
-variables block. For example:
+The `autopkgtest i386` job runs package tests against the 32-bit x86
+architecture. This job is disabled by default because only a small subset of
+packages still need it and running it everywhere would consume a lot of
+resources and slow pipelines.
+
+If your package still needs testing on i386, you can enable it by setting the
+variable `SALSA_CI_DISABLE_AUTOPKGTEST_I386` to `0`, `no`, or `false` in the
+variables block. For instance:
+
 
 ```yaml
 variables:
-  SALSA_CI_DISABLE_AUTOPKGTEST_I386: 1
+  SALSA_CI_DISABLE_AUTOPKGTEST_I386: 0
 ```
 
 ### Enable autopkgtest on ARM
