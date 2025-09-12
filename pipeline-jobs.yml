@@ -4,8 +4,7 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 
-extract-source:
-  extends: .provisioning-extract-source
+# TODO: handle projects that need to extend the extract-source job
 
 build:
   extends: .build-package
@@ -39,6 +38,9 @@ test-build-all:
 
 test-build-twice:
   extends: .test-build-package-twice
+
+test-build-validate-cleanup:
+  extends: .test-build-validate-cleanup
 
 test-build-profiles:
   extends: .test-build-package-profiles

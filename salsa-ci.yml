@@ -33,6 +33,10 @@ variables:
   DEBIAN_FRONTEND: noninteractive
   WORKING_DIR: $CI_PROJECT_DIR/debian/output
   SOURCE_DIR: 'source_dir'
+  # BUILD_DIR is the place where the build job scripts will look for all the
+  # required files to build the package, including ({orig,}.tar.*) and
+  # extracted debinaized source directory
+  BUILD_DIR: $CI_PROJECT_DIR/build/
   VENDOR: 'debian'
   # The Debian release to build for (leave it assigned to $RELEASE_FROM_CHANGELOG to automatically pick one, based on the target distribution in d/changelog)
   RELEASE: '$RELEASE_FROM_CHANGELOG'
@@ -40,6 +44,7 @@ variables:
   BUILD_ARCH: 'amd64'
   # only set this for cross-compiling
   HOST_ARCH: ''
+  # TODO: remove BUILD_TWICE support once its obsolescence has been well known.
   # Set to true to build the package twice
   BUILD_TWICE: 'false'
   SALSA_CI_MIRROR: 'http://deb.debian.org/debian'
@@ -61,6 +66,13 @@ variables:
   SALSA_CI_IMAGES_BASE_ARM64: ${SALSA_CI_IMAGES}/arm64v8/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_PPC64LE: ${SALSA_CI_IMAGES}/ppc64le/base:${RELEASE}
   SALSA_CI_IMAGES_BASE_RISCV64: ${SALSA_CI_IMAGES}/riscv64/base:${RELEASE}
+  # build images should always run on debian sid ("latest"), even for other vendors.
+  SALSA_CI_IMAGES_BUILD: ${SALSA_CI_IMAGES}/build:latest
+  SALSA_CI_IMAGES_BUILD_I386: ${SALSA_CI_IMAGES}/i386/build:latest
+  SALSA_CI_IMAGES_BUILD_ARM32V5: ${SALSA_CI_IMAGES}/arm32v5/build:latest
+  SALSA_CI_IMAGES_BUILD_ARM32V7: ${SALSA_CI_IMAGES}/arm32v7/build:latest
+  SALSA_CI_IMAGES_BUILD_ARM64: ${SALSA_CI_IMAGES}/arm64v8/build:latest
+  SALSA_CI_IMAGES_BUILD_RISCV64: ${SALSA_CI_IMAGES}/riscv64/build:latest
   SALSA_CI_IMAGES_GENERIC_TESTS: ${SALSA_CI_IMAGES}/generic_tests:${RELEASE}
   SALSA_CI_IMAGES_BLHC: ${SALSA_CI_IMAGES}/blhc:${RELEASE}
   SALSA_CI_IMAGES_GBP: ${SALSA_CI_IMAGES}/gbp:latest
@@ -102,6 +114,8 @@ variables:
   SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT: ''
   SALSA_CI_DPKG_BUILDPACKAGE_ARGS: ''
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: ''
+  SALSA_CI_SBUILD_ARGS: ''
+  SALSA_CI_SBUILD_EXTRA_PACKAGE: ''
   DOCKER_TLS_CERTDIR: ""
   SALSA_CI_DISABLE_APTLY: 1
   SALSA_CI_DISABLE_AUTOPKGTEST_I386: 1
@@ -127,12 +141,20 @@ variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE:
     description: "Set this to 0 to enable the test that builds the package twice in a row"
     value: 1
+  SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP:
+    description: "Set this to 0 to validate if the clean target of debian/rules
+      does not restore the source directory to its initial state. This option
+      will make sbuild to help to detect modifications that will prevent the
+      package to build twice in a row."
+    value: 1
+  SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_RC_BUGS: 1
   SALSA_CI_IGNORED_BRANCHES: ''
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
   SALSA_CI_DISABLE_BUILD_DBGSYM: 1
   SALSA_CI_DISABLE_WRAP_AND_SORT: 1
   SALSA_CI_WRAP_AND_SORT_ARGS: ''
+  SALSA_CI_DISABLE_EXTRACT_SOURCE: 1
   # Use fastzip to fix https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/177
   FF_USE_FASTZIP: 'true'
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 0
@@ -149,6 +171,13 @@ variables:
     description: "Disable origtargz fallback when gbp export-orig has failed. Stop CI when gbp export-orig has failed."
     value: 0
   SALSA_CI_VERSION_BUMP_SUFFIX_NAME: "salsaci"
+  SALSA_CI_SBUILD_VERBOSE:
+    description: "Enable sbuild verbosity so all the information goes to stdout as well as to the build log files."
+    value: 1
+  SALSA_CI_DISABLE_CCACHE:
+    description: "Disable using ccache(1) in the build job."
+    value: 0
+  SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: ''
   # GitLab runners execute `umask 0000` command by default which may lead to
   # failure of build jobs due to everything being world writeable.
   # This feature flag disables execution of `umask 0000`.
@@ -182,6 +211,7 @@ stages:
 
 # try to autodetect the target distribution
 .get-target-distribution: &get-target-distribution
+  - export RELEASE_FROM_CHANGELOG
   - dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED)
   # if dist is UNRELEASED, try to use 'dch' to guess a sane default.
   # Use questing by default if VENDOR's value is `ubuntu`.
@@ -205,109 +235,19 @@ stages:
 
   - echo "RELEASE_FROM_CHANGELOG=${dist}" | tee ${CI_PROJECT_DIR}/salsa.env
 
-
 .provisioning-extract-source: &provisioning-extract-source
   stage: provisioning
-  image: $SALSA_CI_IMAGES_GBP
+  image: $SALSA_CI_IMAGES_BASE
   dependencies: []
   extends:
     - .artifacts-default-expire
-  variables:
-    DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
-  retry:
-    max: 1
-    when:
-      - script_failure
-  before_script:
-    # Experimental: Salsa CI statistics (See #413)
-    - |
-      if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && [ "$CI_PROJECT_VISIBILITY" = 'public' ]; then
-        curl --connect-timeout 30 --max-time 90 -X PUT 'https://salsa-status.debian.net/api/v1/pipelines' \
-          -H 'Content-Type: application/json' \
-          -d @- <<-EOF || true
-        {
-          "id": $CI_PIPELINE_ID,
-          "project_id": $CI_PROJECT_ID,
-          "created_at": "$CI_PIPELINE_CREATED_AT"
-        }
-      EOF
-      fi
   script:
-    - mkdir -vp ${WORKING_DIR}
-
-    - gbp pull --ignore-branch --pristine-tar --track-missing
-
-    # gbp setup-gitattributes needs to be called after gbp pull to avoid having
-    # staging commits (See #322)
-    - if echo "$SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES" | grep -qvE '^(1|yes|true)$'; then test -r .gitattributes && gbp setup-gitattributes ; fi
-
-    - apt-get update && eatmydata apt-get upgrade -y
-
-    - |
-      if find . -maxdepth 3 -wholename "*/debian/source/format" -exec cat {} \; | grep -q '3.0 (gitarchive)'
-      then
-        eatmydata apt-get install --no-install-recommends -y \
-          dpkg-source-gitarchive
-        { DSC=$(dpkg-source --build . | tee /dev/fd/3 | sed -n 's/.* \(\S*.dsc$\)/\1/p') ; } 3>&1
-        dpkg-source --extract --no-check ../$DSC ${WORKING_DIR}/${DSC%.dsc}
-      else
-        # Check if we can obtain the orig from the git branches
-
-        if ! gbp export-orig --tarball-dir=${WORKING_DIR}; then
-          if [ $SALSA_CI_DISABLE_EXPORTORIG_FALLBACK -eq 1 ]; then
-            echo "Error: 'gbp export-orig' failed. Check that the branch with upstream source was pushed correctly. See 'gbp-push(1)' man page for details."
-            exit 1
-          else
-            # Fallback using origtargz
-            origtargz -dt
-            cp -v ../*orig*tar* ${WORKING_DIR}
-            SALSA_CI_GBP_BUILDPACKAGE_ARGS="--git-overlay ${SALSA_CI_GBP_BUILDPACKAGE_ARGS}"
-          fi
-        fi
-
-        # As of 2020-09-09, gbp doesn't have a simpler method to extract the
-        # debianized source package. Use --git-pbuilder=`/bin/true` for the moment:
-        # https://bugs.debian.org/969952
-
-        gbp buildpackage \
-          --git-ignore-branch \
-          --git-ignore-new \
-          --git-no-create-orig \
-          --git-export-dir=${WORKING_DIR} \
-          --no-check-builddeps \
-          --git-builder=/bin/true \
-          --git-no-pbuilder \
-          --git-no-hooks \
-          --git-no-purge \
-          ${SALSA_CI_GBP_BUILDPACKAGE_ARGS} |& filter-output
-      fi
-
-    - ls -lh ${WORKING_DIR}
-    - cd ${WORKING_DIR}
-    - DEBIANIZED_SOURCE=$(find . -maxdepth 3 -wholename "*/debian/changelog" | sed -e 's%/\w*/\w*$%%')
-    - |
-      if [ ! "${DEBIANIZED_SOURCE}" ] ; then
-        echo "Error: No valid debianized source tree found."
-        exit 1
-      fi
-
-    - mv -v ${DEBIANIZED_SOURCE} ${SOURCE_DIR}
-
-    - cd "${SOURCE_DIR}"
-    - *get-target-distribution
-    - cd "${OLDPWD}"
-
-    # Print size of artifacts
-    - du -sh
-
-    # Warn if job artifacts size limit exceeded
-    - |
-      if [ "$(du -s | cut -f1)" -gt ${SALSA_CI_MAX_ARTIFACTS_SIZE} ]; then
-        echo -e "\e[91m WARNING: job artifacts exceed the size limit of $(( ${SALSA_CI_MAX_ARTIFACTS_SIZE} / 1024 ))MiB which may prevent the job to succeed.\e[39m"
-      fi
+    - echo "Empty script section."
+    - echo "TODO: support extending the extract-source job, and taking it into account at the build job"
+  rules:
+    - if: $SALSA_CI_DISABLE_EXTRACT_SOURCE !~ /^(1|yes|true)$/
 
 .check-architecture-is-buildable: &check-architecture-is-buildable
-  - cd ${WORKING_DIR}/${SOURCE_DIR}
   - |
     if [ "${DB_BUILD_TYPE}" = all ]; then
       pattern="all"
@@ -337,49 +277,159 @@ stages:
       exit 0
     fi
   - unset pattern
-  - cd ${OLDPWD}
 
 .build-before-script: &build-before-script
-  - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
+  # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
+  - export RELEASE_FROM_CHANGELOG=$(grep RELEASE_FROM_CHANGELOG ${CI_PROJECT_DIR}/salsa.env | awk -F '=' '{print $2}')
+  - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
+  - test -n "${RELEASE}" || RELEASE=${RELEASE_FROM_CHANGELOG}
+
+  - apt-get update && eatmydata apt-get upgrade -y
+
+  - |
+    export ENABLE_CCACHE=1
+    if echo "${SALSA_CI_DISABLE_CCACHE}" | grep -qE '^(1|yes|true)$'; then
+      ENABLE_CCACHE=0
+    fi
+
+  - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
+
+  - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
+
+  - export MMDEBSTRAP_COMPONENTS="main"
+
+  - test -z "${SALSA_CI_COMPONENTS}" || export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS} ${SALSA_CI_COMPONENTS}"
+
+  - |
+    if [ "$VENDOR" = ubuntu ] ;
+    then
+      eatmydata apt-get install -y gpg distro-info-data ubuntu-keyring
+      export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS},universe"
+    fi
+
+  - test -z "${MMDEBSTRAP_INCLUDE_PACKAGES}" || export MMDEBSTRAP_INCLUDE_PACKAGES_ARGS="--include=${MMDEBSTRAP_INCLUDE_PACKAGES}"
+
+  - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS="--customize-hook='chroot \"\$1\" update-ccache-symlinks'"
+
+  # Experimental chroots should be based on unstable, and backports chroots on
+  # their target release.
+  - |
+    case "${RELEASE}" in
+    experimental)
+      mmdebstrap_dist=${DEFAULT_RELEASE}
+      ;;
+    *-backports)
+      mmdebstrap_dist=${RELEASE%-backports}
+      ;;
+    *)
+      mmdebstrap_dist=${RELEASE}
+      ;;
+    esac
+
+  - su salsa-ci -c "mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-amd64.tar ${SALSA_CI_MIRROR}"
+
+  - mkdir -vp ${WORKING_DIR}
 
   # https://salsa.debian.org/salsa-ci-team/pipeline/-/merge_requests/230
   - (set -o pipefail; rm -vrf ${CCACHE_TMP_DIR} | tail)
+  - |
+    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    then
+      mkdir -vp ${CCACHE_WORK_DIR}
+      mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
+      find ${CCACHE_TMP_DIR} -type d | xargs chmod g+s
+    fi
 
-  - mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
-  - add_extra_repository.sh -v
-    -e "${SALSA_CI_EXTRA_REPOSITORY}" -k "${SALSA_CI_EXTRA_REPOSITORY_KEY}"
-    -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
+  - |
+    if ! [ -z "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}" ] ; then
+      echo -e "\e[91m Error: sbuild doesn't support deb822-style sources. Please move your settings to one-line-style format, until https://bugs.debian.org/1089735 gets fixed and supported by Salsa CI.\e[39m"
+      exit 1
+    fi
 
-.build-script: &build-script
-  - export CCACHE_DIR=${CCACHE_TMP_DIR}
+.build-script-setup-environment: &build-script-setup-environment
+  # setup sbuild+unshare support
+  - mkdir -p ~salsa-ci/.config/sbuild/
+  - |
+    cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
+    $chroot_mode = 'unshare';
+    $build_path = "/build/package/";
+    $dsc_dir = "package";
+    EOF
+
+  - mkdir -vp ${BUILD_DIR}
+
+  # setup environment required for ccache
+  - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
+  - |
+    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    then
+      export CCACHE_DIR=${CCACHE_TMP_DIR}
+      # fix permissions
+      chmod a+X ${CI_PROJECT_DIR} ${CI_PROJECT_DIR}/.ccache
+      chmod -R a+rwX ${CCACHE_DIR} ${CCACHE_WORK_DIR}
+    fi
+
+  # configure sbuild to use ccache
+  - |
+    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    then
+    cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
+    $build_environment = { "CCACHE_DIR" => "/build/ccache" };
+    $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
+    $unshare_bind_mounts = [ { directory => "%CCACHE_DIR%", mountpoint => "/build/ccache" } ];
+    EOF
+    fi
+
+  - |
+    if echo "${BUILD_TWICE} ${SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP}" | grep -qE '^(1|yes|true)$' ; then
+      cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
+      $external_commands = {
+        "starting-build-commands" => [
+          'bash -c \'find %SBUILD_PKGBUILD_DIR -print0 |
+                      sort -z |
+                      while read -d $\'\\\'\'\0\'\\\'\' file; do
+                          echo -n "$(stat -c "%n %F %%s" "${file}") "
+                          if [ -f "${file}" ]; then
+                              sha256sum "${file}" |
+                                  cut -d " " -f 1
+                          else
+                                  echo
+                          fi
+                      done > /tmp/file-list.pre-build\''
+        ],
+        "chroot-cleanup-commands" => [
+          'cd %SBUILD_PKGBUILD_DIR && ./debian/rules clean',
+          'bash -c \'find %SBUILD_PKGBUILD_DIR -print0 |
+                    sort -z |
+                    while read -d $\'\\\'\'\0\'\\\'\' file; do
+                        echo -n "$(stat -c "%n %F %%s" "${file}") "
+                        if [ -f "${file}" ]; then
+                            sha256sum "${file}" |
+                                cut -d " " -f 1
+                        else
+                                echo
+                        fi
+                    done > /tmp/file-list.post-build\'',
+          'diff /tmp/file-list.pre-build /tmp/file-list.post-build'
+        ]
+      };
+    EOF
+    fi
+
+  - test ! "${ENABLE_CCACHE}" != "0" || sed -i -e "s#%CCACHE_DIR%#${CCACHE_DIR}#" ~salsa-ci/.config/sbuild/config.pl
+
+  - chown -R salsa-ci ~salsa-ci/.config/sbuild/
+
+  # Show ccache stats before building
+  - test ! "${ENABLE_CCACHE}" != "0" || su salsa-ci -c "ccache -vv -s"
+
+  - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
+
+.build-script-extract-source: &build-script-extract-source
+  - gbp pull --ignore-branch --pristine-tar --track-missing
 
   # add target architecture if cross-compiling
-  - test -z "${HOST_ARCH}" || dpkg --add-architecture ${HOST_ARCH}
-
-  # Add deb-src entries
-  - |
-    if [ -f /etc/apt/sources.list ]; then
-      sed -n '/^deb\s/s//deb-src /p' /etc/apt/sources.list > /etc/apt/sources.list.d/deb-src.list
-    fi
-  - |
-    if [ -f /etc/apt/sources.list.d/debian.sources ]; then
-      sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
-    fi
-
-  - apt-get update && eatmydata apt-get upgrade -y
-  - |
-    eatmydata apt-get install --no-install-recommends -y \
-      ccache \
-      fakeroot \
-      build-essential
-
-  # in case we are cross-building, install some more dependencies
-  # see #815172 why we need libc-dev and libstdc++-dev
-  - |
-    test -z "${HOST_ARCH}" || eatmydata apt-get satisfy --no-install-recommends -y \
-      libc-dev:${HOST_ARCH} \
-      libstdc++-dev:${HOST_ARCH} \
-      crossbuild-essential-${HOST_ARCH}
+  - test -z "${HOST_ARCH}" || export HOST_ARCH_ARG="--host=${HOST_ARCH}"
   # when cross-compiling, add 'nocheck' to the DEB_BUILD_OPTIONS
   - test -z "${HOST_ARCH}" || export DEB_BUILD_OPTIONS="nocheck ${DEB_BUILD_OPTIONS}"
 
@@ -389,67 +439,63 @@ stages:
       export DEB_BUILD_OPTIONS="noautodbgsym ${DEB_BUILD_OPTIONS}"
     fi
 
-  # Enter source package dir
-  - cd ${WORKING_DIR}/${SOURCE_DIR}
+  - test "$DB_BUILD_TYPE" != "any" || BUILD_TYPE_ARG="--arch-any"
+  - test "$DB_BUILD_TYPE" != "all" || BUILD_TYPE_ARG="--arch-all"
+  # https://lists.debian.org/debian-devel/2022/10/msg00009.html
+  - test "$DB_BUILD_TYPE" != "source" || BUILD_TYPE_ARG="--source --no-arch-all --no-arch-any"
+  - test "$DB_BUILD_TYPE" != "full" || BUILD_TYPE_ARG="--source --arch-all --arch-any"
 
-  # Install package build dependencies
-  # use plain "apt-get build-dep" so that we can install only packages for
-  # architecture indep or arch:any builds. When doing source-only builds,
-  # manually extract and satisfy the Build-Dependencies field to improve
-  # salsa-ci-team/pipeline#187 until #1021342 is resolved.
-  - aptopts=""
-  - test "$DB_BUILD_TYPE" != "any" || aptopts="--arch-only"
-  - test "$DB_BUILD_TYPE" != "all" || aptopts="--indep-only"
-  - apt_solver_opts=""
-  - aspcud_version="1:0.0.0-0"
-  # use aspcud solver for experimental and backports
-  # but not when cross building
-  - |
-    test -n "${HOST_ARCH}" || case "$RELEASE" in
-    experimental | *-backports)
-      eatmydata apt-get install --no-install-recommends -y aspcud apt-cudf
-      apt_solver_opts="$apt_solver_opts --solver aspcud -oAPT::Solver::Strict-Pinning=false -oAPT::Solver::aspcud::Preferences="
-      aspcud_version=$(dpkg-query --show --showformat '${Version}' aspcud)
-      # minimize number of packages from experimental and backports
-      case "$RELEASE" in
-      experimental)
-        apt_solver_opts="$apt_solver_opts-count(solution,APT-Release:=/a=experimental/),"
-        ;;
-      *-backports)
-        apt_solver_opts="$apt_solver_opts-count(solution,APT-Release:~/a=.*-backports/),"
-        ;;
-      esac
-      apt_solver_opts="$apt_solver_opts-removed,-changed,-new"
-      aptopts="$aptopts $apt_solver_opts"
-      ;;
-    esac
-
-  # Before attempting apt-get satisfy usage, check that it is working - it
-  # doesn't exist on buster and older. Also check aspcud version as it doesn't
-  # work well on versions before the mentioned one.
-  # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/387
-
-  - aspcud_confirmed_to_work_version="1:1.9.6-2"
+  # gbp setup-gitattributes needs to be called after gbp pull to avoid having
+  # staging commits (See #322)
+  - if echo "$SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES" | grep -qvE '^(1|yes|true)$'; then test -r .gitattributes && gbp setup-gitattributes ; fi
 
   - |
-    if [ "$DB_BUILD_TYPE" = 'source' ] && apt-get -qq --no-act satisfy apt && dpkg --compare-versions $aspcud_version ge $aspcud_confirmed_to_work_version
+    if find . -maxdepth 3 -wholename "*/debian/source/format" -exec cat {} \; | grep -q '3.0 (gitarchive)'
     then
-      perl <<- 'EOF' | xargs -r0 eatmydata apt-get -y --no-install-recommends $apt_solver_opts satisfy
-      use Dpkg::Control::Info;
-      my $control         = Dpkg::Control::Info->new();
-      my $fields          = $control->get_source();
-      my $build_depends   = $fields->{'Build-Depends'};
-      my $build_conflicts = $fields->{'Build-Conflicts'};
-      if ( length $build_depends ) {
-          print $build_depends . "\0";
-      }
-      if ( length $build_conflicts ) {
-          print 'Conflicts: ' . $build_conflicts . "\0";
-      }
-    EOF
+      eatmydata apt-get install --no-install-recommends -y \
+        dpkg-source-gitarchive
+      { DSC=$(dpkg-source --build . | tee /dev/fd/3 | sed -n 's/.* \(\S*.dsc$\)/\1/p') ; } 3>&1
+      dpkg-source --extract --no-check ../$DSC ${BUILD_DIR}/${DSC%.dsc}
     else
-      eatmydata apt-get build-dep ${HOST_ARCH:+--host-architecture ${HOST_ARCH} -Pcross,nocheck} --no-install-recommends -y $aptopts .
+      # Check if we can obtain the orig from the git branches
+
+      if ! gbp export-orig --tarball-dir=${BUILD_DIR}; then
+        # Fallback using origtargz
+        origtargz -dt
+        cp -v ../*orig*tar* ${BUILD_DIR}
+        SALSA_CI_GBP_BUILDPACKAGE_ARGS="--git-overlay ${SALSA_CI_GBP_BUILDPACKAGE_ARGS}"
+      fi
+
+      # As of 2020-09-09, gbp doesn't have a simpler method to extract the
+      # debianized source package. Use --git-pbuilder=`/bin/true` for the moment:
+      # https://bugs.debian.org/969952
+
+      gbp buildpackage \
+        --git-ignore-branch \
+        --git-ignore-new \
+        --git-no-create-orig \
+        --git-export-dir=${BUILD_DIR} \
+        --no-check-builddeps \
+        --git-builder=/bin/true \
+        --git-no-pbuilder \
+        --git-no-hooks \
+        --git-no-purge \
+        ${SALSA_CI_GBP_BUILDPACKAGE_ARGS} |& filter-output
     fi
+
+  - ls -lh ${BUILD_DIR}
+  - cd ${BUILD_DIR}
+  - DEBIANIZED_SOURCE=$(find . -maxdepth 3 -wholename "*/debian/changelog" | sed -e 's%/\w*/\w*$%%')
+  - |
+    if [ ! "${DEBIANIZED_SOURCE}" ] ; then
+      echo "Error: No valid debianized source tree found."
+      exit 1
+    fi
+
+  # fix permissions
+  - chown -R 'salsa-ci:' ${BUILD_DIR} ${WORKING_DIR}
+
+  - cd ${DEBIANIZED_SOURCE}
 
   # If not disabled, bump package version
   - |
@@ -458,67 +504,72 @@ stages:
       sed -i -e "1 s/)/+${SALSA_CI_VERSION_BUMP_SUFFIX_NAME}+${DATESTAMP}+${CI_PIPELINE_IID})/" debian/changelog
     fi
 
-  # Generate ccache links
-  - dpkg-reconfigure ccache
-  - PATH="/usr/lib/ccache/:${PATH}"
 
-  # Reset ccache stats
-  - ccache -z
-
-  # The $CI_BUILDS_DIR (/builds) directory is writeable by others by default on
-  # arm runners which may lead to failure of arm build jobs.
-  # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/362#note_507662
-  - chmod o-w $CI_BUILDS_DIR
-
-  # Create salsaci user and fix permissions
-  - useradd --create-home salsaci
-  - chown -R 'salsaci:' ${WORKING_DIR} ${CCACHE_DIR}
-
-  # Define buildlog filename
-  - BUILD_LOGFILE_SOURCE=$(dpkg-parsechangelog -S Source)
-  - BUILD_LOGFILE_VERSION=$(dpkg-parsechangelog -S Version)
-  - BUILD_LOGFILE_VERSION=${BUILD_LOGFILE_VERSION#*:}
-  - BUILD_LOGFILE_ARCH=${HOST_ARCH:-${BUILD_ARCH}}
-  - BUILD_LOGFILE="${WORKING_DIR}/${BUILD_LOGFILE_SOURCE}_${BUILD_LOGFILE_VERSION}_${BUILD_LOGFILE_ARCH}.build"
-
-  # Define build command
-  - export BUILD_COMMAND="eatmydata dpkg-buildpackage ${HOST_ARCH:+--host-arch ${HOST_ARCH} -Pcross,nocheck} --build=${DB_BUILD_TYPE} ${DB_BUILD_PARAM}"
+.build-script-setup-build-command: &build-script-setup-build-command
+  # Define the build command
+  - export BUILD_COMMAND="sbuild --dist=${RELEASE} --no-clean-source ${HOST_ARCH_ARG} ${BUILD_TYPE_ARG} --build-dir=${WORKING_DIR}"
+  - test -z "${DB_BUILD_PARAM}" || export BUILD_COMMAND="${BUILD_COMMAND} --debbuildopts=${DB_BUILD_PARAM}"
+  - export BUILD_COMMAND="${BUILD_COMMAND} --no-run-lintian"
+  - |
+    if echo "$SALSA_CI_SBUILD_VERBOSE" | grep -qE '^(1|yes|true)$'; then
+      export BUILD_COMMAND="${BUILD_COMMAND} --verbose"
+    fi
   # Set architecture to correct in case it is i386 to avoid pitfalls (See #284)
   - test "${BUILD_ARCH}" = "i386" && export BUILD_COMMAND="/usr/bin/setarch i686 ${BUILD_COMMAND}"
 
-  # Add verbose option for timeout
+  # handle experimental and backports
   - |
-    timeout_version="$(timeout --version | awk 'NR==1{print $4}')"
-    if dpkg --compare-versions "$timeout_version" ge 8.29; then
-      export SALSA_CI_BUILD_TIMEOUT_ARGS=" -v ${SALSA_CI_BUILD_TIMEOUT_ARGS}"
-    fi
+    # minimize number of packages from experimental and backports
+    case "${RELEASE}" in
+    experimental)
+      apt_solver_opts="${apt_solver_opts}-count(down),-count(changed,APT-Release:=/experimental/),-removed,-changed,-new"
+      export BUILD_COMMAND="${BUILD_COMMAND} --build-dep-resolver=aspcud --aspcud-criteria \"${apt_solver_opts}\""
+      ;;
+     *-backports)
+      export BUILD_COMMAND="${BUILD_COMMAND} --build-dep-resolver=aptitude"
+      ;;
+    esac
 
+  - test -z "${SALSA_CI_SBUILD_ARGS}" || export BUILD_COMMAND="${BUILD_COMMAND} ${SALSA_CI_SBUILD_ARGS}"
+  # TODO: handle multiple (space separated) extra packages
+  - test -z "${SALSA_CI_SBUILD_EXTRA_PACKAGE}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-package=${SALSA_CI_SBUILD_EXTRA_PACKAGE}"
+
+  - test -z "${SALSA_CI_EXTRA_REPOSITORY}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-repository=\"${SALSA_CI_EXTRA_REPOSITORY}\""
+  - test -z "${SALSA_CI_EXTRA_REPOSITORY_KEY}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-repository-key=\"${SALSA_CI_EXTRA_REPOSITORY_KEY}\""
+
+.build-script-run-build-command: &build-script-run-build-command
   # Print the build environment
   - printenv | sort
 
-  # Build package as user salsaci
-  - su salsaci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} ${BUILD_COMMAND} && if [ "${BUILD_TWICE}" = "true" ]; then ${BUILD_COMMAND}; fi" |& OUTPUT_FILENAME=${BUILD_LOGFILE} filter-output
+  # Build the package as user salsa-ci
+  - su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} ${BUILD_COMMAND}" |& filter-output
   # Do not append any diagnostics or cleanup code here. The above build line
   # often fails or timeouts, and the remaining 'script' section will not be
   # executed.
+  #
+  # But let's copy the (orig) *tar* files to the artifacts dir
+  - test -z "$(find ../ -maxdepth 1 -name '*.tar.*')" || cp -vn ../*tar* ${WORKING_DIR}
+
+.build-script: &build-script
+  - *build-script-setup-environment
+  - *build-script-extract-source
+  - *build-script-setup-build-command
+  - *build-script-run-build-command
 
 # Place all diagnostics or cleanup in the 'after_script' section, as it will run
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
   # Print ccache stats on job log and move it to location that will be saved
-  - |
-    if [ -x /usr/bin/ccache ]; then
-      # Older ccache does not support '-vv' but will print stats anyway,
-      # followed by error in stderr and exit code 1. Newer ccache 4.0+
-      # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
-      # to show any cache hit stats at all.
-      CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
-      mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
-    fi
+  #
+  # Older ccache does not support '-vv' but will print stats anyway,
+  # followed by error in stderr and exit code 1. Newer ccache 4.0+
+  # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
+  # to show any cache hit stats at all.
+  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
+  - test ! "${ENABLE_CCACHE}" != "0" || mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
-  # Clean away sources from artifact directory
-  - rm -rf ${WORKING_DIR}/${SOURCE_DIR}
+
   # Print size of artifacts after build
   - du -sh
   # Warn if job artifacts size limit exceeded
@@ -530,9 +581,13 @@ stages:
   # Keep in mind that this last diagnostics line will run only if all lines
   # above returned exit code zero.
 
-.build-definition: &build-definition
+# This is the common build definition, so third party projects customize/extend
+# .build-definition, without creating circular dependencies in the pipeline.
+.build-definition-common: &build-definition-common
   stage: build
-  image: $SALSA_CI_IMAGES_BASE
+  image: $SALSA_CI_IMAGES_BUILD
+  extends:
+    - .artifacts-default-expire
   cache:
     when: always
     key: "build-${BUILD_ARCH}_${HOST_ARCH}"
@@ -544,27 +599,30 @@ stages:
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
   script:
-    # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
-    - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
+    - *get-target-distribution
     - *build-before-script
     - *build-script
   after_script:
     - *build-after-script
-  dependencies:
-    - extract-source
   artifacts:
     reports:
       dotenv: salsa.env
 
+# Third party projects should redefine .build-defintion, extending
+# .build-definition-common, if they need to customize the {test-,}build jobs,
+# in a common place.
+.build-definition: &build-definition
+  extends:
+    - .build-definition-common
+
 .build-package: &build-package
   extends:
     - .build-definition
-    - .artifacts-default-expire
 
 .build-package-i386: &build-package-i386
   extends:
     - .build-package
-  image: $SALSA_CI_IMAGES_BASE_I386
+  image: $SALSA_CI_IMAGES_BUILD_I386
   variables:
     BUILD_ARCH: 'i386'
   rules:
@@ -573,7 +631,7 @@ stages:
 .build-package-armel: &build-package-armel
   extends:
     - .build-package
-  image: $SALSA_CI_IMAGES_BASE_ARM32V5
+  image: $SALSA_CI_IMAGES_BUILD_ARM32V5
   variables:
     BUILD_ARCH: 'armel'
   tags:
@@ -584,7 +642,7 @@ stages:
 .build-package-armhf: &build-package-armhf
   extends:
     - .build-package
-  image: $SALSA_CI_IMAGES_BASE_ARM32V7
+  image: $SALSA_CI_IMAGES_BUILD_ARM32V7
   variables:
     BUILD_ARCH: 'armhf'
   tags:
@@ -595,7 +653,7 @@ stages:
 .build-package-arm64: &build-package-arm64
   extends:
     - .build-package
-  image: $SALSA_CI_IMAGES_BASE_ARM64
+  image: $SALSA_CI_IMAGES_BUILD_ARM64
   variables:
     BUILD_ARCH: 'arm64'
   tags:
@@ -617,7 +675,7 @@ stages:
 .build-package-riscv64: &build-package-riscv64
   extends:
     - .build-package
-  image: $SALSA_CI_IMAGES_BASE_RISCV64
+  image: $SALSA_CI_IMAGES_BUILD_RISCV64
   variables:
     BUILD_ARCH: 'riscv64'
   tags:
@@ -641,20 +699,12 @@ stages:
     - .build-definition
   script:
     - *check-architecture-is-buildable
-
-    - cd "${WORKING_DIR}/${SOURCE_DIR}"
     - *get-target-distribution
-    - cd "${OLDPWD}"
-
     - *build-before-script
     - *build-script
   after_script:
     - *build-after-script
-  needs:
-    - job: extract-source
-      artifacts: true
-    - job: build
-      artifacts: true
+  needs: []
 
 .test-build-package-any: &test-build-package-any
   extends:
@@ -683,11 +733,13 @@ stages:
     - .build-definition
   stage: test
   script:
+    - *get-target-distribution
     - *build-before-script
     - LOCAL_ARCH=$(dpkg --print-architecture)
     - *build-script
   after_script:
     - *build-after-script
+    - echo -e "\e[31m WARNING, the build package twice job is obsolete since the pipeline moved to\n sbuild, in favor of validating if the package correctly cleans up the source\n tree. The build twice test support will be removed in the future. To get an\n equivalent functionality, set the SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP\n to 0 instead.\e[0m"
   variables:
     BUILD_TWICE: 'true'
   rules:
@@ -695,6 +747,19 @@ stages:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE !~ /^(1|yes|true)$/
+
+.test-build-validate-cleanup: &test-build-validate-cleanup
+  extends:
+    - .build-definition
+  stage: test
+  variables:
+    SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP: 'true'
+  rules:
+    - if: $SALSA_CI_ENABLE_VALIDATE_PACKAGE_CLEAN_UP =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP !~ /^(1|yes|true)$/
+  needs: []
 
 .check-build-package-profiles: &check-build-package-profiles
   - |
@@ -708,10 +773,12 @@ stages:
     - .build-definition
   script:
     - *check-build-package-profiles
+    - *get-target-distribution
     - *build-before-script
     - *build-script
   after_script:
     - *build-after-script
+  needs: []
 
 .test-build-package-profiles: &test-build-package-profiles
   extends:
@@ -765,11 +832,21 @@ stages:
     - /etc/init.d/lxc start
     - chown -R 'debci:' ${WORKING_DIR}
     - export debci_autopkgtest_args="${SALSA_CI_AUTOPKGTEST_ARGS}"
+
+    # Find the non-source .change files from artifacts from previous build job
+    - AUTOPKGTEST_INPUT_FILES=$(find $WORKING_DIR/ -regex ".*changes" ! -regex ".*_source.changes")
+    # Look out if the binary changes files contain the source package (at
+    # least, the .dsc)
+    - DSC_IN_CHANGES=$(grep -q -E '(\w+\s+){2,3}\w+\s[[:alnum:].+~\-]+_[[:alnum:].+~\-]+\.dsc$' ${AUTOPKGTEST_INPUT_FILES} ; echo $?)
+    # And include the .dsc file as input for autopkgtest
+    - if [ "${DSC_IN_CHANGES}" == 1 ] ; then AUTOPKGTEST_INPUT_FILES="${AUTOPKGTEST_INPUT_FILES} ${WORKING_DIR}/*.dsc" ; fi
+    - echo "${AUTOPKGTEST_INPUT_FILES}"
+
     - |
       ret=0
       # su's -P is required to have ownership over /dev/stderr, /dev/stdout and
       # /dev/stdin, and then fix #256
-      su -P debci -c "debci localtest $WORKING_DIR/*.changes --suite ${RELEASE} --logs-dir ${DEBCI_LOG_PATH}" || ret=$?
+      su -P debci -c "debci localtest ${AUTOPKGTEST_INPUT_FILES} --suite ${RELEASE} --logs-dir ${DEBCI_LOG_PATH}" || ret=$?
       case ",$SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS," in *",$ret,"*) exit 0;; esac
       exit $ret
     - rm -vrf ${WORKING_DIR}/debci/binaries
@@ -1123,16 +1200,15 @@ stages:
     - if: $SALSA_CI_DISABLE_WRAP_AND_SORT !~ /^(1|yes|true)$/
   script:
     - apt-get update && eatmydata apt-get install --no-install-recommends -y devscripts
-    - cd ${WORKING_DIR}
-    - mkdir -v wrap-and-sort
-    - cp -av ${SOURCE_DIR}/debian wrap-and-sort/
-    - (cd wrap-and-sort && wrap-and-sort ${SALSA_CI_WRAP_AND_SORT_ARGS})
-    - diff -ur ${SOURCE_DIR}/debian/ wrap-and-sort/debian/
+    - mkdir -v ${CI_BUILDS_DIR}/control
+    - mkdir -v ${CI_BUILDS_DIR}/wrap-and-sort
+    - cp -av debian/ ${CI_BUILDS_DIR}/control/
+    - cp -av debian/ ${CI_BUILDS_DIR}/wrap-and-sort/
+    - (cd ${CI_BUILDS_DIR}/wrap-and-sort && wrap-and-sort ${SALSA_CI_WRAP_AND_SORT_ARGS})
+    - diff -ur ${CI_BUILDS_DIR}/control/debian/ ${CI_BUILDS_DIR}/wrap-and-sort/debian/
   variables:
     GIT_STRATEGY: none
-  needs:
-    - job: extract-source
-      artifacts: true
+  needs: []
 
 .test-licenserecon: &test-licenserecon
   stage: test
@@ -1144,13 +1220,10 @@ stages:
     - if: $SALSA_CI_DISABLE_LICENSERECON !~ /^(1|yes|true)$/
   script:
     - apt-get update && eatmydata apt-get install --no-install-recommends -y licenserecon
-    - cd ${WORKING_DIR}/${SOURCE_DIR}
     - lrc ${SALSA_CI_LICENSERECON_ARGS}
   variables:
     GIT_STRATEGY: none
-  needs:
-    - job: extract-source
-      artifacts: true
+  needs: []
 
 .publish-aptly: &publish-aptly
   stage: publish

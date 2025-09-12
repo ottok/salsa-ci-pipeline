@@ -13,10 +13,12 @@ workflow:
       variables:
         IMAGE_VERSION: latest
         AUTOPKGTEST_IMAGE_VERSION: latest
+        BUILD_IMAGE_VERSION: latest
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: ${RELEASE}_${CI_COMMIT_REF_SLUG}
+        IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
         AUTOPKGTEST_IMAGE_VERSION: ${STABLE}_${CI_COMMIT_REF_SLUG}
+        BUILD_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
     - when: always
   auto_cancel:
     on_new_commit: interruptible
@@ -169,8 +171,6 @@ check yaml lint:
     - yamllint .
 
 test-pipeline:
-  variables:
-    RELEASE: sid
   trigger:
     include:
       - local: .pipeline-test.yml
@@ -182,6 +182,10 @@ test-pipeline:
         SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
         SALSA_CI_PIUPARTS_ARGS: --extra-repo="deb http://deb.debian.org/debian sid non-free"
         SALSA_CI_BLHC_ARGS: --ignore-line "some harmless line"
+        SALSA_CI_SBUILD_VERBOSE: 1
+        SALSA_CI_LINTIAN_SUPPRESS_TAGS: 'unreleased-changes'
+        SALSA_CI_EXTRA_REPOSITORY: "deb-src http://deb.debian.org/debian unstable main"
+        SALSA_CI_EXTRA_REPOSITORY_KEY: /usr/share/keyrings/debian-archive-keyring.gpg
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         PROJECT_TARGET_HEAD: debian/master
         SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
@@ -192,6 +196,32 @@ test-pipeline:
         SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
         BUILD_PROFILES:
           - nocheck,nodoc
+      # test building the grep bookworm version
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/3.8-5
+        # d/changelog targets unstable, so we need to manually define the RELEASE
+        RELEASE: bookworm
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
+      # test building the grep bullseye version
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: debian/3.6-1+deb11u1
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
+      # test building on experimental
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: salsa-ci/debian/experimental
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
+      # test building on bookworm-backports
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        PROJECT_TARGET_HEAD: salsa-ci/debian/bookworm-backports
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
+        SALSA_CI_DISABLE_APTLY: 1
       # curl is used to test calling reprotest and passing an --append-build-command
       - PROJECT_URL: https://salsa.debian.org/debian/curl
         PROJECT_TARGET_HEAD: debian/bookworm
@@ -199,15 +229,19 @@ test-pipeline:
         SALSA_CI_ENABLE_REPROTEST: 1
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
+        SALSA_CI_DISABLE_CCACHE: 1
       # boxes is used to test gbp setup-gitattributes (#322)
       # - PROJECT_URL: https://salsa.debian.org/otto/boxes
       #   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
       #
       # cloudflare-ddns is used to verify that the build source job only
-      # satisfies Build-Depends and Build-Conflicts See:
-      # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/187
+      # satisfies Build-Depends and Build-Conflicts. See:
+      # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/187.
+      # It is also used to test the package clean up validation, that replaces
+      # the build twice test job.
       - PROJECT_URL: https://salsa.debian.org/tachi/cloudflare-ddns/
         PROJECT_TARGET_HEAD: debian/2.1.0-2
+        SALSA_CI_ENABLE_VALIDATE_PACKAGE_CLEAN_UP: 1
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
       # iortcw is used to test enabling additional APT components (contrib,
@@ -219,6 +253,27 @@ test-pipeline:
         SALSA_CI_DISABLE_APTLY: 1
         SALSA_CI_ENABLE_PIUPARTS: 1
         SALSA_CI_COMPONENTS: 'main contrib non-free'
+      # systemd's test-cgroup test fails during build time on unshare.
+      # Its pipeline definition for bookworm runs with DEB_BUILD_OPTIONS:
+      # "nocheck"
+      - PROJECT_URL: https://salsa.debian.org/systemd-team/systemd
+        PROJECT_TARGET_HEAD: debian/bookworm
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+      # hello 2.10-3 should be built for bookworm, even if its debian/changelog
+      # targets unstable. This test helps to verify that the RELEASE variable
+      # is honored by the pipeline.
+      - PROJECT_URL: https://salsa.debian.org/sanvila/hello
+        PROJECT_TARGET_HEAD: debian/2.10-3
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+        RELEASE: bookworm
+      # OCaml projects were unable to use the Salsa CI pipeline with the
+      # obsolete extract-source job. See #200.
+      - PROJECT_URL: https://salsa.debian.org/ocaml-team/ocaml-ffmpeg.git
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
+        SALSA_CI_DISABLE_APTLY: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
@@ -249,6 +304,11 @@ test-pipeline-non-default-archs:
   allow_failure: true
 
 ubuntu-test-pipeline:
+  variables:
+    # gitlab doesn't pass these variables from var/ubuntu.yml
+    VENDOR: 'ubuntu'
+    DEFAULT_RELEASE: 'plucky'
+    SALSA_CI_MIRROR: 'http://archive.ubuntu.com/ubuntu'
   trigger:
     include:
       - local: .pipeline-test-ubuntu.yml

@@ -373,9 +373,6 @@ follows:
 ---
 include: https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
 
-extract-source:
-    extends: .provisioning-extract-source
-
 variables:
   RELEASE: 'experimental'
 
@@ -419,6 +416,8 @@ NOT to do define all jobs manually**. Most of the time it is better to simply
 [select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline).
 
 ### Experimental: Enable Salsa CI statistics
+
+> :warning: This is currently non-operational
 
 To help monitor and improve Salsa CI, you can configure the pipeline to report basic
 pipeline identifiers, such as the pipeline ID, project ID, and creation timestamp for
@@ -541,6 +540,14 @@ build riscv64:
     - if: $CI_PROJECT_ROOT_NAMESPACE  == "debian"
 ```
 
+### Customize the build jobs
+
+The build jobs run a script composed of different steps, predefined by, at a
+first level, .build-definition-common, and, at a second level, by
+`.build-script`.  Their composing scripts should be safe-explanatory.  If you
+need to customize the script run by any build job, the easiest way to do it is
+by redefining `.build-definition`.
+
 ### Add more architectures or CI runners
 
 If you want to add more architectures or for other reasons have your own
@@ -621,7 +628,12 @@ variables:
   SALSA_CI_DISABLE_CROSSBUILD_ARM64: 0
 ```
 
-### Enable building packages twice in a row
+### Enable building packages twice in a row (Obsolete)
+
+This test job has been replaced and will be removed in the future. Instead of
+testing if a package builds twice in a row, the pipeline makes it possible to
+validate if the `clean` target of `debian/rules` correctly restores the source
+directory to its initial state (See the next test job documentation).
 
 The job `test-build-twice` can be used to check whether it is possible to run
 `dpkg-buildpackage` twice in a row. To enable this check, either run your
@@ -632,6 +644,20 @@ different than 1, 'yes' or 'true' or by adding the following to your
 ```yaml
 variables:
   SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE: 0
+```
+
+### Validate if debian/rules clean correctly cleans up the source tree
+
+The job `test-build-validate-cleanup` can be used to check whether the `clean`
+target of `debian/rules` correctly restores the source tree directory to its
+initial state. This generally means that a package is able to build twice in a
+row. To enable this check, either run your pipeline manually with
+`SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP` set to anything different than 1,
+'yes' or 'true' or by adding the following to your `debian/salsaci.yml`:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP: 0
 ```
 
 ### Enable generation of dbgsym packages
@@ -662,10 +688,10 @@ variables:
     SALSA_CI_COMPONENTS: 'main contrib non-free'
 ```
 
-This is currently used for `piuparts`, but is likely to be used for
-other stages in future.
+This is currently used for the `build` and `piuparts` jobs, but is likely to be
+used for other stages in future.
 
-It is possible to use the `SALSA_CI_EXTRA_REPOSITORY` support to add a
+It is also possible to use the `SALSA_CI_EXTRA_REPOSITORY` support to add a
 suitable apt source to the build environment and allow builds to access
 build-dependencies from contrib and non-free. You will need permission
 to modify the Salsa Settings for the project.
@@ -783,6 +809,44 @@ include:
 
 variables:
   SALSA_CI_DISABLE_GBP_SETUP_GITATTRIBUTES: 1
+```
+
+### Sbuild verbosity and additional arguments
+
+By default, the build jobs run `sbuild` with verbose enabled, so all the
+information goes to the `.build` logs as well to stdout. To disable verbosity,
+set the `$SALSA_CI_SBUILD_VERBOSE` variable to something different than 1,
+'yes' or 'true':
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+  SALSA_CI_SBUILD_VERBOSE: 0
+```
+
+If needed, additional arguments can be be passed to sbuild with the
+`SALSA_CI_SBUILD_ARGS` variable. Options given with this variable are included
+after all the other `sbuild` arguments.
+
+### Disable ccache
+
+By default, the build jobs use `ccache(1)` to speed up recompilation of C/C++
+code by caching the results from previous jobs. To
+disable the use of `ccache`, set the `SALSA_CI_DISABLE_CCACHE` variable to 1,
+'yes' or 'true':
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+  SALSA_CI_DISABLE_CCACHE: 1
 ```
 
 ### Customize reprotest
