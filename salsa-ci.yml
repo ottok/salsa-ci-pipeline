@@ -248,6 +248,25 @@ stages:
   rules:
     - if: $SALSA_CI_DISABLE_EXTRACT_SOURCE !~ /^(1|yes|true)$/
 
+.pipeline-stats-reporting: &pipeline-stats-reporting
+  - |
+    # Beta: Salsa CI statistics reporting to salsa-status.debian.net (See #413)
+    if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && \
+      [ "$CI_PROJECT_VISIBILITY" = 'public' ] && \
+      [ "$CI_SERVER_URL" = "https://salsa.debian.org" ]; then
+      curl --connect-timeout 30 --max-time 90 --silent --show-error \
+        -X PUT 'https://salsa-status.debian.net/api/v1/pipelines' \
+        -H 'Content-Type: application/json' \
+        -d @- <<-EOF || true
+      {
+        "id": $CI_PIPELINE_ID,
+        "project_id": $CI_PROJECT_ID,
+        "created_at": "$CI_PIPELINE_CREATED_AT"
+      }
+    EOF
+      echo
+    fi
+
 .check-architecture-is-buildable: &check-architecture-is-buildable
   - |
     if [ "${DB_BUILD_TYPE}" = all ]; then
@@ -685,6 +704,8 @@ stages:
     - if: $SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64 !~ /^(1|yes|true)$/
 
 .build-source-only: &build-source-only
+  before_script:
+    - *pipeline-stats-reporting
   extends:
     - .build-definition
     - .artifacts-default-expire
