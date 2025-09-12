@@ -882,10 +882,10 @@ stages:
 
     # Find the non-source .change files from artifacts from previous build job
     - AUTOPKGTEST_INPUT_FILES=$(find $WORKING_DIR/ -regex ".*changes" ! -regex ".*_source.changes")
-    # Look out if the binary changes files contain the source package (at
-    # least, the .dsc)
-    - DSC_IN_CHANGES=$(grep -q -E '(\w+\s+){2,3}\w+\s[[:alnum:].+~\-]+_[[:alnum:].+~\-]+\.dsc$' ${AUTOPKGTEST_INPUT_FILES} ; echo $?)
-    # And include the .dsc file as input for autopkgtest
+    # Check if the .changes file lists the source package (.dsc file)
+    - DSC_IN_CHANGES=$(grep -q -E '^\s*(\S+\s+){3,4}[[:alnum:].+\-]+_[[:alnum:].+~\-]+\.dsc$' ${AUTOPKGTEST_INPUT_FILES} ; echo $?)
+    # Fallback: if .changes lacks a .dsc, append the .dsc so autopkgtest has
+    # exactly one source
     - if [ "${DSC_IN_CHANGES}" == 1 ] ; then AUTOPKGTEST_INPUT_FILES="${AUTOPKGTEST_INPUT_FILES} ${WORKING_DIR}/*.dsc" ; fi
     - echo "${AUTOPKGTEST_INPUT_FILES}"
 
