@@ -49,6 +49,7 @@ variables:
   # Set to true to build the package twice
   BUILD_TWICE: 'false'
   SALSA_CI_MIRROR: 'http://deb.debian.org/debian'
+  SALSA_CI_SECURITY_MIRROR: 'http://deb.debian.org/debian-security'
   SALSA_CI_DEBIAN_ARCHIVE_MIRROR: 'http://archive.debian.org/debian'
   SALSA_CI_COMPONENTS: ''
   SALSA_CI_IMAGES: 'registry.salsa.debian.org/salsa-ci-team/pipeline'
@@ -190,6 +191,9 @@ variables:
   DEFAULT_RELEASE: 'unstable'
   SALSA_CI_ENABLE_STATS:
     description: "Experimental feature to send statistics to https://salsa-status.debian.net"
+    value: 1
+  SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES:
+    description: "Build reverse dependencies jobs"
     value: 1
 
 stages:
@@ -608,6 +612,9 @@ stages:
   artifacts:
     reports:
       dotenv: salsa.env
+    paths:
+      - ${WORKING_DIR}/
+      - salsa.env
 
 # Third party projects should redefine .build-defintion, extending
 # .build-definition-common, if they need to customize the {test-,}build jobs,
@@ -1232,6 +1239,145 @@ stages:
   variables:
     GIT_STRATEGY: none
   needs: []
+
+.setup_chdist: &setup_chdist
+  - apt-get update && eatmydata apt-get install --no-install-recommends -y distro-info
+  - CHDIST_NAME="archive-${RELEASE}"
+  - |
+    STABLE="$(distro-info --stable)"
+    OLDSTABLE="$(distro-info --oldstable)"
+    EXTRAS=""
+
+    case "$RELEASE" in
+      experimental)
+        BASE="unstable"
+        EXTRAS="experimental"
+        ;;
+      *-backports)
+        BASE="${RELEASE%-backports}"   # strip suffix
+        EXTRAS="${BASE}-updates ${BASE}-security ${BASE}-backports"
+        ;;
+      *)
+        BASE="$RELEASE"
+        # for (old)stable codenames, include updates/security
+        if [ "$BASE" = "$STABLE" ] || [ "$BASE" = "$OLDSTABLE" ]; then
+          EXTRAS="${BASE}-updates ${BASE}-security"
+        fi
+        ;;
+    esac
+
+    chdist create "$CHDIST_NAME" "$SALSA_CI_MIRROR" "$BASE" main
+
+    for SUITE in $EXTRAS; do
+      REPO="$SALSA_CI_MIRROR"
+      case "$SUITE" in
+        *-security)
+          type=security
+          REPO="$SALSA_CI_SECURITY_MIRROR"
+          ;;
+        *-updates)
+          type=updates
+          ;;
+        *-backports)
+          type=backports
+          ;;
+        experimental)
+          type=experimental
+          ;;
+      esac
+
+      cat > "${HOME}/.chdist/${CHDIST_NAME}/etc/apt/sources.list.d/${type}.list" <<EOF
+    deb ${REPO} ${SUITE} main
+    deb-src ${REPO} ${SUITE} main
+    EOF
+    done
+  - chdist "$CHDIST_NAME" apt-get update
+
+.generate-build-rdep-config: &generate-build-rdep-config
+  stage: test
+  image: $SALSA_CI_IMAGES_BUILD
+  rules:
+    - if: $SALSA_CI_ENABLE_BUILD_REVERSE_DEPENDENCIES =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES !~ /^(1|yes|true)$/
+  variables:
+    GIT_STRATEGY: fetch
+  script:
+    - cat /usr/share/salsa-ci/build-rdeps-template.yml >> ${WORKING_DIR}/build-rdeps-config.yml
+    - *setup_chdist
+    - |
+      ratt -skip_ftbfs \
+        -sbuild-keep-build-log \
+        -direct-rdeps \
+        -dry_run -json \
+        -dist "$RELEASE" \
+        -chdist "$CHDIST_NAME" \
+        ${WORKING_DIR}/*.changes > /tmp/ratt_dry.json
+
+      RDEP_COUNT="$(jq -r '.reverse_dep_count' /tmp/ratt_dry.json 2>/dev/null)"
+
+      if [ "$RDEP_COUNT" -eq 0 ]; then
+        echo "Package has no reverse build-dependencies."
+        exit 1
+      fi
+
+      MAX_RDEP_LIMIT=100
+
+      if [ "$RDEP_COUNT" -gt "$MAX_RDEP_LIMIT" ]; then
+        echo "***********************************************************************************************************"
+        echo "NOTICE! Package has ${RDEP_COUNT} reverse build-dependencies."
+        echo ""
+        echo "Limiting to ${MAX_RDEP_LIMIT} in CI to avoid overloading the Salsa infrastructure."
+        echo "If you need to test all reverse-dependencies, please run ratt locally on your machine."
+        echo "***********************************************************************************************************"
+      fi
+
+      jq --argjson max_rdep_limit "$MAX_RDEP_LIMIT" -r '
+        (.dry_run_builds // [])
+        | sort_by([.package, .version, .sbuild_command])
+        | .[:$max_rdep_limit][]
+        | [.package, .version, .sbuild_command]
+        | @tsv' /tmp/ratt_dry.json |
+      while IFS=$'\t' read -r package version sbuild_command; do
+        cat <<EOF >> "${WORKING_DIR}/build-rdeps-config.yml"
+
+      build-rdep-${package}:
+        extends: .rdep-build-definition
+        stage: test
+        variables:
+          REVERSE_DEP: ${package}
+        script:
+          - su salsa-ci -c "${sbuild_command} --no-run-lintian --build-dir='${RDEP_BUILD_DIR}' --verbose"
+        artifacts:
+          paths:
+            - ${RDEP_BUILD_DIR}
+      EOF
+      done
+  artifacts:
+    paths:
+      - ${WORKING_DIR}/build-rdeps-config.yml
+  needs:
+    - job: build
+      artifacts: true
+
+.test-build-reverse-dependencies: &test-build-reverse-dependencies
+  stage: test
+  rules:
+    - if: $SALSA_CI_ENABLE_BUILD_REVERSE_DEPENDENCIES =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES !~ /^(1|yes|true)$/
+    - when: never
+  needs:
+    - job: generate-build-rdep-config
+      optional: true
+  trigger:
+    include:
+      - artifact: ${WORKING_DIR}/build-rdeps-config.yml
+        job: generate-build-rdep-config
+  variables:
+    PARENT_PIPELINE_ID: $CI_PIPELINE_ID
 
 .publish-aptly: &publish-aptly
   stage: publish

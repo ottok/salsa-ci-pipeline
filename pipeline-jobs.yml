@@ -90,6 +90,12 @@ licenserecon:
 aptly:
   extends: .publish-aptly
 
+generate-build-rdep-config:
+  extends: .generate-build-rdep-config
+
+build-reverse-dependencies:
+  extends: .test-build-reverse-dependencies
+
 ## Atomic Reprotest jobs
 atomic-reprotest:
   extends: .test-reprotest
