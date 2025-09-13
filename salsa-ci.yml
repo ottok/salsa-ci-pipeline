@@ -609,6 +609,9 @@ stages:
   artifacts:
     reports:
       dotenv: salsa.env
+    paths:
+      - ${WORKING_DIR}/
+      - salsa.env
 
 # Third party projects should redefine .build-defintion, extending
 # .build-definition-common, if they need to customize the {test-,}build jobs,
