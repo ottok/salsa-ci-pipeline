@@ -32,6 +32,7 @@ variables:
   DEBEMAIL: "salsa-pipeline@debian.org"
   DEBIAN_FRONTEND: noninteractive
   WORKING_DIR: $CI_PROJECT_DIR/debian/output
+  RDEP_BUILD_DIR: $WORKING_DIR/rdep-build/
   SOURCE_DIR: 'source_dir'
   # BUILD_DIR is the place where the build job scripts will look for all the
   # required files to build the package, including ({orig,}.tar.*) and
@@ -692,6 +693,13 @@ stages:
   variables:
     DB_BUILD_TYPE: source
     SALSA_CI_DISABLE_VERSION_BUMP: 1
+
+.rdeps-sbuild-setup: &rdeps-sbuild-setup
+  before_script:
+    - mkdir -vp ${RDEP_BUILD_DIR}
+    - chown -R 'salsa-ci:' ${RDEP_BUILD_DIR}
+    - *build-before-script
+    - *build-script-setup-environment
 
 .test-build-package: &test-build-package
   stage: test
