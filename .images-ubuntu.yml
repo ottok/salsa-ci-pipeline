@@ -19,7 +19,6 @@ variables:
 .all-supported-releases: &all-supported-releases
   - questing
   - plucky
-  - oracular
   - noble
   - jammy
   - focal
