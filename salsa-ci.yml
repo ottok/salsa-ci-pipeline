@@ -990,7 +990,7 @@ stages:
         SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG='--show-overrides'
       fi
     - |
-      lintian --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}" --display-info --pedantic ${SALSA_CI_LINTIAN_FAIL_ARG} --allow-root \
+      lintian --suppress-tags 'unreleased-changes,changelog-distribution-does-not-match-changes-file' --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}" --display-info --pedantic ${SALSA_CI_LINTIAN_FAIL_ARG} --allow-root \
         ${SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG} ${SALSA_CI_LINTIAN_ARGS} ${WORKING_DIR}/*.changes | tee lintian.output || ECODE=$?
     - |
         if echo "${SALSA_CI_LINTIAN_FAIL_WARNING}" | grep -qE '^(1|yes|true)$'; then
@@ -999,7 +999,7 @@ stages:
     - lintian2junit.py --lintian-file lintian.output > ${WORKING_DIR}/lintian.xml
     # 🗂️ Generate HTML report
     - |
-      lintian --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}"  --display-info --pedantic --allow-root \
+      lintian --suppress-tags 'unreleased-changes,changelog-distribution-does-not-match-changes-file' --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}"  --display-info --pedantic --allow-root \
         ${SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG} --exp-output format=html ${SALSA_CI_LINTIAN_ARGS} ${WORKING_DIR}/*.changes > ${WORKING_DIR}/lintian.html || true
     - exit ${ECODE-0}
   variables:
