@@ -296,6 +296,8 @@ test-pipeline-non-default-archs:
     - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/
       when: always
     - when: manual
+    # Disable all ARM jobs until salsa.debian.org has ARM runners available again
+    - when: never
   parallel:
     matrix:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
