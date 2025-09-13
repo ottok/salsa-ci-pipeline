@@ -25,8 +25,17 @@ RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-insta
     mmdebstrap \
     uidmap \
     iproute2 \
-    distro-info-data && \
+    distro-info-data \
+    # Dependencies required for build reverse-dependencies jobs.
+    # ratt orchestrates the rebuilds and indicates the exact sbuild
+    # command to execute, dose-extra verifies dependency relationships,
+    # and jq processes JSON output in the pipeline.
+    ratt \
+    dose-extra \
+    jq && \
     rm -rf /var/lib/apt
+
+COPY files/reverse-dependencies/build-rdeps-template.yml /usr/share/salsa-ci/build-rdeps-template.yml
 
 # Ideally, to replicate as close as possible the buildd environment,
 # a non-privileged user (as salsa-ci) should run sbuild to build the package
