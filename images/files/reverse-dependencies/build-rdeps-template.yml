@@ -1,0 +1,23 @@
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+
+workflow:
+  rules:
+    - when: always
+
+.rdep-build-definition: &rdep-build-definition
+  extends: .rdeps-sbuild-setup
+  stage: test
+  image: $SALSA_CI_IMAGES_BUILD
+  variables:
+    CCACHE_TMP_DIR: "${CI_PROJECT_DIR}/../.${CI_PROJECT_NAME}.ccache"
+    CCACHE_WORK_DIR: "${CI_PROJECT_DIR}/.ccache"
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: build
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - ${RDEP_BUILD_DIR}/
