@@ -1243,7 +1243,7 @@ stages:
     - (cd ${CI_BUILDS_DIR}/wrap-and-sort && wrap-and-sort ${SALSA_CI_WRAP_AND_SORT_ARGS})
     - diff -ur ${CI_BUILDS_DIR}/control/debian/ ${CI_BUILDS_DIR}/wrap-and-sort/debian/
   variables:
-    GIT_STRATEGY: none
+    GIT_STRATEGY: fetch
   needs: []
 
 .test-licenserecon: &test-licenserecon
@@ -1258,7 +1258,7 @@ stages:
     - apt-get update && eatmydata apt-get install --no-install-recommends -y licenserecon
     - lrc ${SALSA_CI_LICENSERECON_ARGS}
   variables:
-    GIT_STRATEGY: none
+    GIT_STRATEGY: fetch
   needs: []
 
 .setup_chdist: &setup_chdist
