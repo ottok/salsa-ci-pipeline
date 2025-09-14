@@ -1228,7 +1228,7 @@ stages:
 
 .test-wrap-and-sort: &test-wrap-and-sort
   stage: test
-  image: $SALSA_CI_IMAGES_GENERIC_TESTS
+  image: ${SALSA_CI_IMAGES}/generic_tests:unstable
   rules:
     - if: $SALSA_CI_ENABLE_WRAP_AND_SORT =~ /^(1|yes|true)$/
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
