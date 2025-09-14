@@ -420,15 +420,14 @@ NOT to do define all jobs manually**. Most of the time it is better to simply
 
 ### Experimental: Enable Salsa CI statistics
 
-> :warning: This is currently non-operational
-
 To help monitor and improve Salsa CI, you can configure the pipeline to report basic
 pipeline identifiers, such as the pipeline ID, project ID, and creation timestamp for
-public projects. This is done by setting the `SALSA_CI_ENABLE_STATS` variable:
+public projects. This is enabled by default and can be disabled by setting the
+`SALSA_CI_ENABLE_STATS` variable:
 
 ```yaml
 variables:
-  SALSA_CI_ENABLE_STATS: 1
+  SALSA_CI_ENABLE_STATS: 0
 ```
 
 This data is sent to the Salsa CI Dashboard backend and helps monitor the pipeline
