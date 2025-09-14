@@ -19,7 +19,6 @@ variables:
 .all-supported-releases: &all-supported-releases
   - questing
   - plucky
-  - oracular
   - noble
   - jammy
   - focal
@@ -62,6 +61,8 @@ ubuntu-images-prod-arm:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    # Disable all ARM jobs until salsa.debian.org has ARM runners available again
+    - when: never
 
 # Images built on branches.
 # This is a subset of all the images, and are the only ones
