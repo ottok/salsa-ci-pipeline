@@ -185,7 +185,6 @@ images-prod-riscv:
         ARCH:
           - riscv64
         RELEASE: sid
-  when: manual  # disable riscv64 temporairly until runners are operational again
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
