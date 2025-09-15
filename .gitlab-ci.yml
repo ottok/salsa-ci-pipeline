@@ -292,12 +292,11 @@ test-pipeline-non-default-archs:
     strategy: depend
   rules:
     - if: $CI_SERVER_URL == "https://salsa.debian.org" && $CI_PROJECT_PATH == "salsa-ci-team/pipeline"
-      when: always
+      # Only run on request until salsa.debian.org has ARM runners readily available again
+      when: manual
     - if: $SALSA_CI_TEST_NON_DEFAULT_ARCHS =~ /^(1|yes|true)$/
       when: always
     - when: manual
-    # Disable all ARM jobs until salsa.debian.org has ARM runners available again
-    - when: never
   parallel:
     matrix:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
