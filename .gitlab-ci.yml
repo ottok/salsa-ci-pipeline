@@ -306,8 +306,6 @@ test-pipeline-non-default-archs:
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
-        # disable riscv64 temporairly until runners are operational again
-        SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 1
   allow_failure: true
 
 ubuntu-test-pipeline:
