@@ -132,8 +132,8 @@ images-prod-arm:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-    # Disable all ARM jobs until salsa.debian.org has ARM runners available again
-    - when: never
+  # Disable all ARM jobs until salsa.debian.org has ARM runners available again
+  when: manual
 
 # PPC64EL images built on main branch
 # We need a separate matrix. If we place these build jobs on images-prod,
