@@ -463,8 +463,8 @@ stages:
       export DEB_BUILD_OPTIONS="noautodbgsym ${DEB_BUILD_OPTIONS}"
     fi
 
-  - test "$DB_BUILD_TYPE" != "any" || BUILD_TYPE_ARG="--arch-any"
-  - test "$DB_BUILD_TYPE" != "all" || BUILD_TYPE_ARG="--arch-all"
+  - test "$DB_BUILD_TYPE" != "any" || BUILD_TYPE_ARG="--arch-any --no-arch-all"
+  - test "$DB_BUILD_TYPE" != "all" || BUILD_TYPE_ARG="--arch-all --no-arch-any"
   # https://lists.debian.org/debian-devel/2022/10/msg00009.html
   - test "$DB_BUILD_TYPE" != "source" || BUILD_TYPE_ARG="--source --no-arch-all --no-arch-any"
   - test "$DB_BUILD_TYPE" != "full" || BUILD_TYPE_ARG="--source --arch-all --arch-any"
