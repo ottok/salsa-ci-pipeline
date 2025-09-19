@@ -260,6 +260,12 @@ test-pipeline:
         PROJECT_TARGET_HEAD: debian/bookworm
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
+      # To verify if the test-build-{all,any} correctly build the related
+      # packages, only.
+      - PROJECT_URL: https://salsa.debian.org/systemd-team/systemd
+        PROJECT_TARGET_HEAD: debian/trixie
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
         SALSA_CI_ENABLE_BUILD_PACKAGE_ANY: 1
         SALSA_CI_ENABLE_BUILD_PACKAGE_ALL: 1
       # hello 2.10-3 should be built for bookworm, even if its debian/changelog
