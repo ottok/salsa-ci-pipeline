@@ -315,6 +315,7 @@ stages:
     if echo "${SALSA_CI_DISABLE_CCACHE}" | grep -qE '^(1|yes|true)$'; then
       ENABLE_CCACHE=0
     fi
+    echo "ENABLE_CCACHE=${ENABLE_CCACHE}" | tee ${CI_PROJECT_DIR}/ccache.env
 
   - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
 
@@ -583,6 +584,7 @@ stages:
 # Place all diagnostics or cleanup in the 'after_script' section, as it will run
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
+  - . ${CI_PROJECT_DIR}/ccache.env
   # Print ccache stats on job log and move it to location that will be saved
   #
   # Older ccache does not support '-vv' but will print stats anyway,
