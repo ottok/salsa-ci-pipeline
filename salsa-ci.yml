@@ -449,7 +449,7 @@ stages:
   - |
     if [ "${ENABLE_CCACHE}" != "0" ]; then
       export CCACHE_STATS_BEFORE=$(mktemp)
-      su salsa-ci -c "ccache -vv -s" > ${CCACHE_STATS_BEFORE}
+      su salsa-ci -c "ccache -svv" > ${CCACHE_STATS_BEFORE}
       echo "CCACHE_STATS_BEFORE=${CCACHE_STATS_BEFORE}" | tee ${CI_PROJECT_DIR}/ccache.env
     fi
 
@@ -593,13 +593,8 @@ stages:
   - echo "ccache stats before building:"
   - cat ${CCACHE_STATS_BEFORE}
   # Print ccache stats on job log and move it to location that will be saved
-  #
-  # Older ccache does not support '-vv' but will print stats anyway,
-  # followed by error in stderr and exit code 1. Newer ccache 4.0+
-  # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
-  # to show any cache hit stats at all.
   - echo "ccache stats after building:"
-  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
+  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv
   - test ! "${ENABLE_CCACHE}" != "0" || mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
