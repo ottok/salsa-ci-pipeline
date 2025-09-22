@@ -836,10 +836,16 @@ after all the other `sbuild` arguments.
 
 ### Disable ccache
 
-By default, the build jobs use `ccache(1)` to speed up recompilation of C/C++
-code by caching the results from previous jobs. To
-disable the use of `ccache`, set the `SALSA_CI_DISABLE_CCACHE` variable to 1,
-'yes' or 'true':
+By default, the build jobs use `ccache(1)` aiming to speed up recompilation of
+C/C++ code by caching the results from previous jobs. However, depending on
+different factors, including the building machine's available memory, the size
+of the project or the `make` dependencies, `ccache` may actually increase the
+building time. As stated in the
+[ccache's performance information](https://ccache.dev/performance.html), it may
+be useful to perform some measurements to determine if `ccache` is beneficial
+or not for your project's case.
+To disable the use of `ccache`, set the `SALSA_CI_DISABLE_CCACHE` variable to
+1, 'yes' or 'true':
 
 ```yaml
 ---

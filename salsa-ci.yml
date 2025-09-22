@@ -315,6 +315,7 @@ stages:
     if echo "${SALSA_CI_DISABLE_CCACHE}" | grep -qE '^(1|yes|true)$'; then
       ENABLE_CCACHE=0
     fi
+    echo "ENABLE_CCACHE=${ENABLE_CCACHE}" | tee ${CI_PROJECT_DIR}/ccache.env
 
   - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
 
@@ -445,7 +446,12 @@ stages:
   - chown -R salsa-ci ~salsa-ci/.config/sbuild/
 
   # Show ccache stats before building
-  - test ! "${ENABLE_CCACHE}" != "0" || su salsa-ci -c "ccache -vv -s"
+  - |
+    if [ "${ENABLE_CCACHE}" != "0" ]; then
+      export CCACHE_STATS_BEFORE=$(mktemp)
+      su salsa-ci -c "ccache -svv" > ${CCACHE_STATS_BEFORE}
+      echo "CCACHE_STATS_BEFORE=${CCACHE_STATS_BEFORE}" | tee ${CI_PROJECT_DIR}/ccache.env
+    fi
 
   - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
 
@@ -583,13 +589,12 @@ stages:
 # Place all diagnostics or cleanup in the 'after_script' section, as it will run
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
+  - . ${CI_PROJECT_DIR}/ccache.env
+  - echo "ccache stats before building:"
+  - cat ${CCACHE_STATS_BEFORE}
   # Print ccache stats on job log and move it to location that will be saved
-  #
-  # Older ccache does not support '-vv' but will print stats anyway,
-  # followed by error in stderr and exit code 1. Newer ccache 4.0+
-  # (Ubuntu 22.04 "Focal", Debian 12 "Bullseye") however require '--verbose'
-  # to show any cache hit stats at all.
-  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv 2> /dev/null || true
+  - echo "ccache stats after building:"
+  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv
   - test ! "${ENABLE_CCACHE}" != "0" || mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
