@@ -355,14 +355,20 @@ stages:
   - su salsa-ci -c "${MMDEBSTRAP_COMMAND}"
   - mkdir -vp ${WORKING_DIR}
 
-  # https://salsa.debian.org/salsa-ci-team/pipeline/-/merge_requests/230
-  - (set -o pipefail; rm -vrf ${CCACHE_TMP_DIR} | tail)
+
+  - du -sh ${CCACHE_DIR} || true
+
+  # Delete any old .ccache directory inside .ccache if the cache got extra
+  # subdirectories as result of recursive copying as bug described in #492
+  - (set -o pipefail; rm -vrf ${CCACHE_DIR}/.${CI_PROJECT_NAME}.ccache | tail)
+
+  # If an existing cache was downloaded the cache directory already exists,
+  # otherwise ensure the directory is created
   - |
-    if [ "${ENABLE_CCACHE}" = 1 ] ;
+    if [ "${ENABLE_CCACHE}" = 1 ]
     then
-      mkdir -vp ${CCACHE_WORK_DIR}
-      mv -v ${CCACHE_WORK_DIR} ${CCACHE_TMP_DIR}
-      find ${CCACHE_TMP_DIR} -type d | xargs chmod g+s
+      mkdir -vp ${CCACHE_DIR}
+      find ${CCACHE_DIR} -type d | xargs chmod g+s
     fi
 
   - |
@@ -385,15 +391,9 @@ stages:
   - mkdir -vp ${BUILD_DIR}
 
   # setup environment required for ccache
-  - mkdir -vp ${WORKING_DIR} ${CCACHE_WORK_DIR}
-  - |
-    if [ "${ENABLE_CCACHE}" = 1 ] ;
-    then
-      export CCACHE_DIR=${CCACHE_TMP_DIR}
-      # fix permissions
-      chmod a+X ${CI_PROJECT_DIR} ${CI_PROJECT_DIR}/.ccache
-      chmod -R a+rwX ${CCACHE_DIR} ${CCACHE_WORK_DIR}
-    fi
+  - mkdir -vp ${WORKING_DIR} ${CCACHE_DIR}
+  # fix permissions regardless of ccache is actually used
+  - chmod a+X ${CI_PROJECT_DIR}; chmod -R a+rwX ${CCACHE_DIR}
 
   # configure sbuild to use ccache
   - |
@@ -596,13 +596,14 @@ stages:
   - cat ${CCACHE_STATS_BEFORE}
   # Print ccache stats on job log and move it to location that will be saved
   - echo "ccache stats after building:"
-  - test ! "${ENABLE_CCACHE}" != "0" || CCACHE_DIR=${CCACHE_TMP_DIR} ccache -svv
-  - test ! "${ENABLE_CCACHE}" != "0" || mv -v ${CCACHE_TMP_DIR} ${CCACHE_WORK_DIR}
+  - test ! "${ENABLE_CCACHE}" != "0" || ccache -svv
+  - du -sh ${CCACHE_DIR} || true
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
 
-  # Print size of artifacts after build
-  - du -sh
+  # List top-level artifacts and their sizes after build
+  - du -shc *
+
   # Warn if job artifacts size limit exceeded
   - |
     if [ "$(du -s | cut -f1)" -gt ${SALSA_CI_MAX_ARTIFACTS_SIZE} ]
@@ -625,8 +626,7 @@ stages:
     paths:
       - .ccache
   variables:
-    CCACHE_TMP_DIR: ${CI_PROJECT_DIR}/../.${CI_PROJECT_NAME}.ccache
-    CCACHE_WORK_DIR: ${CI_PROJECT_DIR}/.ccache
+    CCACHE_DIR: "${CI_PROJECT_DIR}/.ccache"
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
   script:
