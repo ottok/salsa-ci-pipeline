@@ -311,11 +311,14 @@ stages:
   - apt-get update && eatmydata apt-get upgrade -y
 
   - |
-    export ENABLE_CCACHE=1
-    if echo "${SALSA_CI_DISABLE_CCACHE}" | grep -qE '^(1|yes|true)$'; then
-      ENABLE_CCACHE=0
+    if echo "${SALSA_CI_DISABLE_CCACHE}" | grep -qE '^(1|yes|true)$'
+    then
+      echo "export ENABLE_CCACHE=0" | tee -a ${CI_PROJECT_DIR}/ccache.env
+    else
+      echo "export ENABLE_CCACHE=1" | tee -a ${CI_PROJECT_DIR}/ccache.env
+      echo "export CCACHE_MAXSIZE=2GB" | tee -a ${CI_PROJECT_DIR}/ccache.env
     fi
-    echo "ENABLE_CCACHE=${ENABLE_CCACHE}" | tee ${CI_PROJECT_DIR}/ccache.env
+    . ${CI_PROJECT_DIR}/ccache.env
 
   - test ! "${ENABLE_CCACHE}" != "0" || export MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES},ccache"
 
@@ -354,7 +357,6 @@ stages:
   - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-amd64.tar ${SALSA_CI_MIRROR}"
   - su salsa-ci -c "${MMDEBSTRAP_COMMAND}"
   - mkdir -vp ${WORKING_DIR}
-
 
   - du -sh ${CCACHE_DIR} || true
 
@@ -399,8 +401,8 @@ stages:
   - |
     if [ "${ENABLE_CCACHE}" = 1 ]
     then
-    cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
-    $build_environment = { "CCACHE_DIR" => "/build/ccache" };
+      cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
+    $build_environment = { "CCACHE_DIR" => "/build/ccache", "CCACHE_MAXSIZE" => "2G" };
     $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
     $unshare_bind_mounts = [ { directory => "%CCACHE_DIR%", mountpoint => "/build/ccache" } ];
     EOF
@@ -446,12 +448,11 @@ stages:
 
   - chown -R salsa-ci ~salsa-ci/.config/sbuild/
 
-  # Show ccache stats before building
+  # Zero stats before the build to that post-build stats are useful
   - |
-    if [ "${ENABLE_CCACHE}" != "0" ]; then
-      export CCACHE_STATS_BEFORE=$(mktemp)
-      su salsa-ci -c "ccache -svv" > ${CCACHE_STATS_BEFORE}
-      echo "CCACHE_STATS_BEFORE=${CCACHE_STATS_BEFORE}" | tee ${CI_PROJECT_DIR}/ccache.env
+    if [ "${ENABLE_CCACHE}" != "0" ]
+    then
+      su salsa-ci -c "ccache --zero-stats"
     fi
 
   - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
@@ -592,11 +593,8 @@ stages:
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
   - . ${CI_PROJECT_DIR}/ccache.env
-  - echo "ccache stats before building:"
-  - cat ${CCACHE_STATS_BEFORE}
-  # Print ccache stats on job log and move it to location that will be saved
-  - echo "ccache stats after building:"
-  - test ! "${ENABLE_CCACHE}" != "0" || ccache -svv
+  # Print ccache stats if it was enabled with double verbose to get full stats
+  - test ! "${ENABLE_CCACHE}" != "0" || ccache --show-stats --verbose --verbose
   - du -sh ${CCACHE_DIR} || true
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
