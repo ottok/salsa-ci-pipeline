@@ -730,7 +730,9 @@ armor format. Alternatively, the single variable `SALSA_CI_EXTRA_REPOSITORY_SOUR
  variables are of [type file](https://salsa.debian.org/help/ci/variables/index.md#cicd-variable-types),
  which eases the multiline handling, but have the disadvantage that their
  content can't be set on the salsa-ci.yml file - but they can be added to the
- repository as files and have their filenames then set in the salsa-ci.yml file:
+ repository as files and have their filenames then set in the salsa-ci.yml file.
+ When using https url, you need to add ca-certificates as extra package, you can do this
+ using the extra variable `SALSA_CI_MMDEBSTRAP_EXTRA_ARGS`:
 
 ```yaml
 ---
@@ -741,6 +743,8 @@ variables:
   SALSA_CI_EXTRA_REPOSITORY_KEY: debian/ci/extra_repository.asc
   # or
   SALSA_CI_EXTRA_REPOSITORY_SOURCES: debian/ci/extra_repository.sources
+  # Extra variable for https urls
+  SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: --include=ca-certificates
 ```
 
 See also
