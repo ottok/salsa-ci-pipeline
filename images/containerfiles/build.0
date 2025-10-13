@@ -40,4 +40,4 @@ COPY files/reverse-dependencies/build-rdeps-template.yml /usr/share/salsa-ci/bui
 # Ideally, to replicate as close as possible the buildd environment,
 # a non-privileged user (as salsa-ci) should run sbuild to build the package
 # in the build job.
-RUN useradd --gid 100 -G sbuild -m salsa-ci
+RUN useradd --gid 100 -m salsa-ci
