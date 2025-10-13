@@ -584,7 +584,7 @@ stages:
   # executed.
   #
   # But let's copy the (orig) *tar* files to the artifacts dir
-  - test -z "$(find ../ -maxdepth 1 -name '*.tar.*')" || cp -vn ../*tar* ${WORKING_DIR}
+  - find ../ -maxdepth 1 -type f -name '*.tar.*' -exec cp -vn -- {} "${WORKING_DIR}" ";"
 
 .build-script: &build-script
   - *build-script-setup-environment

@@ -288,6 +288,13 @@ test-pipeline:
         SALSA_CI_DISABLE_APTLY: 1
         SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
         SALSA_CI_ENABLE_BUILD_REVERSE_DEPENDENCIES: 1
+      # starjava-util was unable to build due to the 'tar' in it's name
+      # see #503
+      - PROJECT_URL: https://salsa.debian.org/debian-astro-team/starjava-util
+        PROJECT_TARGET_HEAD: debian/1.0+2025.08.15-1
+        SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline
