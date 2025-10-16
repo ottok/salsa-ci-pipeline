@@ -17,6 +17,7 @@ variables:
   UBUNTU_MIRROR: "http://archive.ubuntu.com/ubuntu"
 
 .all-supported-releases: &all-supported-releases
+  - resolute
   - questing
   - plucky
   - noble
@@ -76,7 +77,7 @@ ubuntu-image-staging:
           - base
           - generic_tests
         ARCH: amd64
-        RELEASE: questing
+        RELEASE: resolute
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: never
@@ -92,7 +93,7 @@ ubuntu-image-staging-arm:
       - IMAGE_NAME:
           - base
         ARCH: arm64/v8
-        RELEASE: questing
+        RELEASE: resolute
   # While there isn't an ARM shared runner available, let's allow these images
   # to fail to don't block pipelines on MRs.
   allow_failure: true

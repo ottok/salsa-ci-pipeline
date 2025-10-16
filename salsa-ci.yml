@@ -220,13 +220,13 @@ stages:
   - export RELEASE_FROM_CHANGELOG
   - dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED)
   # if dist is UNRELEASED, try to use 'dch' to guess a sane default.
-  # Use questing by default if VENDOR's value is `ubuntu`.
+  # Use resolute by default if VENDOR's value is `ubuntu`.
   - clbak="/tmp/debian.changelog"
   - cp debian/changelog "${clbak}"
   - |
     if [ "$VENDOR" = ubuntu ] && [ "${dist}" = UNRELEASED ]
     then
-      dist=questing
+      dist=resolute
     elif [ "${dist}" = UNRELEASED ]
     then
       dch --release foo || true; dist=$(dpkg-parsechangelog --show-field=distribution || echo UNRELEASED); cat "${clbak}" >debian/changelog;
@@ -1238,7 +1238,7 @@ stages:
     - |
       case "$RELEASE" in
         # NOTE: Releases with devscripts >= 2.25.10 update this list as needed
-        experimental|unstable|trixie|questing)
+        experimental|unstable|trixie|questing|resolute)
           eatmydata apt-get install --no-install-recommends -y devscripts
           deb-check-file-conflicts -o ${WORKING_DIR}/missing_breaks.xml --changes-file ${WORKING_DIR}/*.changes
           ;;
