@@ -994,7 +994,7 @@ stages:
       when: never
     - if: $SALSA_CI_DISABLE_BLHC !~ /^(1|yes|true)$/
   script:
-    - sh -c "exec blhc --debian --line-numbers --color ${SALSA_CI_BLHC_ARGS} ${WORKING_DIR}/*.build" blhc |& OUTPUT_FILENAME=${WORKING_DIR}/blhc.log filter-output || [ $? -eq 1 ]
+    - sh -c "exec blhc --debian --line-numbers --color ${SALSA_CI_BLHC_ARGS} $(find ${WORKING_DIR} -name '*.build' ! -type l)" blhc |& OUTPUT_FILENAME=${WORKING_DIR}/blhc.log filter-output || [ $? -eq 1 ]
   variables:
     GIT_STRATEGY: none
   artifacts:
