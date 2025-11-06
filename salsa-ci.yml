@@ -461,6 +461,13 @@ stages:
 
   - chown -R 'salsa-ci:' ${WORKING_DIR} ${CCACHE_DIR}
 
+.build-script-disable-dbgsym-package: &build-script-disable-dbgsym-package
+  # Disable autogeneration of dbgsym packages. (See #273)
+  - |
+    if echo "$SALSA_CI_DISABLE_BUILD_DBGSYM" | grep -qE '^(1|yes|true)$'; then
+      export DEB_BUILD_OPTIONS="noautodbgsym ${DEB_BUILD_OPTIONS}"
+    fi
+
 .build-script-extract-source: &build-script-extract-source
   - gbp pull --ignore-branch --pristine-tar --track-missing
 
@@ -469,11 +476,7 @@ stages:
   # when cross-compiling, add 'nocheck' to the DEB_BUILD_OPTIONS
   - test -z "${HOST_ARCH}" || export DEB_BUILD_OPTIONS="nocheck ${DEB_BUILD_OPTIONS}"
 
-  # Disable autogeneration of dbgsym packages. (See #273)
-  - |
-    if echo "$SALSA_CI_DISABLE_BUILD_DBGSYM" | grep -qE '^(1|yes|true)$'; then
-      export DEB_BUILD_OPTIONS="noautodbgsym ${DEB_BUILD_OPTIONS}"
-    fi
+  - *build-script-disable-dbgsym-package
 
   - test "$DB_BUILD_TYPE" != "any" || BUILD_TYPE_ARG="--arch-any --no-arch-all"
   - test "$DB_BUILD_TYPE" != "all" || BUILD_TYPE_ARG="--arch-all --no-arch-any"
@@ -1001,6 +1004,29 @@ stages:
     when: always
     paths:
       - ${WORKING_DIR}/blhc.log
+  needs:
+    - job: build
+      artifacts: true
+
+.test-debrebuild: &test-debrebuild
+  stage: test
+  image: $SALSA_CI_IMAGES_BUILD
+  rules:
+    - if: $SALSA_CI_ENABLE_DEBREBUILD =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_DEBREBUILD !~ /^(1|yes|true)$/
+  script:
+    - *build-script-setup-environment
+    - *build-script-disable-dbgsym-package
+    - su salsa-ci -c "exec debrebuild --buildresult=${WORKING_DIR}/debrebuild --builder=sbuild+unshare -- ${WORKING_DIR}/*.buildinfo" |& OUTPUT_FILENAME=${WORKING_DIR}/debrebuild.log filter-output || [ $? -eq 1 ]
+  variables:
+    GIT_STRATEGY: none
+  artifacts:
+    when: always
+    paths:
+      - ${WORKING_DIR}/debrebuild.log
+      - ${WORKING_DIR}/debrebuild
   needs:
     - job: build
       artifacts: true

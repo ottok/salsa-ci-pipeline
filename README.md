@@ -256,6 +256,7 @@ variables:
   SALSA_CI_DISABLE_APTLY: 1
   SALSA_CI_DISABLE_AUTOPKGTEST: 1
   SALSA_CI_DISABLE_BLHC: 1
+  SALSA_CI_DISABLE_DEBREBUILD: 1
   SALSA_CI_DISABLE_LINTIAN: 1
   SALSA_CI_DISABLE_PIUPARTS: 1
   SALSA_CI_DISABLE_REPROTEST: 1
@@ -402,6 +403,9 @@ autopkgtest:
 
 blhc:
   extends: .test-blhc
+
+debrebuild:
+  extends: .test-debrebuild
 
 piuparts:
   extends: .test-piuparts

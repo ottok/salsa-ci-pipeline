@@ -72,6 +72,9 @@ autopkgtest arm64:
 blhc:
   extends: .test-blhc
 
+debrebuild:
+  extends: .test-debrebuild
+
 piuparts:
   extends: .test-piuparts
 
