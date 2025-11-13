@@ -412,7 +412,7 @@ stages:
     fi
 
   - |
-    if echo "${BUILD_TWICE} ${SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP}" | grep -qE '^(1|yes|true)$' ; then
+    if printf '%s\n' "${BUILD_TWICE}" "${SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP}" | grep -qiE '^(1|yes|true)$' ; then
       cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
       $external_commands = {
         "starting-build-commands" => [
