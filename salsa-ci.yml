@@ -89,6 +89,7 @@ variables:
   SALSA_CI_ENABLE_ATOMIC_REPROTEST:
     description: "Set to 1 to run one job per reprotest variation"
     value: 0
+  SALSA_CI_DISABLE_REPROTEST: 1
   SALSA_CI_REPROTEST_ENABLE_DIFFOSCOPE:
     description: "Set this to 1 to produce an in-depth comparison of reprotest results"
     value: 0
