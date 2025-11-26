@@ -107,7 +107,7 @@ Salsa CI currently offers:
 * Package installation and removal testing using [Piuparts](https://piuparts.debian.org)
 * Conflicting file path check against packages that are not declared with Breaks and Replaces
 * Checking proper use of secure build flags etc using [Buildd Log Scanner](https://qa.debian.org/bls/)
-* Build reproducibility testing using [Reprotest](https://reproducible-builds.org/tools)
+* Build reproducibility testing using [debrebuild](https://manpages.debian.org/unstable/devscripts/debrebuild.1.en.html)
 
 ## Activate Salsa CI
 
@@ -256,9 +256,9 @@ variables:
   SALSA_CI_DISABLE_APTLY: 1
   SALSA_CI_DISABLE_AUTOPKGTEST: 1
   SALSA_CI_DISABLE_BLHC: 1
+  SALSA_CI_DISABLE_DEBREBUILD: 1
   SALSA_CI_DISABLE_LINTIAN: 1
   SALSA_CI_DISABLE_PIUPARTS: 1
-  SALSA_CI_DISABLE_REPROTEST: 1
   SALSA_CI_DISABLE_MISSING_BREAKS: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ALL: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ANY: 1
@@ -285,9 +285,9 @@ Without completely disabling a job, you can allow it to fail without failing the
 whole pipeline. That way, if the job fails, the pipeline will pass and show an
 orange warning telling you something went wrong.
 
-For example, even though reproducible builds are important, `reprotest`'s
+For example, even though reproducible builds are important, `debrebuild`'s
 behaviour can sometimes be a slightly flaky and fail randomly on packages that
-aren't totally reproducible (yet!). In such case, you can allow `reprotest` to
+aren't totally reproducible (yet!). In such case, you can allow `debrebuild` to
 fail by adding this variable in your salsa-ci.yml manifest:
 
 ```yaml
@@ -295,7 +295,7 @@ fail by adding this variable in your salsa-ci.yml manifest:
 include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
-reprotest:
+debrebuild:
   allow_failure: true
 ```
 
@@ -402,6 +402,9 @@ autopkgtest:
 
 blhc:
   extends: .test-blhc
+
+debrebuild:
+  extends: .test-debrebuild
 
 piuparts:
   extends: .test-piuparts

@@ -26,6 +26,13 @@ RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-insta
     uidmap \
     iproute2 \
     distro-info-data \
+    # Dependencies for debrebuild
+    libstring-shellquote-perl \
+    python3-apt \
+    python3-requests \
+    python3-debian \
+    equivs \
+    gpgv \
     # Dependencies required for build reverse-dependencies jobs.
     # ratt orchestrates the rebuilds and indicates the exact sbuild
     # command to execute, dose-extra verifies dependency relationships,
