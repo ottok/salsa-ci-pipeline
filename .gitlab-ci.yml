@@ -331,7 +331,7 @@ ubuntu-test-pipeline:
   variables:
     # gitlab doesn't pass these variables from var/ubuntu.yml
     VENDOR: 'ubuntu'
-    DEFAULT_RELEASE: 'plucky'
+    DEFAULT_RELEASE: 'resolute'
     SALSA_CI_MIRROR: 'http://archive.ubuntu.com/ubuntu'
   trigger:
     include:
@@ -344,11 +344,11 @@ ubuntu-test-pipeline:
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: questing
+        IMAGE_VERSION: resolute
         DEBIAN_IMAGE_VERSION: sid
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       variables:
-        IMAGE_VERSION: questing_${CI_COMMIT_REF_SLUG}
+        IMAGE_VERSION: resolute_${CI_COMMIT_REF_SLUG}
         DEBIAN_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
   parallel:
     matrix:
@@ -399,7 +399,7 @@ clean images:
       arm64v8/base
       base
       generic_tests
-    UBUNTU_RELEASE: questing
+    UBUNTU_RELEASE: resolute
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - wget -O /usr/bin/reg https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64
