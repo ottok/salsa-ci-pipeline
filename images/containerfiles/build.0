@@ -16,7 +16,6 @@ RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
 # distro-info-data is needed by mmdebstrap to map keyrings and distribution
 # suites, especially for ubuntu
 RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-install-recommends -y \
-    ccache \
     git-buildpackage \
     pristine-tar \
     curl \

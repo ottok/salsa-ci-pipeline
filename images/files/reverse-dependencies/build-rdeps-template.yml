@@ -10,9 +10,6 @@ workflow:
   extends: .rdeps-sbuild-setup
   stage: test
   image: $SALSA_CI_IMAGES_BUILD
-  variables:
-    CCACHE_TMP_DIR: "${CI_PROJECT_DIR}/../.${CI_PROJECT_NAME}.ccache"
-    CCACHE_WORK_DIR: "${CI_PROJECT_DIR}/.ccache"
   needs:
     - pipeline: $PARENT_PIPELINE_ID
       job: build
