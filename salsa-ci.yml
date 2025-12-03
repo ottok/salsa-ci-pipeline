@@ -1458,8 +1458,6 @@ stages:
     # One just has to make sure that each such job adds a differing suffix
     - for d in "${WORKING_DIR}"*; do aptly repo add ${CI_PROJECT_NAME} "$d"; done
     - aptly repo show -with-packages ${CI_PROJECT_NAME}
-    # accept miss-spelled var for backwards-compatibility (see https://salsa.debian.org/salsa-ci-team/pipeline/issues/114)
-    - export SALSA_CI_APTLY_GPG_PASSPHRASE="${SALSA_CI_APTLY_GPG_PASSPHRASE:=${SALSA_CI_APTLY_GPG_PASSPHRASE}}"
     - |
       if [ -n "${SALSA_CI_APTLY_GPG_KEY}" ]; then \
         echo "${SALSA_CI_APTLY_GPG_KEY}" \
