@@ -616,8 +616,9 @@ test-build-profiles:
   extends: .test-build-package-profiles
   parallel:
     matrix:
-      - BUILD_PROFILES: nocheck
-      - BUILD_PROFILES: nodoc
+      - BUILD_PROFILES:
+        - nocheck
+        - nodoc
 ```
 
 ### Enable cross-builds
