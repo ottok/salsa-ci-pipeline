@@ -37,7 +37,7 @@ variables:
   # BUILD_DIR is the place where the build job scripts will look for all the
   # required files to build the package, including ({orig,}.tar.*) and
   # extracted debinaized source directory
-  BUILD_DIR: $CI_PROJECT_DIR/build/
+  BUILD_DIR: $CI_PROJECT_DIR/salsa-ci-build/
   VENDOR: 'debian'
   # The Debian release to build for (leave it assigned to $RELEASE_FROM_CHANGELOG to automatically pick one, based on the target distribution in d/changelog)
   RELEASE: '$RELEASE_FROM_CHANGELOG'
