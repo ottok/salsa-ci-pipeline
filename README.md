@@ -1234,7 +1234,9 @@ The URL of the repositories created by aptly follow the following pattern:
 So a simple way to add an aptly-produced repository to another project is by setting:
 
 ```
-SALSA_CI_EXTRA_REPOSITORY="deb [trusted=yes] https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly unstable main"
+variables:
+  SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: "--include=ca-certificates"
+  SALSA_CI_EXTRA_REPOSITORY="deb [trusted=yes] https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly unstable main"
 ```
 
 Replace `%{CI_PROJECT_PATH_SLUG}` with complete path to project,
