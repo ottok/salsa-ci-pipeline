@@ -1204,34 +1204,39 @@ save published apt repository files as its artifacts, so downstream CI tasks may
 access built binary/source packages directly through artifacts url via apt. This
 is currently disabled by default. To enable it, set the `SALSA_CI_DISABLE_APTLY`
 variable of the repository whose artifacts you want to use to anything other
-than `1`, '`yes`' or '`true`'. (check example below)
+than `1`, '`yes`' or '`true`'.
 
-To specify repository signing key, export the gpg key/passphrase as CI / CD
+To specify repository signing key, export the OpenPGP key/passphrase as CI / CD
 [Variables](https://salsa.debian.org/help/ci/variables/index.md)
 `SALSA_CI_APTLY_GPG_KEY` and `SALSA_CI_APTLY_GPG_PASSPHRASE`. Otherwise, an
 automatically generated one will be used.
 
-For example, to let package `src:pkgA` of team `${TEAM}` and project
-`${PROJECT}` setup an aptly repository and let package `src:pkgB` use the
-repository, enable the `aptly` job by adding the following line to the
-`debian/salsa-ci.yml` of `src:pkgA`:
+For example, to publish an aptly repository for package `src:pkgA` and use it to
+build package `src:pkgB`, you need first to enable the `src:pkgA`'s `aptly` job
+by adding the following line to the `debian/salsa-ci.yml` of `src:pkgA`:
 
 ```yaml
 variables:
   SALSA_CI_DISABLE_APTLY: 0
 ```
 
+For a one-shot approach, the `SALSA_CI_DISABLE_APTLY` can be set by triggering
+a manual pipeline or via `git push -o ci.variable="SALSA_CI_DISABLE_APTLY=0".
+
 The next time the pipeline of `src:pkgA` is run, a new job called `aptly` will
-be part of the "Publish" stage of the pipeline. Click on the job to obtain the
-job number which will be needed in the `debian/salsa-ci.yml` file of `src:pkgB`:
+be part of the "publish" stage of the pipeline. Look at the aptly job artifacts for
+the required repository information, to be used as an extra repository for
+building `src:pkgB`. See how to
+[add private repositories to the builds](#add-private-repositories-to-the-builds).
 
-In the `debian/salsa-ci.yml` file of `src:pkgB` add the following lines after
-the `variables` section
+The URL of the repositories created by aptly follow the following pattern:
+`https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly`.
+So a simple way to add an aptly-produced repository to another project is by setting:
 
-```yaml
-before_script:
-  - echo "deb [trusted=yes] https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly unstable main" | tee /etc/apt/sources.list.d/pkga.list
-  - apt-get update
+```
+variables:
+  SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: "--include=ca-certificates"
+  SALSA_CI_EXTRA_REPOSITORY="deb [trusted=yes] https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly unstable main"
 ```
 
 Replace `%{CI_PROJECT_PATH_SLUG}` with complete path to project,
@@ -1243,8 +1248,6 @@ the old repository that the job number points to. If you want `src:pkgB` to use
 the updated binary packages, you have to retrieve the job number of the `aptly`
 job from `src:pkgA` and update the `${CI_JOB_ID}` of `src:pkgB`.
 
-See also howto
-[add private repositories to the builds](#add-private-repositories-to-the-builds).
 
 ### Enable wrap-and-sort job
 
