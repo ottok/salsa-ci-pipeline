@@ -71,7 +71,7 @@ include:
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
 * [Testing Salsa CI \(and GitLab CI in general\) pipeline definitions locally](#testing-salsa-ci-and-gitlab-ci-in-general-pipeline-definitions-locally)
-  * [Testing definitiion file for correctness](#testing-definitiion-file-for-correctness)
+  * [Testing definition file for correctness](#testing-definition-file-for-correctness)
   * [Running the pipeline locally](#running-the-pipeline-locally)
 * [General Debian packaging support and resources](#general-debian-packaging-support-and-resources)
 * [General Salsa information](#general-salsa-information)
@@ -1380,7 +1380,7 @@ Other test jobs can be enabled using `SALSA_CI_DISABLE_*` variables.
 
 ## Testing Salsa CI (and GitLab CI in general) pipeline definitions locally
 
-### Testing definitiion file for correctness
+### Testing definition file for correctness
 
 The `salsa-ci.yml` file contents can be pasted into the embedded editor on the
 project page _Build > Pipeline editor_. In addition to the interactive feedback,
