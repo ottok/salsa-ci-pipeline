@@ -31,6 +31,8 @@ RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-insta
     python3-apt \
     python3-requests \
     python3-debian \
+    apt-utils \
+    dpkg-dev \
     equivs \
     gpgv \
     # Dependencies required for build reverse-dependencies jobs.
