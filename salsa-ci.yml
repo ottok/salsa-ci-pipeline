@@ -191,7 +191,7 @@ variables:
   # release to an ubuntu release in the Ubuntu pipeline.
   DEFAULT_RELEASE: 'unstable'
   SALSA_CI_ENABLE_STATS:
-    description: "Experimental feature to send statistics to https://salsa-status.debian.net"
+    description: "Experimental feature to send statistics to https://salsa-ci-stats.debian.net"
     value: 1
   SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES:
     description: "Build reverse dependencies jobs"
@@ -255,12 +255,12 @@ stages:
 
 .pipeline-stats-reporting: &pipeline-stats-reporting
   - |
-    # Beta: Salsa CI statistics reporting to salsa-status.debian.net (See #413)
+    # Salsa CI statistics reporting to salsa-ci-stats.debian.net
     if echo "$SALSA_CI_ENABLE_STATS" | grep -qE '^(1|yes|true)$' && \
       [ "$CI_PROJECT_VISIBILITY" = 'public' ] && \
       [ "$CI_SERVER_URL" = "https://salsa.debian.org" ]; then
       curl --connect-timeout 30 --max-time 90 --silent --show-error \
-        -X PUT 'https://salsa-status.debian.net/api/v1/pipelines' \
+        -X PUT 'https://salsa-ci-stats.debian.net/api/v1/pipelines' \
         -H 'Content-Type: application/json' \
         -d @- <<-EOF || true
       {
