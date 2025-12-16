@@ -412,6 +412,10 @@ stages:
     EOF
     fi
 
+  # Configure sbuild to generate a list of files in the building directory before and after
+  # the build, to check if the clean target properly restores the build environment.
+  # Each line in the generated lists follows the format (filename, filetype, size, checksum).
+  # sbuild configuration taken from <https://wiki.debian.org/sbuild#Validate_package_cleanup>
   - |
     if printf '%s\n' "${BUILD_TWICE}" "${SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP}" | grep -qiE '^(1|yes|true)$' ; then
       cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
@@ -419,29 +423,19 @@ stages:
         "starting-build-commands" => [
           'bash -c \'find %SBUILD_PKGBUILD_DIR -print0 |
                       sort -z |
-                      while read -d $\'\\\'\'\0\'\\\'\' file; do
-                          echo -n "$(stat -c "%n %F %%s" "${file}") "
-                          if [ -f "${file}" ]; then
-                              sha256sum "${file}" |
-                                  cut -d " " -f 1
-                          else
-                                  echo
-                          fi
-                      done > /tmp/file-list.pre-build\''
+                      xargs -0 -I{} bash -c "
+                        stat --printf \"%n %F %%s \" \"{}\"
+                        if [ -f \"{}\" ]; then sum -s \"{}\" | cut -d\" \" -f1; else echo; fi
+                      " > /tmp/file-list.pre-build\'',
         ],
         "chroot-cleanup-commands" => [
           'cd %SBUILD_PKGBUILD_DIR && ./debian/rules clean',
           'bash -c \'find %SBUILD_PKGBUILD_DIR -print0 |
                     sort -z |
-                    while read -d $\'\\\'\'\0\'\\\'\' file; do
-                        echo -n "$(stat -c "%n %F %%s" "${file}") "
-                        if [ -f "${file}" ]; then
-                            sha256sum "${file}" |
-                                cut -d " " -f 1
-                        else
-                                echo
-                        fi
-                    done > /tmp/file-list.post-build\'',
+                    xargs -0 -I{} bash -c "
+                      stat --printf \"%n %F %%s \" \"{}\"
+                      if [ -f \"{}\" ]; then sum -s \"{}\" | cut -d\" \" -f1; else echo; fi
+                    " > /tmp/file-list.post-build\'',
           'diff /tmp/file-list.pre-build /tmp/file-list.post-build'
         ]
       };
