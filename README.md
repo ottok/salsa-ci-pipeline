@@ -435,7 +435,7 @@ variables:
 
 This data is sent to the Salsa CI Dashboard backend and helps monitor the pipeline
 usage, health, and long-term trends. The statistics will show up at
-[salsa-status.debian.net](https://salsa-status.debian.net),
+[salsa-ci-stats.debian.net](https://salsa-ci-stats.debian.net),
 where the dashboard is hosted.
 
 For more details, see [#413](https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/413)
