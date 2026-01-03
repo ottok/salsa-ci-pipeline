@@ -3,7 +3,7 @@
 TL;DR
 
 This Salsa Continuous Integration
-([CI](https://about.gitlab.com/product/continuous-integration/)) pipeline
+([CI](https://about.gitlab.com/solutions/continuous-integration/)) pipeline
 increases the quality of Debian packages by automatically testing every commit
 on a Debian package.
 
@@ -49,6 +49,7 @@ include:
   * [Adding extra arguments to gbp-buildpackage](#adding-extra-arguments-to-gbp-buildpackage)
   * [Disabling gbp exportorig fallback](#disabling-gbp-exportorig-fallback)
   * [Git attributes](#git-attributes)
+  * [Sbuild verbosity and additional arguments](#sbuild-verbosity-and-additional-arguments)
   * [Customize reprotest](#customize-reprotest)
 * [Build reverse dependencies](#build-reverse-dependencies)
   * [Enable build reverse dependencies](#enable-build-reverse-dependencies)
@@ -106,7 +107,7 @@ Salsa CI currently offers:
 * Functional testing using [Autopkgtest](https://salsa.debian.org/ci-team/autopkgtest/raw/master/doc/README.package-tests.rst)
 * Package installation and removal testing using [Piuparts](https://piuparts.debian.org)
 * Conflicting file path check against packages that are not declared with Breaks and Replaces
-* Checking proper use of secure build flags etc using [Buildd Log Scanner](https://qa.debian.org/bls/)
+* Checking proper use of secure build flags etc using [Build Log Hardening Check](https://manpages.debian.org/unstable/blhc/blhc.1p.en.html)
 * Build reproducibility testing using [debrebuild](https://manpages.debian.org/unstable/devscripts/debrebuild.1.en.html)
 
 ## Activate Salsa CI
@@ -451,7 +452,7 @@ the GitLab instance configuration.
 
 If a CI job has a valid reason to run beyond the default limits, a custom value
 can be defined with the [timeout
-keyword](https://docs.gitlab.com/ee/ci/yaml/#timeout) for individual jobs.
+keyword](https://docs.gitlab.com/ci/yaml/#timeout) for individual jobs.
 However, the primary way to address slow CI jobs should by optimizing the build
 to run faster, for example by ensuring that the build cache works. For C/C++
 programs ensure the build is compatible with
@@ -713,7 +714,7 @@ Expand the section on Variables and add a **File** type variable:
 
 The apt source should reference `sid` or `unstable`.
 
-Repositories can be also be added by defining the repos in files inside the debian folder and reference them with
+Repositories can also be added by defining the repos in files inside the debian folder and reference them with
 
 > Key: SALSA_CI_EXTRA_REPOSITORY
 
@@ -1119,7 +1120,7 @@ variables:
 
 ### Avoid autopkgtest failures on systemd masked tmp
 
-If an autopkgtest fail with:
+If an autopkgtest fails with:
 
 ```shell
 $> systemctl restart myservice
@@ -1127,7 +1128,7 @@ Failed to restart myservice.service: Unit tmp.mount is masked.
 ```
 The error is probably due to bug [#1078157](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1078157).
 
-You could workaround by adding at the top of the autopkgtest:
+You could work around this by adding at the top of the autopkgtest:
 
 ```shell
 SERVICE=myservice
@@ -1207,7 +1208,7 @@ the required repository information, to be used as an extra repository for
 building `src:pkgB`. See how to
 [add private repositories to the builds](#add-private-repositories-to-the-builds).
 
-The URL of the repositories created by aptly follow the following pattern:
+The URL of the repositories created by aptly follow the pattern:
 `https://salsa.debian.org/%{CI_PROJECT_PATH_SLUG}/-/jobs/${CI_JOB_ID}/artifacts/raw/aptly`.
 So a simple way to add an aptly-produced repository to another project is by setting:
 
@@ -1409,7 +1410,7 @@ separate from the Salsa CI team.
 
 The Salsa CI developers and users can be found at:
 
-* Mailing list: [debian-salsa-ci_at_alioth-lists.debian.net](mailto:debian-salsa-ci_at_alioth-lists.debian.net)
+* Mailing list: [debian-salsa-ci_at_alioth-lists.debian.net](https://alioth-lists.debian.net/cgi-bin/mailman/listinfo/debian-salsa-ci)
 * Matrix: [#salsaci:matrix.debian.social](https://matrix.to/#/#salsaci:matrix.debian.social)
 * IRC: [#salsaci @ OFTC](ircs://irc.oftc.net/salsa) ([webchat](https://webchat.oftc.net/?channels=salsaci))
 * Issue tracker: [salsa-ci-team/pipeline/issues](https://salsa.debian.org/salsa-ci-team/pipeline/issues)
