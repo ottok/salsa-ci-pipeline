@@ -112,8 +112,7 @@ elxr-images:
 check license + contributor:
   extends: .self-checks
   before_script:
-    - apt-get update && apt-get upgrade -y
-    - apt-get install -y licensecheck
+    - apt-get update && apt-get install -y licensecheck
   script:
     - PROBLEMS=0
     # check files without any license
@@ -139,8 +138,7 @@ check license + contributor:
 check gpg signature:
   extends: .self-checks
   before_script:
-    - apt-get update && apt-get upgrade -y
-    - apt-get install -y --no-install-recommends debian-keyring dirmngr git gpg gpg-agent ca-certificates
+    - apt-get update && apt-get install -y --no-install-recommends debian-keyring dirmngr git gpg gpg-agent ca-certificates
   script:
     - mkdir -p ${HOME}/.gnupg
     - chmod 600 ${HOME}/.gnupg
@@ -165,8 +163,7 @@ check gpg signature:
 check yaml lint:
   extends: .self-checks
   before_script:
-    - apt-get update && apt-get upgrade -y
-    - apt-get install -y yamllint
+    - apt-get update && apt-get install -y yamllint
   script:
     - yamllint .
 
