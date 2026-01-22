@@ -1,6 +1,6 @@
 # GitLab CI runners for Salsa
 
-This document explains how to setup and maintain your own GitLab CI runners.
+This document explains how to set up and maintain your own GitLab CI runners.
 
 If you want to learn about the existing shared runners on salsa.debian.org or
 donate hardware of computing resources to Debian, see the [general Salsa
@@ -53,11 +53,11 @@ then needs to be passed to a GitLab Runner program to register it.
 ## Installing the GitLab Runner
 
 The GitLab Runner is not available in Debian yet, and thus must be installed
-from [GitLab's repositories](https://docs.gitlab.com/runner/install/linux-repository.html).
+from [GitLab's repositories](https://docs.gitlab.com/runner/install/linux-repository/).
 In addition to the GitLab Runner to orchestrate fetching and executing the CI
 jobs, additional software is also needed according to the selected executor
 type. While there have been prototypes for
-[KVM/libvirt](https://docs.gitlab.com/runner/executors/custom_examples/libvirt.html),
+[KVM/libvirt](https://docs.gitlab.com/runner/executors/custom_examples/libvirt/),
 [LXD and systemd-nspawn](https://gitlab.com/gitlab-org/gitlab-runner/-/issues/1585),
 the most practical choice for executor type remains to be "Docker", for which
 Podman can be used.
@@ -175,6 +175,6 @@ slightly faster in downloading git repositories if it is hosted in northwest USA
 or southwest Canada (e.g. states of British Columbia, Washington or Oregon).
 
 The runner host will constantly be downloading, unpacking compressed files and
-compiling source code. This type of workload is in particular IO and CPU heavy.
-Choose large and fast NVMe SSD disks, and has much CPU as possible. A rule of
-thumb the amount of memory is 2 GB of RAM for each CPU core.
+compiling source code. This type of workload is particularly I/O and CPU heavy.
+Choose large and fast NVMe SSD disks, and have as much CPU as possible. A rule of
+thumb is the amount of memory should be 2 GB of RAM for each CPU core.
