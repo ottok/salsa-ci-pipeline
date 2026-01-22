@@ -51,6 +51,7 @@ include:
   * [Disabling gbp exportorig fallback](#disabling-gbp-exportorig-fallback)
   * [Git attributes](#git-attributes)
   * [Sbuild verbosity and additional arguments](#sbuild-verbosity-and-additional-arguments)
+  * [Build cache](#build-cache)
   * [Customize reprotest](#customize-reprotest)
 * [Build reverse dependencies](#build-reverse-dependencies)
   * [Enable build reverse dependencies](#enable-build-reverse-dependencies)
@@ -867,6 +868,26 @@ variables:
 If needed, additional arguments can be be passed to sbuild with the
 `SALSA_CI_SBUILD_ARGS` variable. Options given with this variable are included
 after all the other `sbuild` arguments.
+
+### Build cache
+
+The build jobs can use a build cache to speed up recompilation. C/C++ code is
+cached using [ccache](https://manpages.debian.org/unstable/ccache/ccache.1.en.html)
+and Rust code is cached using
+[sccache](https://manpages.debian.org/unstable/sccache/sccache.1.en.html). The
+cache is stored under `salsa-ci-cache/` and shared between pipeline runs using
+the GitLab cache key `build-${BUILD_ARCH}_${HOST_ARCH}`.
+
+To **enable** the build cache, set `SALSA_CI_BUILD_CACHE` to `1`:
+
+```yaml
+variables:
+  SALSA_CI_BUILD_CACHE: 1
+```
+
+Note that `sccache` is only available from Debian Bookworm onward. Do not enable
+`SALSA_CI_BUILD_CACHE` when building for releases older than Bookworm, as the
+missing `sccache` package will cause the build to fail.
 
 ### Customize reprotest
 

@@ -125,7 +125,6 @@ where vendors can create specific include recipe to easily customize the
 pipeline for specific cases. Additionally, the [vars](vars) directory contains
 distribution-specific variables and configurations.
 
-
 ## Salsa CI Internal Pipeline
 
 The Salsa CI internal pipeline has two main goals:
@@ -189,3 +188,37 @@ flowchart LR;
   the autopkgtest-lxc jobs. It creates one lxc.tar per supported release, tar
   file that is fetched by the autopkgtest-job according to the target release
   set in the pipeline.
+
+## Performance optimization
+
+### Build cache
+
+Build caching is **disabled by default**. To opt in, set the variable
+`SALSA_CI_BUILD_CACHE` to `1`, `yes`, or `true`.
+
+When enabled, the `.build-definition-common` template defines a GitLab CI cache
+that is shared across all compilation jobs. The cache key is derived from the
+build architecture (`build-${BUILD_ARCH}_${HOST_ARCH}`), so caches for `amd64`,
+`i386`, `arm64`, etc. are kept separate.
+
+The cache is only populated by the build job (even partial and failed ones). The
+latter jobs have access to the cache to run faster, but they don't upload new
+versions of it.
+
+| Job(s) | Cache behaviour when enabled |
+|---|---|
+| `build`, `build i386`, `build arm64`, `build armel`, `build armhf`, `build ppc64el`, `build riscv64` | Download **and** upload (cache key `build-${BUILD_ARCH}_${HOST_ARCH}`) |
+| `build faketime`, `build faketime i386` | Download only (`policy: pull`) |
+| `test-build-any`, `test-build-all`, `test-build-profiles`, `test-build-validate-cleanup`, `test-crossbuild-arm64` | Download only (`policy: pull`) |
+| `build source` | Disabled (`paths: []`) |
+| `autopkgtest`, `lintian`, `piuparts`, `reprotest`, etc. | No cache (do not extend `.build-definition-common`) |
+
+The cache directory (`CACHE_DIR`, default `salsa-ci-cache/`) stores two
+subdirectories, `ccache/` and `sccache/`. Additional caches can easily be placed
+in the same directory.
+
+Note that while these tools are installed into the build image, it only serves
+the purpose of showing statistics. For the actual caching to take place, the
+tools are also injected into the sbuild chroot. The sbuild chroot itself is
+built on-the-fly on every build job and not cached. The cache directory is
+bind-mounted into the sbuild chroot and persists across builds.

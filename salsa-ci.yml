@@ -38,6 +38,14 @@ variables:
   # required files to build the package, including ({orig,}.tar.*) and
   # extracted debianized source directory
   BUILD_DIR: $CI_PROJECT_DIR/salsa-ci-build/
+  # CACHE_DIR is the place where ccache and sccache store files that are
+  # intended to be re-used across jobs. It is bind-mounted into the sbuild
+  # unshare chroot at /build/cache so the same cache is available during the
+  # build and to any subsequent test-build jobs that pull the cache.
+  CACHE_DIR: $CI_PROJECT_DIR/salsa-ci-cache
+  SALSA_CI_BUILD_CACHE:
+    description: "Set to 1, yes, or true to enable the build cache"
+    value: ""
   VENDOR: 'debian'
   # The Debian release to build for (leave it assigned to $RELEASE_FROM_CHANGELOG to automatically pick one, based on the target distribution in d/changelog)
   RELEASE: '$RELEASE_FROM_CHANGELOG'
@@ -324,7 +332,8 @@ stages:
   - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
   - test -n "${RELEASE}" || RELEASE=${RELEASE_FROM_CHANGELOG}
 
-  - apt-get update && eatmydata apt-get upgrade -y
+  # Avoid running unnecessary 'apt upgrade' here. The sbuild chroot bootstrap
+  # will prime its own apt cache and install fresh packages.
 
   - |
     case "$SALSA_CI_GIT_DEBREBASE" in 1|yes|true)
@@ -377,12 +386,72 @@ stages:
     test -n "${mmdebstrap_chroot}" || mmdebstrap_chroot=${mmdebstrap_dist}
 
 .build-before-script: &build-before-script
+  # Configure build cache. Both ccache and sccache are installed directly
+  # into the mmdebstrap chroot via --include so they work out-of-the-box
+  # without runtime apt. update-ccache-symlinks creates
+  # /usr/lib/ccache/<compiler> wrappers for every compiler found in the
+  # chroot at chroot-creation time.
+  - |
+    if echo "${SALSA_CI_BUILD_CACHE}" | grep -qE '^(1|yes|true)$'
+    then
+      cat > ${CI_PROJECT_DIR}/cache.env << 'EOF'
+    export CACHE_ENABLED=1
+    export CCACHE_DIR=${CACHE_DIR}/ccache
+    export CCACHE_MAXSIZE=2G
+    export SCCACHE_DIR=${CACHE_DIR}/sccache
+    export SCCACHE_CACHE_SIZE=2G
+    EOF
+      MMDEBSTRAP_INCLUDE_PACKAGES="${MMDEBSTRAP_INCLUDE_PACKAGES:+${MMDEBSTRAP_INCLUDE_PACKAGES},}ccache,sccache"
+      MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS="${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS:+${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS}} --customize-hook='chroot \"\$1\" update-ccache-symlinks'"
+    else
+      echo "export CACHE_ENABLED=0" | tee ${CI_PROJECT_DIR}/cache.env
+    fi
   - *mmdebstrap-config-script
   - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_SETUP_HOOK_ARGS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_chroot}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
   - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
 
   - su salsa-ci -c "${MMDEBSTRAP_COMMAND}"
+  - |
+    if [ "${CACHE_ENABLED}" = "1" ]
+    then
+      if su salsa-ci -c "tar -tf ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar | grep -q 'usr/bin/sccache'"
+      then
+        echo "export SCCACHE_AVAILABLE=1" | tee -a ${CI_PROJECT_DIR}/cache.env
+        # Inject a wrapper at /usr/local/bin/sccache that only delegates to
+        # the real sccache for rustc, bypassing it for C/C++ compilers.
+        # This prevents meson auto-detection from breaking tests that compile
+        # to /dev/null, while keeping sccache functional for Rust builds.
+        mkdir -p /tmp/sccache-wrapper/usr/local/bin
+        cat > /tmp/sccache-wrapper/usr/local/bin/sccache << 'EOF'
+    #!/bin/sh
+    # sccache wrapper: only enable sccache for Rust (rustc)
+    if [ "$1" = "rustc" ]
+    then
+      exec /usr/bin/sccache "$@"
+    else
+      exec "$@"
+    fi
+    EOF
+        chmod +x /tmp/sccache-wrapper/usr/local/bin/sccache
+        su salsa-ci -c "tar --append --file=~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar -C /tmp/sccache-wrapper usr/local/bin/sccache"
+      else
+        echo "export SCCACHE_AVAILABLE=0" | tee -a ${CI_PROJECT_DIR}/cache.env
+      fi
+    fi
   - mkdir -vp ${WORKING_DIR}
+
+  - |
+    if [ "${CACHE_ENABLED}" = "1" ]
+    then
+      # Delete any old .ccache directory inside .ccache if the cache got extra
+      # subdirectories as result of recursive copying as bug described in #492
+      (set -o pipefail; rm -vrf ${CI_PROJECT_DIR}/.ccache/.${CI_PROJECT_NAME}.ccache | tail)
+      # If an existing cache was downloaded the cache directory already exists,
+      # otherwise ensure the directory is created
+      mkdir -vp ${CACHE_DIR}; find ${CACHE_DIR} -type d | xargs chmod g+s
+      # Show cache sizes before build starts
+      du -shc ${CACHE_DIR}/* || true
+    fi
 
 .build-script-setup-environment: &build-script-setup-environment
   # setup sbuild+unshare support
@@ -395,6 +464,58 @@ stages:
     EOF
 
   - mkdir -vp ${BUILD_DIR}
+
+  # setup build cache environment
+  - . ${CI_PROJECT_DIR}/cache.env || true
+
+  # configure sbuild to use build cache
+  # The host CACHE_DIR is bind-mounted to /build/cache inside the chroot,
+  # and CCACHE_DIR points to the ccache subdirectory there so the cache is
+  # shared across builds. ccache handles C/C++; sccache is only used for
+  # Rust via RUSTC_WRAPPER, and a wrapper script at /usr/local/bin/sccache
+  # prevents meson from auto-detecting it for C/C++ compilers (which would
+  # break tests that compile to /dev/null).
+  - |
+    if [ "${CACHE_ENABLED}" = "1" ]
+    then
+      # The cache directory is bind-mounted into the sbuild unshare chroot.
+      # Because the build user inside the chroot (sbuild) can have a different
+      # UID from the host user (salsa-ci), we make the cache tree
+      # world-traversable and world-writable so ccache can read and write cache
+      # entries regardless of the exact UID mapping.
+      mkdir -vp ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache
+      # Allow traversal from any UID inside the unshare chroot
+      chmod a+X ${CI_PROJECT_DIR} ${CACHE_DIR}
+      # Allow read/write of cache entries from any UID
+      chmod -R a+rwX ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache
+
+      cat > ~salsa-ci/.config/sbuild/config.pl << 'EOF'
+    $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
+    $unshare_bind_mounts = [
+      { directory => "%CACHE_DIR%", mountpoint => "/build/cache" }
+    ];
+    EOF
+      sed -i -e "s#%CACHE_DIR%#${CACHE_DIR}#" ~salsa-ci/.config/sbuild/config.pl
+      if [ "${SCCACHE_AVAILABLE}" = "1" ]
+      then
+        cat >> ~salsa-ci/.config/sbuild/config.pl << 'EOF'
+    $build_environment = {
+      "CCACHE_DIR" => "/build/cache/ccache",
+      "CCACHE_MAXSIZE" => "2G",
+      "SCCACHE_DIR" => "/build/cache/sccache",
+      "SCCACHE_CACHE_SIZE" => "2G",
+      "RUSTC_WRAPPER" => "sccache"
+    };
+    EOF
+      else
+        cat >> ~salsa-ci/.config/sbuild/config.pl << 'EOF'
+    $build_environment = {
+      "CCACHE_DIR" => "/build/cache/ccache",
+      "CCACHE_MAXSIZE" => "2G"
+    };
+    EOF
+      fi
+    fi
 
   # setup extra repositories
   - |
@@ -460,8 +581,16 @@ stages:
     fi
 
   - chown -R salsa-ci ~salsa-ci/.config/sbuild/
-
   - chown -R 'salsa-ci:' ${WORKING_DIR}
+  - |
+    if [ "${CACHE_ENABLED}" = "1" ]
+    then
+      chown -R 'salsa-ci:' ${CACHE_DIR}
+      # Zero stats before the build so post-build stats are useful
+      su -s /bin/bash salsa-ci -c "CCACHE_DIR=${CACHE_DIR}/ccache ccache --zero-stats"
+      su -s /bin/bash salsa-ci -c "SCCACHE_DIR=${CACHE_DIR}/sccache sccache --zero-stats"
+    fi
+
 
 .build-script-disable-dbgsym-package: &build-script-disable-dbgsym-package
   # Disable autogeneration of dbgsym packages. (See #273)
@@ -607,6 +736,18 @@ stages:
 # Place all diagnostics or cleanup in the 'after_script' section, as it will run
 # on both successful and failed jobs (but not on cancelled jobs).
 .build-after-script: &build-after-script
+  # Print build cache stats
+  - . ${CI_PROJECT_DIR}/cache.env || true
+  - |
+    if [ "${CACHE_ENABLED}" = "1" ]
+    then
+      echo "Cache stats: ccache"
+      CCACHE_DIR=${CACHE_DIR}/ccache ccache --show-stats --verbose || true
+      echo "Cache stats: sccache"
+      SCCACHE_DIR=${CACHE_DIR}/sccache sccache --show-stats || true
+      du -shc ${CACHE_DIR}/* || true
+    fi
+
   # Restore PWD to ${WORKING_DIR}
   - cd ${WORKING_DIR}
 
@@ -628,6 +769,11 @@ stages:
   image: $SALSA_CI_IMAGES_BUILD
   extends:
     - .artifacts-default-expire
+  cache:
+    when: always
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
   variables:
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
@@ -723,6 +869,11 @@ stages:
 .build-package-faketime: &build-package-faketime
   extends:
     - .build-package
+  cache:
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
+    policy: pull
   variables:
     SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION: 'true'
   rules:
@@ -732,6 +883,11 @@ stages:
   extends:
     - .build-package
   image: $SALSA_CI_IMAGES_BUILD_I386
+  cache:
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
+    policy: pull
   variables:
     SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION: 'true'
     BUILD_ARCH: 'i386'
@@ -761,6 +917,12 @@ stages:
   stage: test
   extends:
     - .build-definition
+  cache:
+    when: always
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
+    policy: pull
   script:
     - *check-architecture-is-buildable
     - *get-target-distribution
@@ -796,6 +958,11 @@ stages:
   extends:
     - .build-definition
   stage: test
+  cache:
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
+    policy: pull
   script:
     - *get-target-distribution
     - *build-before-script
@@ -816,6 +983,11 @@ stages:
   extends:
     - .build-definition
   stage: test
+  cache:
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
+    policy: pull
   variables:
     SALSA_CI_VALIDATE_PACKAGE_CLEAN_UP: 'true'
   rules:
@@ -835,6 +1007,11 @@ stages:
 .build-package-profiles-definition: &build-package-profiles-definition
   extends:
     - .build-definition
+  cache:
+    key: "build-${BUILD_ARCH}_${HOST_ARCH}"
+    paths:
+      - ${CACHE_DIR}
+    policy: pull
   script:
     - *check-build-package-profiles
     - *get-target-distribution

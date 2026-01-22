@@ -181,6 +181,7 @@ test-pipeline:
         SALSA_CI_EXTRA_REPOSITORY: "deb-src http://deb.debian.org/debian unstable main"
         SALSA_CI_EXTRA_REPOSITORY_KEY: /usr/share/keyrings/debian-archive-keyring.gpg
         SALSA_CI_ENABLE_CROSSBUILD_ARM64: 1
+        SALSA_CI_BUILD_CACHE: 1
         SALSA_CI_ENABLE_DEBDIFF: 1
       # test running the project against testing
       - PROJECT_URL: https://salsa.debian.org/debian/grep
@@ -340,6 +341,14 @@ test-pipeline:
         SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DISABLE_APTLY: 1
+      # debian-codemods is a Rust project used to verify sccache integration
+      - PROJECT_URL: https://salsa.debian.org/jelmer/debian-codemods
+        SALSA_CI_BUILD_CACHE: 1
+        SALSA_CI_EXTRA_REPOSITORY: "deb [trusted=yes] https://people.debian.org/~jelmer/debian-codemods-deps ./"
+        SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: --include=ca-certificates
+        SALSA_CI_DISABLE_ALL_TESTS: 1
+        SALSA_CI_DISABLE_APTLY: 1
+        SALSA_CI_DISABLE_BUILD_PACKAGE_I386: 1
 
 # test pipeline to test the build jobs in architectures non-enabled-by-default
 # While we don't have shared runners for these architectures, this pipeline

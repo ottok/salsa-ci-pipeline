@@ -36,6 +36,9 @@ RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-insta
     dpkg-dev \
     equivs \
     gpgv \
+    # Required to display cache stats outside the sbuild chroot
+    ccache \
+    sccache \
     # Dependencies required for build reverse-dependencies jobs.
     # ratt orchestrates the rebuilds and indicates the exact sbuild
     # command to execute, dose-extra verifies dependency relationships,
