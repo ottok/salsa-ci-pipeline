@@ -944,7 +944,13 @@ stages:
   script:
     - *build-script-setup-environment
     - *build-script-disable-dbgsym-package
-    - su salsa-ci -c "exec debrebuild --buildresult=${WORKING_DIR}/debrebuild --builder=sbuild+unshare -- ${WORKING_DIR}/*.buildinfo" |& OUTPUT_FILENAME=${WORKING_DIR}/debrebuild.log filter-output || [ $? -eq 1 ]
+    - |
+      ret=0
+      su salsa-ci -c "exec debrebuild --buildresult=${WORKING_DIR}/debrebuild --builder=sbuild+unshare -- ${WORKING_DIR}/*.buildinfo" |& OUTPUT_FILENAME=${WORKING_DIR}/debrebuild.log filter-output || ret=$?
+      if [ $ret = 255 ]; then
+        diffoscope --html ${WORKING_DIR}/diffoscope.html ${WORKING_DIR}/*.changes ${WORKING_DIR}/debrebuild/*.changes
+      fi
+      exit $ret
   variables:
     GIT_STRATEGY: none
   artifacts:
@@ -952,6 +958,7 @@ stages:
     paths:
       - ${WORKING_DIR}/debrebuild.log
       - ${WORKING_DIR}/debrebuild
+      - ${WORKING_DIR}/diffoscope.html
   needs:
     - job: build
       artifacts: true
