@@ -421,7 +421,7 @@ stages:
   - test "$DB_BUILD_TYPE" != "all" || BUILD_TYPE_ARG="--arch-all --no-arch-any"
   # https://lists.debian.org/debian-devel/2022/10/msg00009.html
   - test "$DB_BUILD_TYPE" != "source" || BUILD_TYPE_ARG="--source --no-arch-all --no-arch-any"
-  - test "$DB_BUILD_TYPE" != "full" || BUILD_TYPE_ARG="--source --arch-all --arch-any"
+  - test "$DB_BUILD_TYPE" != "full" || BUILD_TYPE_ARG="--arch-all --arch-any"
 
   # gbp setup-gitattributes needs to be called after gbp pull to avoid having
   # staging commits (See #322)
@@ -525,8 +525,8 @@ stages:
   # often fails or timeouts, and the remaining 'script' section will not be
   # executed.
   #
-  # But let's copy the (orig) *tar* files to the artifacts dir
-  - find ../ -maxdepth 1 -type f -name '*.tar.*' -exec cp -vn -- {} "${WORKING_DIR}" ";"
+  # Copy the input source package to the output artifacts so subsequent jobs can use it
+  - dcmd mv ../*.dsc "${WORKING_DIR}"
 
 .build-script: &build-script
   - *build-script-setup-environment
