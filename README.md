@@ -28,6 +28,7 @@ include:
   * [Select which jobs run in the CI pipeline](#select-which-jobs-run-in-the-ci-pipeline)
   * [Allow a job to fail](#allow-a-job-to-fail)
   * [Disable the pipeline on certain branches](#disable-the-pipeline-on-certain-branches)
+  * [Completely disable the pipeline](#completely-disable-the-pipeline)
   * [Allow pipeline to run when git tags are pushed](#allow-pipeline-to-run-when-git-tags-are-pushed)
   * [Setting variables on pipeline creation](#setting-variables-on-pipeline-creation)
   * [Run only selected jobs](#run-only-selected-jobs)
@@ -315,6 +316,23 @@ include:
 
 variables:
   SALSA_CI_IGNORED_BRANCHES: 'some-branch|another-ref'
+```
+
+### Completely disable the pipeline
+
+Note that simply deleting the `debian/salsa-ci.yml` file or commenting out all
+lines will cause GitLab to complain about a missing CI configuration file. Thus
+the recommended way to completely disable Salsa CI is to use `workflow:rules`:
+
+```yaml
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+# Document here why pipeline is being permanently skipped for now
+workflow:
+  rules:
+    - when: never
 ```
 
 ### Allow pipeline to run when git tags are pushed
