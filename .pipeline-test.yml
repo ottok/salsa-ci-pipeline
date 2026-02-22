@@ -109,6 +109,11 @@ test-crossbuild-arm64:
     - *clone_repo_test
   allow_failure: true
 
+test-uscan:
+  extends: .test-uscan
+  before_script:
+    - *clone_repo_test
+
 wrap-and-sort:
   extends: .test-wrap-and-sort
   before_script:

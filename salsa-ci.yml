@@ -1013,6 +1013,19 @@ stages:
     - job: build
       artifacts: true
 
+.test-uscan:
+  stage: test
+  image: $SALSA_CI_IMAGES_GENERIC_TESTS
+  script:
+    - apt-get update && apt-get install -y devscripts
+    - uscan --version
+    - uscan --download-current-version --no-download
+  rules:
+    - if: $SALSA_CI_ENABLE_USCAN =~ /^(1|yes|true)$/
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_USCAN !~ /^(1|yes|true)$/
+
 .test-reprotest: &test-reprotest
   stage: test
   image: $SALSA_CI_IMAGES_REPROTEST

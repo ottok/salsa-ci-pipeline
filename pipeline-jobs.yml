@@ -54,6 +54,9 @@ reprotest:
 lintian:
   extends: .test-lintian
 
+test-uscan:
+  extends: .test-uscan
+
 autopkgtest:
   extends: .test-autopkgtest
 
