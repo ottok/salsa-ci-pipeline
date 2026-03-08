@@ -1,17 +1,8 @@
-From 6e6d467b2bd7a24dda5ef1a7813cedfaf0756bbb Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Santiago=20Ruano=20Rinc=C3=B3n?= <santiagorr@riseup.net>
-Date: Mon, 6 Nov 2023 23:46:51 -0300
-Subject: [PATCH] Add option to configure the logs-dir in lib/environment.sh
-
----
- lib/environment.sh | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
-
 diff --git a/lib/environment.sh b/lib/environment.sh
-index c0845d0..2df242e 100644
+index 4c31767..8dd36a3 100644
 --- a/lib/environment.sh
 +++ b/lib/environment.sh
-@@ -76,8 +76,8 @@ debci_salsa_client_secret="${debci_salsa_client_secret:-}"
+@@ -77,8 +77,8 @@ debci_salsa_client_secret="${debci_salsa_client_secret:-}"
  
  debci_secrets_dir=${debci_secrets_dir:-$(readlink -f "${debci_base_dir}/secrets")}
  
@@ -22,7 +13,7 @@ index c0845d0..2df242e 100644
  
  usage_shared_options="Common options:
  
-@@ -91,6 +91,7 @@ usage_shared_options="Common options:
+@@ -92,6 +92,7 @@ usage_shared_options="Common options:
                              (default: unstable)
    -d DIR, --data-dir DIR    the directory in which debci will store its data,
                              and where it will read from
@@ -30,7 +21,7 @@ index c0845d0..2df242e 100644
    --amqp amqp://[user:password@]hostname[:port]
                              AMQP server to connect to (default: ${debci_amqp_server})
    -m URL, --mirror URL      selects which mirror to use for APT-related actions,
-@@ -133,6 +134,9 @@ for arg in "$@"; do
+@@ -134,6 +135,9 @@ for arg in "$@"; do
        -d|--data-dir)
          var=debci_data_basedir
          ;;
@@ -40,16 +31,13 @@ index c0845d0..2df242e 100644
        --amqp)
          var=debci_amqp_server
          ;;
-@@ -227,6 +231,9 @@ debci_session_secret="${debci_session_secret:-}"
+@@ -222,6 +226,9 @@ debci_session_secret="${debci_session_secret:-}"
  # page to display when authentication fails
  debci_auth_fail_page="${debci_auth_fail_page:-}"
  
 +# parameter for autopkgtest --logs-dir
 +debci_logs_dir="${debci_logs_dir:-}"
 +
- for dir in \
-   "${debci_base_dir}/backends/${debci_backend}" \
-   "${debci_bin_dir}"
--- 
-2.42.0
-
+ # calculate distro based on debci_suite
+ __script="/usr/share/debootstrap/scripts/${debci_suite:?}"
+ if [ -r "$__script" ]; then

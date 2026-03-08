@@ -1,6 +1,8 @@
+diff --git a/bin/debci-localtest b/bin/debci-localtest
+index 1c1c89d..a907031 100755
 --- a/bin/debci-localtest
 +++ b/bin/debci-localtest
-@@ -9,7 +9,7 @@
+@@ -15,7 +15,7 @@ prepare_args
  
  pkg="$1"
  shift
@@ -9,7 +11,7 @@
  
  # these variables can be considered as an API by backends/*/test-package and
  # debci-autopkgtest
-@@ -19,12 +19,8 @@
+@@ -31,12 +31,8 @@ eval "export debci_autopkgtest_args_$backend_name"
  export debci_test_package="$pkg"
  export debci_test_outputdir="$logs"
  
@@ -18,8 +20,8 @@
 -  extra_opts=--shell-fail
 -fi
  rc=0
--test-package --output-dir="$logs" $extra_opts "$pkg" "$@" || rc="$?"
-+test-package --output-dir="$logs" "$pkg" "$@" || rc="$?"
+-invoke_backend test-package --output-dir="$logs" $extra_opts "$pkg" "$@" || rc="$?"
++invoke_backend test-package --output-dir="$logs" "$pkg" "$@" || rc="$?"
  
  echo "I: test artifacts available at $logs"
  exit "$rc"
