@@ -318,7 +318,8 @@ stages:
     if [ "$VENDOR" = ubuntu ] ;
     then
       eatmydata apt-get install -y gpg distro-info-data ubuntu-keyring
-      export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS},universe"
+      export MMDEBSTRAP_COMPONENTS="${MMDEBSTRAP_COMPONENTS} universe"
+      export MMDEBSTRAP_SETUP_HOOK_ARGS="--setup-hook='printf \"Types: deb\nURIs: ${SALSA_CI_MIRROR}\nSuites: ${RELEASE}-proposed\nComponents: ${MMDEBSTRAP_COMPONENTS}\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n\" >> \"\$1\"/etc/apt/sources.list.d/ubuntu.sources && printf \"Package: *\nPin: release a=${RELEASE}-proposed\nPin-Priority: 500\n\" > \"\$1\"/etc/apt/preferences.d/${RELEASE}-proposed'"
     fi
 
   - test -z "${MMDEBSTRAP_INCLUDE_PACKAGES}" || export MMDEBSTRAP_INCLUDE_PACKAGES_ARGS="--include=${MMDEBSTRAP_INCLUDE_PACKAGES}"
@@ -338,7 +339,7 @@ stages:
       ;;
     esac
 
-  - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
+  - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_SETUP_HOOK_ARGS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
   - su salsa-ci -c "${MMDEBSTRAP_COMMAND}"
   - mkdir -vp ${WORKING_DIR}
 
