@@ -1,5 +1,5 @@
 diff --git a/lib/environment.sh b/lib/environment.sh
-index 4c31767..8dd36a3 100644
+index bdcf9a0..1065d1e 100644
 --- a/lib/environment.sh
 +++ b/lib/environment.sh
 @@ -77,8 +77,8 @@ debci_salsa_client_secret="${debci_salsa_client_secret:-}"
@@ -39,5 +39,5 @@ index 4c31767..8dd36a3 100644
 +debci_logs_dir="${debci_logs_dir:-}"
 +
  # calculate distro based on debci_suite
- __script="/usr/share/debootstrap/scripts/${debci_suite:?}"
- if [ -r "$__script" ]; then
+ __suite="${debci_suite:?}"
+ case "$__suite" in
