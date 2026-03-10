@@ -220,6 +220,9 @@ test-pipeline:
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
+        # Test the autopkgest for -backports. See:
+        # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/549
+        SALSA_CI_ENABLE_AUTOPKGTEST: 1
       # test building the grep trixie version
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         PROJECT_TARGET_HEAD: debian/3.11-4
