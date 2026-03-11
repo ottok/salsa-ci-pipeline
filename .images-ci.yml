@@ -70,6 +70,9 @@ stages:
       cat $(ls -v containerfiles/base.*) > Containerfile
       if ! [ "${IMAGE_NAME}" = "base" ]; then
         cat $(ls -v containerfiles/$IMAGE_NAME.*) >> Containerfile
+        # To avoid issues with cached container images that would yield to out-dated images,
+        # we need to upgrade the system as a last step
+        echo "RUN apt-get update && apt-get upgrade --yes --quiet" >> Containerfile
       fi
     - |
       # Check if aliases are needed.
