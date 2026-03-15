@@ -117,6 +117,10 @@ variables:
   SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT: ''
   SALSA_CI_DPKG_BUILDPACKAGE_ARGS: ''
   SALSA_CI_GBP_BUILDPACKAGE_ARGS: ''
+  # Is this git branch in git-debrebase rather than git-buildpackage format?
+  # Setting this will use git-debrebase convert-to-gbp to convert it.
+  # You will also need to set GIT_DEPTH: 0 to disable shallow clones.
+  SALSA_CI_GIT_DEBREBASE: 0
   SALSA_CI_SBUILD_ARGS: ''
   SALSA_CI_SBUILD_EXTRA_PACKAGE: ''
   DOCKER_TLS_CERTDIR: ""
@@ -321,6 +325,14 @@ stages:
   - test -n "${RELEASE}" || RELEASE=${RELEASE_FROM_CHANGELOG}
 
   - apt-get update && eatmydata apt-get upgrade -y
+
+  - |
+    case "$SALSA_CI_GIT_DEBREBASE" in 1|yes|true)
+        git config user.email "salsa-ci@invalid.invalid"
+        git config user.name "salsa-ci"
+        git-debrebase --force
+        git-debrebase convert-to-gbp
+    ;; esac
 
   - export MMDEBSTRAP_COMPONENTS="main"
 
