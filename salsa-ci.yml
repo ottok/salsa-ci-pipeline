@@ -358,10 +358,12 @@ stages:
   # setup extra repositories
   - |
     if ! [ -z "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}" ] ; then
+    # See: https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/545
+    [[ "$SALSA_CI_EXTRA_REPOSITORY_SOURCES" != /* ]] && SALSA_CI_EXTRA_REPOSITORY_SOURCES="${CI_PROJECT_DIR}/${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
     cat << "EOF" >> ~salsa-ci/.config/sbuild/config.pl
     $external_commands = {
       "pre-build-commands" => [
-              ['cat', "$ENV{'CI_PROJECT_DIR'}/$ENV{'SALSA_CI_EXTRA_REPOSITORY_SOURCES'}", '|', '%SBUILD_CHROOT_EXEC "cat > /etc/apt/sources.list.d/extra_repository.sources"'],
+              ['cat', "$ENV{'SALSA_CI_EXTRA_REPOSITORY_SOURCES'}", '|', '%SBUILD_CHROOT_EXEC "cat > /etc/apt/sources.list.d/extra_repository.sources"'],
       ],
     };
     EOF
