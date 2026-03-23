@@ -235,6 +235,9 @@ variables:
   SALSA_CI_BUILD_REVERSE_DEPENDENCIES_TRANSITION_AFFECTED_REGEX:
     description: "Regex passed to ratt -transition_affected for library transition reverse dependency selection"
     value: ''
+  SALSA_CI_DISABLE_RATT_SBUILD_EXPERIMENTAL_ASPCUD:
+    description: "When RELEASE=experimental, build reverse-dependencies default to `unstable`. Set to 0/false to enable the buildd-like experimental overlay + aspcud criteria instead."
+    value: 1
 
 stages:
   - provisioning
@@ -1535,6 +1538,29 @@ stages:
     - cat /usr/share/salsa-ci/build-rdeps-template.yml >> ${WORKING_DIR}/build-rdeps-config.yml
     - *setup_chdist
     - |
+      # ratt -dist controls where reverse-dependencies are looked up (dose/apt),
+      # while -sbuild_dist controls which suite sbuild builds in.
+      RATT_LOOKUP_SUITE="$RELEASE"
+      SBUILD_SUITE=""
+      RATT_EXTRA_ARGS=""
+
+      if [ "$RELEASE" = "experimental" ]; then
+        # By default resolve and rebuild rdeps from unstable, inject local .debs
+        RATT_LOOKUP_SUITE="unstable"
+        if echo "${SALSA_CI_DISABLE_RATT_SBUILD_EXPERIMENTAL_ASPCUD}" | grep -Eq '^(0|no|false)$'; then
+          SBUILD_SUITE="experimental"
+          RATT_EXTRA_ARGS="-sbuild-experimental-aspcud"
+        else
+          SBUILD_SUITE="unstable"
+        fi
+      fi
+
+      if [ -n "$SBUILD_SUITE" ]; then
+        SBUILD_SUITE_ARG="-sbuild_dist $SBUILD_SUITE"
+      else
+        SBUILD_SUITE_ARG=""
+      fi
+
       if [ -n "${SALSA_CI_BUILD_REVERSE_DEPENDENCIES_TRANSITION_AFFECTED_REGEX:-}" ]; then
         set -- \
           -transition_affected \
@@ -1548,7 +1574,9 @@ stages:
         -sbuild-keep-build-log \
         "$@" \
         -dry_run -json \
-        -dist "$RELEASE" \
+        -dist "$RATT_LOOKUP_SUITE" \
+        $SBUILD_SUITE_ARG \
+        $RATT_EXTRA_ARGS \
         -chdist "$CHDIST_NAME" \
         "${WORKING_DIR}"/*.changes > /tmp/ratt_dry.json
 
