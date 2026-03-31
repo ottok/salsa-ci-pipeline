@@ -521,7 +521,7 @@ stages:
   - printenv | sort
 
   # Build the package as user salsa-ci
-  - su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} ${BUILD_COMMAND}" |& filter-output
+  - su salsa-ci -c "${BUILD_COMMAND}" |& filter-output
   # Do not append any diagnostics or cleanup code here. The above build line
   # often fails or timeouts, and the remaining 'script' section will not be
   # executed.
@@ -562,6 +562,7 @@ stages:
   variables:
     DB_BUILD_PARAM: ${SALSA_CI_DPKG_BUILDPACKAGE_ARGS}
     DB_BUILD_TYPE: full
+    RUNNER_SCRIPT_TIMEOUT: ${SALSA_CI_BUILD_TIMEOUT_ARGS}
   script:
     - *get-target-distribution
     - *build-before-script
@@ -1037,12 +1038,7 @@ stages:
         SALSA_CI_REPROTEST_ARGS="${SALSA_CI_REPROTEST_ARGS} --no-diffoscope"
       fi
     - |
-      timeout_version="$(timeout --version | awk 'NR==1{print $4}')"
-      if dpkg --compare-versions "$timeout_version" ge 8.29; then
-        export SALSA_CI_BUILD_TIMEOUT_ARGS=" -v ${SALSA_CI_BUILD_TIMEOUT_ARGS}"
-      fi
-    - |
-      su salsa-ci -c "timeout ${SALSA_CI_BUILD_TIMEOUT_ARGS} reprotest \
+      su salsa-ci -c "reprotest \
         --min-cpus $(nproc --all) \
         --store-dir ${WORKING_DIR}/reprotest \
         --verbosity=2  \
@@ -1059,6 +1055,7 @@ stages:
     # So SALSA_CI_EXTRA_REPOSITORY, SALSA_CI_EXTRA_REPOSITORY_KEY
     # can refer to files located in the source tree
     GIT_STRATEGY: fetch
+    RUNNER_SCRIPT_TIMEOUT: ${SALSA_CI_BUILD_TIMEOUT_ARGS}
   needs:
     - job: build
       artifacts: true
