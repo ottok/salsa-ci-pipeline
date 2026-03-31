@@ -314,15 +314,13 @@ stages:
     fi
   - unset pattern
 
-.build-before-script: &build-before-script
+.mmdebstrap-config-script: &mmdebstrap-config-script
   # pass the RELEASE_FROM_CHANGELOG envvar to any consecutive job
   - export RELEASE_FROM_CHANGELOG=$(grep RELEASE_FROM_CHANGELOG ${CI_PROJECT_DIR}/salsa.env | awk -F '=' '{print $2}')
   - echo "RELEASE_FROM_CHANGELOG=${RELEASE_FROM_CHANGELOG}" | tee ${CI_PROJECT_DIR}/salsa.env
   - test -n "${RELEASE}" || RELEASE=${RELEASE_FROM_CHANGELOG}
 
   - apt-get update && eatmydata apt-get upgrade -y
-
-  - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
 
   - export MMDEBSTRAP_COMPONENTS="main"
 
@@ -353,7 +351,11 @@ stages:
       ;;
     esac
 
+.build-before-script: &build-before-script
+  - *mmdebstrap-config-script
   - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_SETUP_HOOK_ARGS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
+  - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
+
   - su salsa-ci -c "${MMDEBSTRAP_COMMAND}"
   - mkdir -vp ${WORKING_DIR}
 
@@ -1209,48 +1211,20 @@ stages:
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_PIUPARTS !~ /^(1|yes|true)$/
-  services:
-    - docker:20.10.12-dind
   script:
-    - CHROOT_PATH="/tmp/debian-chroot"
-    - CONTAINER_ID=$(docker run --rm -d "${SALSA_CI_IMAGES_BASE}" sleep infinity)
-    - |
-      if [ -n "$SALSA_CI_COMPONENTS" ]; then
-        docker exec "$CONTAINER_ID" bash -c '
-          if [ -f /etc/apt/sources.list ]; then
-            sed -i "/^deb /s/main$/'"${SALSA_CI_COMPONENTS}"'/" /etc/apt/sources.list;
-          elif [ -f /etc/apt/sources.list.d/debian.sources ]; then
-            sed -i "/Components:/s/main$/'"${SALSA_CI_COMPONENTS}"'/" /etc/apt/sources.list.d/debian.sources;
-          fi
-        ';
-      fi
-    - docker exec ${CONTAINER_ID} bash -c "apt-get update && apt-get install eatmydata -y"
-    - mkdir -vp ${CHROOT_PATH}
-    - docker export ${CONTAINER_ID} | tar -C ${CHROOT_PATH} -xf -
-    - mknod -m 666 ${CHROOT_PATH}/dev/null c 1 3
-    - mknod -m 666 ${CHROOT_PATH}/dev/urandom c 1 9
-    - mkdir -vp /srv/local-apt-repository/ && cp -av ${WORKING_DIR}/*.deb /srv/local-apt-repository/ && /usr/lib/local-apt-repository/rebuild
-    - mkdir -vp ${CHROOT_PATH}/etc-target/apt/sources.list.d ${CHROOT_PATH}/etc-target/apt/preferences.d
-    - cp -Hv /etc/apt/sources.list.d/local-apt-repository.* ${CHROOT_PATH}/etc-target/apt/sources.list.d/
-    - cp -aTLv /etc/apt/preferences.d  ${CHROOT_PATH}/etc-target/apt/preferences.d
-    - cp -aTLv /srv/local-apt-repository ${CHROOT_PATH}/srv/local-apt-repository
-    - cp -aTLv /var/lib/local-apt-repository/ ${CHROOT_PATH}/var/lib/local-apt-repository/
+    - *mmdebstrap-config-script
     - test -n "${SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT}" /etc/piuparts/scripts/pre_install_salsa_ci && chmod 755 /etc/piuparts/scripts/pre_install_salsa_ci
     - test -n "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" /etc/piuparts/scripts/post_install_salsa_ci && chmod 755 /etc/piuparts/scripts/post_install_salsa_ci
-    - add_extra_repository.sh -v
-      -e "${SALSA_CI_EXTRA_REPOSITORY}" -k "${SALSA_CI_EXTRA_REPOSITORY_KEY}"
-      -s "${SALSA_CI_EXTRA_REPOSITORY_SOURCES}"
-      -t "${CHROOT_PATH}/etc-target"
-    - sed  '/127.0.0.1/s/localhost/pipeline.salsa.debian.org localhost/' /etc/hosts > ${CHROOT_PATH}/etc/hosts
-    # Respect base image's sources.list (security, backports, point-updates, etc.) and don't rewrite sources.list
-    # This avoids package installability/mismatch issues e.g. when base image enables security updates while piuparts doesn't (#292).
-    # piuparts sources.list generation makes most sense when it generates the chroot on the fly, not when using our base image.
-    # No need for -d/--distribution either, which is only used for chroot and sources.list generation.
-    - PIUPARTS_DISTRIBUTION_ARG="--keep-sources-list";
-    - |
-      (for PACKAGE in $(ls ${WORKING_DIR}/*.deb); do
-        sh -c "exec piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir /etc/piuparts/scripts --allow-database --warn-on-leftovers-after-purge -e ${CHROOT_PATH} ${PIUPARTS_DISTRIBUTION_ARG} ${PACKAGE}" piuparts
-      done) |& OUTPUT_FILENAME=${WORKING_DIR}/piuparts.log filter-output
+    # passwd is needed for useradd in /etc/piuparts/scripts/post_setup_dummy_users
+    - piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir=/etc/piuparts/scripts
+      --allow-database --warn-on-leftovers-after-purge --distribution=$RELEASE
+      --bootstrapcmd="mmdebstrap --skip=output/dev,check/empty --variant=apt --include=passwd
+        --components=\"${MMDEBSTRAP_COMPONENTS}\"
+        ${MMDEBSTRAP_SETUP_HOOK_ARGS}
+        ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS}
+        --setup-hook=\"add_extra_repository.sh -v -e \\\"${SALSA_CI_EXTRA_REPOSITORY}\\\" -k \\\"${SALSA_CI_EXTRA_REPOSITORY_KEY}\\\" -s \\\"${SALSA_CI_EXTRA_REPOSITORY_SOURCES}\\\" -t \\\"\$1/etc\\\"\""
+      --mirror="${SALSA_CI_MIRROR} ${MMDEBSTRAP_COMPONENTS}"
+      --log-file=${WORKING_DIR}/piuparts.log ${WORKING_DIR}/*.changes
   variables:
     # To make the repository available in this job,
     # so SALSA_CI_PIUPARTS_{PRE,POST}_INSTALL_SCRIPT
