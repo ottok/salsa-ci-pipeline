@@ -32,10 +32,4 @@ COPY files/autopkgtest/lxc-net /etc/default/lxc-net
 COPY files/autopkgtest/default.conf /etc/lxc/default.conf
 COPY files/autopkgtest/fstab /etc/fstab
 
-COPY patches/autopkgtest/debci-localtest.patch /tmp/debci-localtest.patch
-COPY patches/autopkgtest/environment.sh.patch /tmp/environment.sh.patch
-
-RUN patch /usr/share/debci/bin/debci-localtest /tmp/debci-localtest.patch
-RUN patch /usr/share/debci/lib/environment.sh /tmp/environment.sh.patch
-
 RUN useradd --gid 100 -m salsa-ci
