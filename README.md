@@ -1318,6 +1318,15 @@ To disable this behavior set the `SALSA_CI_DISABLE_VERSION_BUMP` to `1`,
 To change the suffix name used in the automatic version bump, set
 `SALSA_CI_VERSION_BUMP_SUFFIX_NAME` to the desired one.
 
+### Uscan test
+
+Job which validates if the debian/watch file is correctly configured using a simple uscan.
+It's enabled by default, and it can be disabled by setting '1' to the `SALSA_CI_DISABLE_USCAN` variable:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_USCAN: 1
+```
 
 ## Distribution and release selection
 
