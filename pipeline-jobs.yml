@@ -27,6 +27,12 @@ build ppc64el:
 build riscv64:
   extends: .build-package-riscv64
 
+"build (faketime)":
+  extends: .build-package-faketime
+
+"build i386 (faketime)":
+  extends: .build-package-faketime-i386
+
 build source:
   extends: .build-source-only
 
@@ -71,6 +77,12 @@ autopkgtest armhf:
 
 autopkgtest arm64:
   extends: .test-autopkgtest-arm64
+
+"autopkgtest (faketime)":
+  extends: .test-autopkgtest-faketime
+
+"autopkgtest i386 (faketime)":
+  extends: .test-autopkgtest-faketime-i386
 
 blhc:
   extends: .test-blhc
