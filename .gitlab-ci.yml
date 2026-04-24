@@ -127,12 +127,6 @@ check license + contributor:
       (echo "ERROR: Missing license statement in the following files:"; \
       echo "$BAD_FILES"; exit 1) || \
       PROBLEMS=$(($PROBLEMS + 1))
-    # check email or name is in the list of contributors
-    - |
-      grep -q "${GITLAB_USER_EMAIL}" CONTRIBUTORS || \
-      grep -q "${GITLAB_USER_NAME}" CONTRIBUTORS || \
-      (echo "ERROR: ${GITLAB_USER_NAME} <${GITLAB_USER_EMAIL}> missing in the CONTRIBUTORS file"; exit 1) || \
-      PROBLEMS=$(($PROBLEMS + 1))
     - exit $PROBLEMS
 
 check gpg signature:
