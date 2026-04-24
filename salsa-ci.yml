@@ -1136,9 +1136,13 @@ stages:
     - uscan --download-current-version --no-download
   rules:
     - if: $SALSA_CI_ENABLE_USCAN =~ /^(1|yes|true)$/
+      exists:
+        - debian/watch
     - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
       when: never
     - if: $SALSA_CI_DISABLE_USCAN !~ /^(1|yes|true)$/
+      exists:
+        - debian/watch
 
 .test-reprotest: &test-reprotest
   stage: test

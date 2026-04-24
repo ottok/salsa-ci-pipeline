@@ -1326,7 +1326,9 @@ To change the suffix name used in the automatic version bump, set
 ### Uscan test
 
 Job which validates if the debian/watch file is correctly configured using a simple uscan.
-It's enabled by default, and it can be disabled by setting '1' to the `SALSA_CI_DISABLE_USCAN` variable:
+It's enabled by default whenever a `debian/watch` file is present in the
+repository, and is automatically skipped otherwise. It can be disabled by
+setting '1' to the `SALSA_CI_DISABLE_USCAN` variable:
 
 ```yaml
 variables:
