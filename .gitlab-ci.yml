@@ -130,6 +130,10 @@ check license + contributor:
     - exit $PROBLEMS
 
 check gpg signature:
+  rules:
+    # Disabled completely, see pipeline#440 and pipeline#554 for rationale.
+    # In the future, we should probably remove this.
+    - when: never
   extends: .self-checks
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends debian-keyring dirmngr git gpg gpg-agent ca-certificates
