@@ -1130,6 +1130,9 @@ stages:
 .test-uscan:
   stage: test
   image: $SALSA_CI_IMAGES_GENERIC_TESTS
+  needs:
+    - job: build source
+      artifacts: true
   script:
     - apt-get update && apt-get install -y devscripts
     - uscan --version
