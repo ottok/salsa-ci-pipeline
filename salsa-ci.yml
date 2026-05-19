@@ -909,14 +909,14 @@ stages:
       ret=0
       # su's -P is required to have ownership over /dev/stderr, /dev/stdout and
       # /dev/stdin, and then fix #256
-      su -P debci -c "debci localtest ${AUTOPKGTEST_INPUT_FILES} --suite ${RELEASE} --logs-dir ${DEBCI_LOG_PATH}" || ret=$?
+      su -P debci -c "debci localtest ${AUTOPKGTEST_INPUT_FILES} --suite ${RELEASE} --output-dir ${DEBCI_OUTPUT_DIR}" || ret=$?
       case ",$SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS," in *",$ret,"*) exit 0;; esac
       exit $ret
-    - rm -vrf ${WORKING_DIR}/debci/binaries
+    - rm -vrf ${DEBCI_OUTPUT_DIR}/binaries
   variables:
     GIT_STRATEGY: fetch
     SCI_LXC_PATH: ${CI_PROJECT_DIR}/lxc
-    DEBCI_LOG_PATH: ${WORKING_DIR}/debci
+    DEBCI_OUTPUT_DIR: ${WORKING_DIR}/debci
   artifacts:
     when: always
     paths:
