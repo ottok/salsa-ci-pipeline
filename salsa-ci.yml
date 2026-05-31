@@ -336,15 +336,24 @@ stages:
 
   - test -z "${MMDEBSTRAP_INCLUDE_PACKAGES}" || export MMDEBSTRAP_INCLUDE_PACKAGES_ARGS="--include=${MMDEBSTRAP_INCLUDE_PACKAGES}"
 
-  # Experimental chroots should be based on unstable, and backports chroots on
-  # their target release.
+  # Experimental and partial suite chroots should be based on their full parent
+  # suite.
   - |
     case "${RELEASE}" in
     experimental)
       mmdebstrap_dist=${DEFAULT_RELEASE}
       ;;
+    *-proposed-updates)
+      mmdebstrap_dist=${RELEASE%-proposed-updates}
+      ;;
     *-backports)
       mmdebstrap_dist=${RELEASE%-backports}
+      ;;
+    *-updates)
+      mmdebstrap_dist=${RELEASE%-updates}
+      ;;
+    *-security)
+      mmdebstrap_dist=${RELEASE%-security}
       ;;
     *)
       mmdebstrap_dist=${RELEASE}
