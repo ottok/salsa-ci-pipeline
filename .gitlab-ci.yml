@@ -175,7 +175,6 @@ test-pipeline:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         SALSA_CI_DISABLE_WRAP_AND_SORT: 0
         SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
-        SALSA_CI_PIUPARTS_ARGS: --extra-repo="deb http://deb.debian.org/debian sid non-free"
         SALSA_CI_BLHC_ARGS: --ignore-line "some harmless line"
         SALSA_CI_SBUILD_VERBOSE: 1
         SALSA_CI_LINTIAN_SUPPRESS_TAGS: 'unreleased-changes'
