@@ -181,6 +181,16 @@ test-pipeline:
         SALSA_CI_EXTRA_REPOSITORY: "deb-src http://deb.debian.org/debian unstable main"
         SALSA_CI_EXTRA_REPOSITORY_KEY: /usr/share/keyrings/debian-archive-keyring.gpg
         SALSA_CI_ENABLE_CROSSBUILD_ARM64: 1
+      # test running the project against testing
+      - PROJECT_URL: https://salsa.debian.org/debian/grep
+        RELEASE: testing
+        SALSA_CI_DISABLE_WRAP_AND_SORT: 0
+        SALSA_CI_WRAP_AND_SORT_ARGS: '--wrap-always --short-indent --trailing-comma'
+        SALSA_CI_BLHC_ARGS: --ignore-line "some harmless line"
+        SALSA_CI_SBUILD_VERBOSE: 1
+        SALSA_CI_LINTIAN_SUPPRESS_TAGS: 'unreleased-changes'
+        SALSA_CI_EXTRA_REPOSITORY: "deb-src http://deb.debian.org/debian testing main"
+        SALSA_CI_EXTRA_REPOSITORY_KEY: /usr/share/keyrings/debian-archive-keyring.gpg
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         PROJECT_TARGET_HEAD: debian/master
         SALSA_CI_ENABLE_BUILD_PACKAGE_PROFILES: 1
