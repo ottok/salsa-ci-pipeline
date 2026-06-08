@@ -1240,8 +1240,14 @@ stages:
         ${PIUPARTS_BASE_TAR} \
         ${SALSA_CI_MIRROR}"
       sh -c "${MMDEBSTRAP_PIUPARTS_BASE_COMMAND}"
+      # Avoid piuparts remapping moving aliases with stale distro information.
+      PIUPARTS_KEEP_SOURCES_LIST=
+      if [ "${mmdebstrap_dist}" = "${RELEASE}" ]; then
+        PIUPARTS_KEEP_SOURCES_LIST=--keep-sources-list
+      fi
     - piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir=/etc/piuparts/scripts
       --allow-database --warn-on-leftovers-after-purge --distribution=$RELEASE --basetgz="${PIUPARTS_BASE_TAR}"
+      ${PIUPARTS_KEEP_SOURCES_LIST}
       --mirror="${SALSA_CI_MIRROR} ${MMDEBSTRAP_COMPONENTS}"
       --log-file=${WORKING_DIR}/piuparts.log ${WORKING_DIR}/*.changes
   variables:
