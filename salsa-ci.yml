@@ -336,15 +336,24 @@ stages:
 
   - test -z "${MMDEBSTRAP_INCLUDE_PACKAGES}" || export MMDEBSTRAP_INCLUDE_PACKAGES_ARGS="--include=${MMDEBSTRAP_INCLUDE_PACKAGES}"
 
-  # Experimental chroots should be based on unstable, and backports chroots on
-  # their target release.
+  # Experimental and partial suite chroots should be based on their full parent
+  # suite.
   - |
     case "${RELEASE}" in
     experimental)
       mmdebstrap_dist=${DEFAULT_RELEASE}
       ;;
+    *-proposed-updates)
+      mmdebstrap_dist=${RELEASE%-proposed-updates}
+      ;;
     *-backports)
       mmdebstrap_dist=${RELEASE%-backports}
+      ;;
+    *-updates)
+      mmdebstrap_dist=${RELEASE%-updates}
+      ;;
+    *-security)
+      mmdebstrap_dist=${RELEASE%-security}
       ;;
     *)
       mmdebstrap_dist=${RELEASE}
@@ -1216,13 +1225,29 @@ stages:
     - test -n "${SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT}" /etc/piuparts/scripts/pre_install_salsa_ci && chmod 755 /etc/piuparts/scripts/pre_install_salsa_ci
     - test -n "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" /etc/piuparts/scripts/post_install_salsa_ci && chmod 755 /etc/piuparts/scripts/post_install_salsa_ci
     # passwd is needed for useradd in /etc/piuparts/scripts/post_setup_dummy_users
+    - |
+      PIUPARTS_BASE_TAR="${WORKING_DIR}/piuparts-base.tar"
+      MMDEBSTRAP_PIUPARTS_BASE_COMMAND="mmdebstrap \
+        --skip=output/dev \
+        --variant=apt \
+        --include=passwd,eatmydata \
+        --components=\"${MMDEBSTRAP_COMPONENTS}\" \
+        ${MMDEBSTRAP_SETUP_HOOK_ARGS} \
+        ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} \
+        ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} \
+        --setup-hook=\"add_extra_repository.sh -v -e \\\"${SALSA_CI_EXTRA_REPOSITORY}\\\" -k \\\"${SALSA_CI_EXTRA_REPOSITORY_KEY}\\\" -s \\\"${SALSA_CI_EXTRA_REPOSITORY_SOURCES}\\\" -t \\\"\\\$1/etc\\\"\" \
+        ${mmdebstrap_dist} \
+        ${PIUPARTS_BASE_TAR} \
+        ${SALSA_CI_MIRROR}"
+      sh -c "${MMDEBSTRAP_PIUPARTS_BASE_COMMAND}"
+      # Avoid piuparts remapping moving aliases with stale distro information.
+      PIUPARTS_KEEP_SOURCES_LIST=
+      if [ "${mmdebstrap_dist}" = "${RELEASE}" ]; then
+        PIUPARTS_KEEP_SOURCES_LIST=--keep-sources-list
+      fi
     - piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir=/etc/piuparts/scripts
-      --allow-database --warn-on-leftovers-after-purge --distribution=$RELEASE
-      --bootstrapcmd="mmdebstrap --skip=output/dev,check/empty --variant=apt --include=passwd
-        --components=\"${MMDEBSTRAP_COMPONENTS}\"
-        ${MMDEBSTRAP_SETUP_HOOK_ARGS}
-        ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS}
-        --setup-hook=\"add_extra_repository.sh -v -e \\\"${SALSA_CI_EXTRA_REPOSITORY}\\\" -k \\\"${SALSA_CI_EXTRA_REPOSITORY_KEY}\\\" -s \\\"${SALSA_CI_EXTRA_REPOSITORY_SOURCES}\\\" -t \\\"\$1/etc\\\"\""
+      --allow-database --warn-on-leftovers-after-purge --distribution=$RELEASE --basetgz="${PIUPARTS_BASE_TAR}"
+      ${PIUPARTS_KEEP_SOURCES_LIST}
       --mirror="${SALSA_CI_MIRROR} ${MMDEBSTRAP_COMPONENTS}"
       --log-file=${WORKING_DIR}/piuparts.log ${WORKING_DIR}/*.changes
   variables:
