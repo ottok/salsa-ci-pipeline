@@ -1230,6 +1230,9 @@ stages:
     - *mmdebstrap-config-script
     - test -n "${SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT}" /etc/piuparts/scripts/pre_install_salsa_ci && chmod 755 /etc/piuparts/scripts/pre_install_salsa_ci
     - test -n "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" /etc/piuparts/scripts/post_install_salsa_ci && chmod 755 /etc/piuparts/scripts/post_install_salsa_ci
+    - cd  ${WORKING_DIR}
+    - apt-ftparchive packages . > Packages
+    - apt-ftparchive release . > Release
     # passwd is needed for useradd in /etc/piuparts/scripts/post_setup_dummy_users
     - |
       PIUPARTS_BASE_TAR="${WORKING_DIR}/piuparts-base.tar"
@@ -1254,8 +1257,11 @@ stages:
     - piuparts ${SALSA_CI_PIUPARTS_ARGS} --scriptsdir=/etc/piuparts/scripts
       --allow-database --warn-on-leftovers-after-purge --distribution=$RELEASE --basetgz="${PIUPARTS_BASE_TAR}"
       ${PIUPARTS_KEEP_SOURCES_LIST}
+      --single-packages --single-changes-list --distupgrade-to-testdebs-from ${WORKING_DIR}
       --mirror="${SALSA_CI_MIRROR} ${MMDEBSTRAP_COMPONENTS}"
-      --log-file=${WORKING_DIR}/piuparts.log ${WORKING_DIR}/*.changes
+      --log-file=/tmp/piuparts.log ${WORKING_DIR}/*.changes
+    # we can't move the log earlier as piuparts would detect it and fail
+    - mv /tmp/piuparts.log ${WORKING_DIR}/piuparts.log
   variables:
     # To make the repository available in this job,
     # so SALSA_CI_PIUPARTS_{PRE,POST}_INSTALL_SCRIPT
