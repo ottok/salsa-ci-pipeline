@@ -1114,8 +1114,14 @@ stages:
         SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG='--show-overrides'
       fi
     - |
+      # Find the non-source .change files from artifacts from previous build job
+      LINTIAN_INPUT_FILES=$(find $WORKING_DIR/ -regex ".*changes" ! -regex ".*_source.changes")
+      # Check if the .changes file lists the source package (.dsc file)
+      DSC_IN_CHANGES=$(grep -q -E '^\s*(\S+\s+){3,4}[[:alnum:].+\-]+_[[:alnum:].+~\-]+\.dsc$' ${LINTIAN_INPUT_FILES} ; echo $?)
+      # Fallback: if .changes lacks a .dsc, append the .dsc for source checks
+      if [ "${DSC_IN_CHANGES}" == 1 ] ; then LINTIAN_INPUT_FILES="${LINTIAN_INPUT_FILES} ${WORKING_DIR}/*.dsc" ; fi
       lintian --suppress-tags 'unreleased-changes,changelog-distribution-does-not-match-changes-file' --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}" --display-info --pedantic ${SALSA_CI_LINTIAN_FAIL_ARG} --allow-root \
-        ${SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG} ${SALSA_CI_LINTIAN_ARGS} ${WORKING_DIR}/*.changes | tee lintian.output || ECODE=$?
+        ${SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG} ${SALSA_CI_LINTIAN_ARGS} ${LINTIAN_INPUT_FILES} | tee lintian.output || ECODE=$?
     - |
         if echo "${SALSA_CI_LINTIAN_FAIL_WARNING}" | grep -qE '^(1|yes|true)$'; then
           grep -q '^W: ' lintian.output && ECODE=3
@@ -1123,8 +1129,8 @@ stages:
     - lintian2junit.py --lintian-file lintian.output > ${WORKING_DIR}/lintian.xml
     # 🗂️ Generate HTML report
     - |
-      lintian --suppress-tags 'unreleased-changes,changelog-distribution-does-not-match-changes-file' --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}"  --display-info --pedantic --allow-root \
-        ${SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG} --exp-output format=html ${SALSA_CI_LINTIAN_ARGS} ${WORKING_DIR}/*.changes > ${WORKING_DIR}/lintian.html || true
+      lintian --suppress-tags 'unreleased-changes,changelog-distribution-does-not-match-changes-file' --suppress-tags "${SALSA_CI_LINTIAN_SUPPRESS_TAGS}" --display-info --pedantic --allow-root \
+        ${SALSA_CI_LINTIAN_SHOW_OVERRIDES_ARG} --exp-output format=html ${SALSA_CI_LINTIAN_ARGS} ${LINTIAN_INPUT_FILES} > ${WORKING_DIR}/lintian.html || true
     - exit ${ECODE-0}
   variables:
     GIT_STRATEGY: none
