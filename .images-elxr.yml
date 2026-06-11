@@ -136,10 +136,10 @@ images-prod-riscv:
         ARCH:
           - riscv64
         RELEASE: sid
-  # eLxr doesn't have riscv runners as this time, so allow this to fail
+  # eLxr doesn't have riscv runners at this time, so allow this to fail
   # and make this a manual triggered job.
   allow_failure: true
-  when: manual  # disable riscv64 temporairly until runners are operational again
+  when: manual  # disable riscv64 temporarily until runners are operational again
   rules:
     - if: $BUILD_ALL_IMAGES =~ /^(1|yes|true)$/
       when: always
@@ -199,7 +199,7 @@ image-staging-arm:
           - arm64/v8
         RELEASE: sid
   # While there isn't an ARM shared runner available, let's allow these images
-  # to fail to don't block pipelines on MRs.
+  # to fail to not block pipelines on MRs.
   allow_failure: true
   when: manual
   rules:

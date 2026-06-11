@@ -239,7 +239,7 @@ test-pipeline:
         SALSA_CI_DISABLE_ALL_TESTS: 1
         SALSA_CI_DPKG_BUILDPACKAGE_ARGS: --build-profiles=nocheck
         SALSA_CI_DISABLE_APTLY: 1
-        # Test the autopkgest for -backports. See:
+        # Test the autopkgtest for -backports. See:
         # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/549
         SALSA_CI_ENABLE_AUTOPKGTEST: 1
         SALSA_CI_ENABLE_PIUPARTS: 1
@@ -375,7 +375,7 @@ test-pipeline-non-default-archs:
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
         SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
-        # disable riscv64 temporairly until runners are operational again
+        # disable riscv64 temporarily until runners are operational again
         SALSA_CI_DISABLE_BUILD_PACKAGE_RISCV64: 1
   allow_failure: true
 

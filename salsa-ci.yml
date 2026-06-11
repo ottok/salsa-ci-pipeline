@@ -791,7 +791,7 @@ stages:
       - ${WORKING_DIR}/
       - salsa.env
 
-# Third party projects should redefine .build-defintion, extending
+# Third party projects should redefine .build-definition, extending
 # .build-definition-common, if they need to customize the {test-,}build jobs,
 # in a common place.
 .build-definition: &build-definition

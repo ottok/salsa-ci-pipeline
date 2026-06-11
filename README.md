@@ -654,7 +654,7 @@ The job `test-crossbuild-arm64` can be used to check whether it is possible to
 [cross-build](https://crossqa.debian.net/) the package. To enable this check,
 either run your pipeline manually with `SALSA_CI_DISABLE_CROSSBUILD_ARM64` set
 to anything different than 1, 'yes' or 'true' or by adding the following to your
-`debian/salsaci.yml`:
+`debian/salsa-ci.yml`:
 
 ```yaml
 variables:
@@ -672,7 +672,7 @@ The job `test-build-twice` can be used to check whether it is possible to run
 `dpkg-buildpackage` twice in a row. To enable this check, either run your
 pipeline manually with `SALSA_CI_DISABLE_BUILD_PACKAGE_TWICE` set to anything
 different than 1, 'yes' or 'true' or by adding the following to your
-`debian/salsaci.yml`:
+`debian/salsa-ci.yml`:
 
 ```yaml
 variables:
@@ -686,7 +686,7 @@ target of `debian/rules` correctly restores the source tree directory to its
 initial state. This generally means that a package is able to build twice in a
 row. To enable this check, either run your pipeline manually with
 `SALSA_CI_DISABLE_VALIDATE_PACKAGE_CLEAN_UP` set to anything different than 1,
-'yes' or 'true' or by adding the following to your `debian/salsaci.yml`:
+'yes' or 'true' or by adding the following to your `debian/salsa-ci.yml`:
 
 ```yaml
 variables:

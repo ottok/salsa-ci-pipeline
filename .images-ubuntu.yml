@@ -95,7 +95,7 @@ ubuntu-image-staging-arm:
         ARCH: arm64/v8
         RELEASE: resolute
   # While there isn't an ARM shared runner available, let's allow these images
-  # to fail to don't block pipelines on MRs.
+  # to fail to not block pipelines on MRs.
   allow_failure: true
   when: manual
   rules:
