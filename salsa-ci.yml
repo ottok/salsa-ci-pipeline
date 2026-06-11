@@ -443,9 +443,6 @@ stages:
   - |
     if [ "${CACHE_ENABLED}" = "1" ]
     then
-      # Delete any old .ccache directory inside .ccache if the cache got extra
-      # subdirectories as result of recursive copying as bug described in #492
-      (set -o pipefail; rm -vrf ${CI_PROJECT_DIR}/.ccache/.${CI_PROJECT_NAME}.ccache | tail)
       # If an existing cache was downloaded the cache directory already exists,
       # otherwise ensure the directory is created
       mkdir -vp ${CACHE_DIR}; find ${CACHE_DIR} -type d | xargs chmod g+s
