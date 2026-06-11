@@ -284,7 +284,7 @@ test-pipeline:
       # https://salsa.debian.org/salsa-ci-team/pipeline/-/issues/187.
       # It is also used to test the package clean up validation, that replaces
       # the build twice test job.
-      - PROJECT_URL: https://salsa.debian.org/tachi/cloudflare-ddns/
+      - PROJECT_URL: https://salsa.debian.org/tachi/cloudflare-ddns
         PROJECT_TARGET_HEAD: debian/2.1.0-2
         SALSA_CI_ENABLE_VALIDATE_PACKAGE_CLEAN_UP: 1
         SALSA_CI_DISABLE_ALL_TESTS: 1

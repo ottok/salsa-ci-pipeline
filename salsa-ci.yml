@@ -32,12 +32,12 @@ variables:
   DEBEMAIL: "salsa-pipeline@debian.org"
   DEBIAN_FRONTEND: noninteractive
   WORKING_DIR: $CI_PROJECT_DIR/debian/output
-  RDEP_BUILD_DIR: $WORKING_DIR/rdep-build/
+  RDEP_BUILD_DIR: $WORKING_DIR/rdep-build
   SOURCE_DIR: 'source_dir'
   # BUILD_DIR is the place where the build job scripts will look for all the
   # required files to build the package, including ({orig,}.tar.*) and
   # extracted debianized source directory
-  BUILD_DIR: $CI_PROJECT_DIR/salsa-ci-build/
+  BUILD_DIR: $CI_PROJECT_DIR/salsa-ci-build
   # CACHE_DIR is the place where ccache and sccache store files that are
   # intended to be re-used across jobs. It is bind-mounted into the sbuild
   # unshare chroot at /build/cache so the same cache is available during the
@@ -788,7 +788,7 @@ stages:
     reports:
       dotenv: salsa.env
     paths:
-      - ${WORKING_DIR}/
+      - ${WORKING_DIR}
       - salsa.env
 
 # Third party projects should redefine .build-definition, extending
