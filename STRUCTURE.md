@@ -222,3 +222,59 @@ the purpose of showing statistics. For the actual caching to take place, the
 tools are also injected into the sbuild chroot. The sbuild chroot itself is
 built on-the-fly on every build job and not cached. The cache directory is
 bind-mounted into the sbuild chroot and persists across builds.
+
+### Build environment paths
+
+The pipeline uses several path variables that have different values inside and
+outside the sbuild chroot. Understanding this mapping is essential when
+debugging build scripts or cache configuration.
+
+| Variable | Outside sbuild (host) | Inside sbuild chroot | Example |
+|---|---|---|---|
+| `CI_PROJECT_DIR` | `/builds/<user>/<project>` | N/A (not set) | `/builds/debian/grep` |
+| `BUILD_DIR` | `${CI_PROJECT_DIR}/salsa-ci-build` | N/A | `/builds/debian/grep/salsa-ci-build` |
+| `WORKING_DIR` | `${CI_PROJECT_DIR}/debian/output` | N/A | `/builds/debian/grep/debian/output` |
+| `CACHE_DIR` | `${CI_PROJECT_DIR}/salsa-ci-cache` | `/build/cache` | `/builds/debian/grep/salsa-ci-cache` |
+| `SBUILD_PKGBUILD_DIR` | N/A | `/build/package` | `/build/package` |
+
+The sbuild chroot is created on-the-fly by `mmdebstrap` and runs with
+`$chroot_mode = 'unshare'`. The host `CACHE_DIR` is bind-mounted into the
+chroot at `/build/cache` via `$unshare_bind_mounts` in sbuild's config. The
+package source is extracted to `${BUILD_DIR}` on the host, and sbuild's
+`$dsc_dir` and `$build_path` settings ensure the build happens inside the
+chroot under `/build/package`.
+
+### Environment variable propagation
+
+Environment variables flow through three layers, each of which may filter or
+sanitize them:
+
+1. **GitLab CI container**: Variables defined in `variables:` or passed by the
+   runner are available to the job script.
+2. **sbuild**: The `.build-script-setup-environment` anchor writes
+   `~salsa-ci/.config/sbuild/config.pl`. Only variables explicitly listed in
+   `$build_environment` are passed into the sbuild chroot. sbuild also applies
+   `$environment_filter` (by default derived from
+   `Dpkg::BuildInfo::get_build_env_allowed()`).
+3. **dpkg-buildpackage**: When `debian/rules` is invoked,
+   `dpkg-buildpackage` sanitizes the environment aggressively. It only
+   preserves variables that Debian considers build-relevant (again via
+   `Dpkg::BuildInfo::get_build_env_allowed()`). Variables like
+   `RUSTC_WRAPPER`, `CCACHE_DIR`, or `SCCACHE_DIR` are **not** in this
+   allowlist and are stripped.
+
+Because of this sanitization, the pipeline avoids relying on environment
+variables for tool configuration inside the build:
+
+* **ccache** is configured via `/etc/ccache.conf` inside the chroot (written
+  during `mmdebstrap` via `--customize-hook`), which hardcodes
+  `cache_dir = /build/cache/ccache`.
+* **sccache** is invoked through a `rustc` wrapper placed in
+  `/build/cache/wrappers`, which is prepended to `PATH`. The wrapper exports
+  `SCCACHE_DIR` locally before calling `sccache`, bypassing the need for the
+  variable to survive `dpkg-buildpackage` sanitization.
+
+This three-layer model means that even if a variable is set in the GitLab CI
+job and in sbuild's `$build_environment`, it may still be invisible to `cargo` or
+`make` inside `debian/rules` unless it is in Debian's build-env allowlist or
+injected via a wrapper script.

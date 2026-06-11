@@ -45,7 +45,7 @@ variables:
   CACHE_DIR: $CI_PROJECT_DIR/salsa-ci-cache
   SALSA_CI_BUILD_CACHE:
     description: "Set to 1, yes, or true to enable the build cache"
-    value: ""
+    value: '0'
   VENDOR: 'debian'
   # The Debian release to build for (leave it assigned to $RELEASE_FROM_CHANGELOG to automatically pick one, based on the target distribution in d/changelog)
   RELEASE: '$RELEASE_FROM_CHANGELOG'
@@ -406,6 +406,7 @@ stages:
     else
       echo "export CACHE_ENABLED=0" | tee ${CI_PROJECT_DIR}/cache.env
     fi
+  - . ${CI_PROJECT_DIR}/cache.env
   - *mmdebstrap-config-script
   - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_SETUP_HOOK_ARGS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_chroot}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
   - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
@@ -417,12 +418,13 @@ stages:
       if su salsa-ci -c "tar -tf ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar | grep -q 'usr/bin/sccache'"
       then
         echo "export SCCACHE_AVAILABLE=1" | tee -a ${CI_PROJECT_DIR}/cache.env
-        # Inject a wrapper at /usr/local/bin/sccache that only delegates to
-        # the real sccache for rustc, bypassing it for C/C++ compilers.
-        # This prevents meson auto-detection from breaking tests that compile
-        # to /dev/null, while keeping sccache functional for Rust builds.
-        mkdir -p /tmp/sccache-wrapper/usr/local/bin
-        cat > /tmp/sccache-wrapper/usr/local/bin/sccache << 'EOF'
+        # Create a wrapper that only delegates to the real sccache for rustc,
+        # bypassing it for C/C++ compilers. This prevents meson auto-detection
+        # from breaking tests that compile to /dev/null, while keeping sccache
+        # functional for Rust builds. The wrapper is placed in the cache directory
+        # which is bind-mounted into the sbuild chroot at /build/cache.
+        mkdir -p ${CACHE_DIR}/wrappers
+        cat > ${CACHE_DIR}/wrappers/sccache << 'EOF'
     #!/bin/sh
     # sccache wrapper: only enable sccache for Rust (rustc)
     if [ "$1" = "rustc" ]
@@ -432,8 +434,7 @@ stages:
       exec "$@"
     fi
     EOF
-        chmod +x /tmp/sccache-wrapper/usr/local/bin/sccache
-        su salsa-ci -c "tar --append --file=~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar -C /tmp/sccache-wrapper usr/local/bin/sccache"
+        chmod +x ${CACHE_DIR}/wrappers/sccache
       else
         echo "export SCCACHE_AVAILABLE=0" | tee -a ${CI_PROJECT_DIR}/cache.env
       fi
@@ -480,14 +481,14 @@ stages:
       # UID from the host user (salsa-ci), we make the cache tree
       # world-traversable and world-writable so ccache can read and write cache
       # entries regardless of the exact UID mapping.
-      mkdir -vp ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache
+      mkdir -vp ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache ${CACHE_DIR}/wrappers
       # Allow traversal from any UID inside the unshare chroot
       chmod a+X ${CI_PROJECT_DIR} ${CACHE_DIR}
       # Allow read/write of cache entries from any UID
-      chmod -R a+rwX ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache
+      chmod -R a+rwX ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache ${CACHE_DIR}/wrappers
 
-      cat > ~salsa-ci/.config/sbuild/config.pl << 'EOF'
-    $path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
+      cat >> ~salsa-ci/.config/sbuild/config.pl << 'EOF'
+    $path = "/build/cache/wrappers:/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
     $unshare_bind_mounts = [
       { directory => "%CACHE_DIR%", mountpoint => "/build/cache" }
     ];

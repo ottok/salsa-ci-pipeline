@@ -344,6 +344,7 @@ test-pipeline:
       # debian-codemods is a Rust project used to verify sccache integration
       - PROJECT_URL: https://salsa.debian.org/jelmer/debian-codemods
         SALSA_CI_BUILD_CACHE: 1
+        SALSA_CI_BUILD_TIMEOUT_ARGS: "0.75h"
         SALSA_CI_EXTRA_REPOSITORY: "deb [trusted=yes] https://people.debian.org/~jelmer/debian-codemods-deps ./"
         SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: --include=ca-certificates
         SALSA_CI_DISABLE_ALL_TESTS: 1
