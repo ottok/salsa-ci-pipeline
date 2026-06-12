@@ -427,6 +427,7 @@ stages:
         mkdir -p ${CACHE_DIR}/wrappers
         cat > ${CACHE_DIR}/wrappers/rustc << 'EOF'
     #!/bin/sh
+    export SCCACHE_UNIX_DOMAIN_SOCKET=/build/cache/tmp/.sccache.sock
     printenv | sort | grep SCCACHE >&2
     echo "rustc-wrapper: invoked with args=$@" >&2
     echo "rustc-wrapper: sccache stats before compile:" >&2
@@ -506,7 +507,8 @@ stages:
       "SCCACHE_CACHE_SIZE" => "2G",
       "SCCACHE_LOG" => "debug",
       "SCCACHE_ERROR_LOG" => "/build/cache/sccache/sccache-debug.log",
-      "TMPDIR" => "/build/cache/tmp"
+      "TMPDIR" => "/build/cache/tmp",
+      "SCCACHE_UNIX_DOMAIN_SOCKET" => "/build/cache/tmp/.sccache.sock"
     };
     EOF
       else
@@ -593,7 +595,10 @@ stages:
       chown -R 'salsa-ci:' ${CACHE_DIR}
       # Zero stats before the build so post-build stats are useful
       su -s /bin/bash salsa-ci -c "CCACHE_DIR=${CACHE_DIR}/ccache ccache --zero-stats"
-      su -s /bin/bash salsa-ci -c "SCCACHE_DIR=${CACHE_DIR}/sccache sccache --zero-stats"
+      # Do not run sccache --zero-stats here: sccache 0.14.0 binds to TCP
+      # 127.0.0.1:4226. In sbuild unshare mode the chroot shares the same
+      # loopback, so a host server started here would incorrectly serve all
+      # chroot compile requests and fail to hash chroot paths.
     fi
 
 
