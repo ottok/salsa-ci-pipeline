@@ -418,23 +418,20 @@ stages:
       if su salsa-ci -c "tar -tf ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar | grep -q 'usr/bin/sccache'"
       then
         echo "export SCCACHE_AVAILABLE=1" | tee -a ${CI_PROJECT_DIR}/cache.env
-        # Create a wrapper that only delegates to the real sccache for rustc,
-        # bypassing it for C/C++ compilers. This prevents meson auto-detection
-        # from breaking tests that compile to /dev/null, while keeping sccache
-        # functional for Rust builds. The wrapper is placed in the cache directory
-        # which is bind-mounted into the sbuild chroot at /build/cache.
+        # Create a rustc wrapper that delegates to sccache. This is placed in
+        # the cache directory which is bind-mounted into the sbuild chroot at
+        # /build/cache. By prepending /build/cache/wrappers to PATH, cargo
+        # finds this wrapper instead of the real rustc, and sccache caches
+        # the compilation without relying on RUSTC_WRAPPER (which
+        # dpkg-buildpackage strips from the environment).
         mkdir -p ${CACHE_DIR}/wrappers
-        cat > ${CACHE_DIR}/wrappers/sccache << 'EOF'
+        cat > ${CACHE_DIR}/wrappers/rustc << 'EOF'
     #!/bin/sh
-    # sccache wrapper: only enable sccache for Rust (rustc)
-    if [ "$1" = "rustc" ]
-    then
-      exec /usr/bin/sccache "$@"
-    else
-      exec "$@"
-    fi
+    export SCCACHE_DIR=/build/cache/sccache
+    export SCCACHE_CACHE_SIZE=2G
+    exec /usr/bin/sccache /usr/bin/rustc "$@"
     EOF
-        chmod +x ${CACHE_DIR}/wrappers/sccache
+        chmod +x ${CACHE_DIR}/wrappers/rustc
       else
         echo "export SCCACHE_AVAILABLE=0" | tee -a ${CI_PROJECT_DIR}/cache.env
       fi
@@ -469,10 +466,8 @@ stages:
   # configure sbuild to use build cache
   # The host CACHE_DIR is bind-mounted to /build/cache inside the chroot,
   # and CCACHE_DIR points to the ccache subdirectory there so the cache is
-  # shared across builds. ccache handles C/C++; sccache is only used for
-  # Rust via RUSTC_WRAPPER, and a wrapper script at /usr/local/bin/sccache
-  # prevents meson from auto-detecting it for C/C++ compilers (which would
-  # break tests that compile to /dev/null).
+  # shared across builds. ccache handles C/C++; sccache handles Rust via a
+  # rustc wrapper in /build/cache/wrappers that is prepended to PATH.
   - |
     if [ "${CACHE_ENABLED}" = "1" ]
     then
@@ -501,8 +496,7 @@ stages:
       "CCACHE_DIR" => "/build/cache/ccache",
       "CCACHE_MAXSIZE" => "2G",
       "SCCACHE_DIR" => "/build/cache/sccache",
-      "SCCACHE_CACHE_SIZE" => "2G",
-      "RUSTC_WRAPPER" => "sccache"
+      "SCCACHE_CACHE_SIZE" => "2G"
     };
     EOF
       else
