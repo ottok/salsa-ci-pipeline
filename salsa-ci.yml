@@ -427,11 +427,18 @@ stages:
         mkdir -p ${CACHE_DIR}/wrappers
         cat > ${CACHE_DIR}/wrappers/rustc << 'EOF'
     #!/bin/sh
-    export SCCACHE_DIR=/build/cache/sccache
-    export SCCACHE_CACHE_SIZE=2G
+    printenv | sort | grep SCCACHE >&2
+    echo "rustc-wrapper: invoked with args=$@" >&2
+    echo "rustc-wrapper: sccache stats before compile:" >&2
+    /usr/bin/sccache --show-stats >&2 || true
+    echo "rustc-wrapper: sccache processes visible from wrapper:" >&2
+    ps faxu | grep -E 'sccache|PID' >&2 || true
     exec /usr/bin/sccache /usr/bin/rustc "$@"
     EOF
         chmod +x ${CACHE_DIR}/wrappers/rustc
+        echo "=== Debug sccache ==="
+        find ${CACHE_DIR} -maxdepth 2 -ls
+        echo "=== End debug ==="
       else
         echo "export SCCACHE_AVAILABLE=0" | tee -a ${CI_PROJECT_DIR}/cache.env
       fi
@@ -496,7 +503,9 @@ stages:
       "CCACHE_DIR" => "/build/cache/ccache",
       "CCACHE_MAXSIZE" => "2G",
       "SCCACHE_DIR" => "/build/cache/sccache",
-      "SCCACHE_CACHE_SIZE" => "2G"
+      "SCCACHE_CACHE_SIZE" => "2G",
+      "SCCACHE_LOG" => "debug",
+      "SCCACHE_ERROR_LOG" => "/build/cache/sccache/sccache-debug.log"
     };
     EOF
       else
@@ -508,6 +517,9 @@ stages:
     EOF
       fi
     fi
+    echo "=== Debug: sbuild config ==="
+    cat ~salsa-ci/.config/sbuild/config.pl || true
+    echo "=== End debug ==="
 
   # setup extra repositories
   - |
@@ -671,6 +683,13 @@ stages:
   # Define the build command
   - export BUILD_COMMAND="sbuild --dist=${RELEASE} --no-clean-source ${HOST_ARCH_ARG} ${BUILD_TYPE_ARG} --build-dir=${WORKING_DIR}"
   - |
+    echo "=== Debug: sbuild invocation ==="
+    echo "PWD: $(pwd)"
+    echo "BUILD_COMMAND: ${BUILD_COMMAND}"
+    echo "DSC files in parent dir:"
+    ls -la ../*.dsc 2>/dev/null || true
+    echo "=== End debug ==="
+  - |
     if [ "$SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION" = 'true' ]; then
       export BUILD_COMMAND="${BUILD_COMMAND} --add-depends=libfaketime"
     fi
@@ -707,6 +726,14 @@ stages:
   # Print the build environment
   - printenv | sort
   - |
+    echo "=== Debug: pre-build cache state ==="
+    env | grep -E 'CACHE|SCCACHE|CCACHE|RUSTC' || true
+    echo "--- wrapper ---"
+    ls -la ${CACHE_DIR}/wrappers/ || true
+    echo "--- cargo configs in build dir ---"
+    find ${BUILD_DIR} -path '*/.cargo/config.toml' -exec echo "File: {}" \; -exec cat {} \; 2>/dev/null || true
+    echo "=== End debug ==="
+  - |
     if [ "$SALSA_CI_BUILD_ENABLE_FAKETIME_INJECTION" = 'true' ]; then
       eatmydata apt-get install --no-install-recommends -y libfaketime
     fi
@@ -737,6 +764,12 @@ stages:
       CCACHE_DIR=${CACHE_DIR}/ccache ccache --show-stats --verbose || true
       echo "Cache stats: sccache"
       SCCACHE_DIR=${CACHE_DIR}/sccache sccache --show-stats || true
+      echo "=== sccache processes after build ==="
+      ps faxu | grep -E 'sccache|PID' || true
+      echo "=== end sccache processes ==="
+      echo "=== sccache debug log ==="
+      cat ${CACHE_DIR}/sccache/sccache-debug.log 2>/dev/null || true
+      echo "=== end sccache debug log ==="
       du -shc ${CACHE_DIR}/* || true
     fi
 
