@@ -483,11 +483,11 @@ stages:
       # UID from the host user (salsa-ci), we make the cache tree
       # world-traversable and world-writable so ccache can read and write cache
       # entries regardless of the exact UID mapping.
-      mkdir -vp ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache ${CACHE_DIR}/wrappers
+      mkdir -vp ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache ${CACHE_DIR}/wrappers ${CACHE_DIR}/tmp
       # Allow traversal from any UID inside the unshare chroot
       chmod a+X ${CI_PROJECT_DIR} ${CACHE_DIR}
       # Allow read/write of cache entries from any UID
-      chmod -R a+rwX ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache ${CACHE_DIR}/wrappers
+      chmod -R a+rwX ${CACHE_DIR}/ccache ${CACHE_DIR}/sccache ${CACHE_DIR}/wrappers ${CACHE_DIR}/tmp
 
       cat >> ~salsa-ci/.config/sbuild/config.pl << 'EOF'
     $path = "/build/cache/wrappers:/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games";
@@ -505,7 +505,8 @@ stages:
       "SCCACHE_DIR" => "/build/cache/sccache",
       "SCCACHE_CACHE_SIZE" => "2G",
       "SCCACHE_LOG" => "debug",
-      "SCCACHE_ERROR_LOG" => "/build/cache/sccache/sccache-debug.log"
+      "SCCACHE_ERROR_LOG" => "/build/cache/sccache/sccache-debug.log",
+      "TMPDIR" => "/build/cache/tmp"
     };
     EOF
       else
