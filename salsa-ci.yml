@@ -1232,7 +1232,11 @@ stages:
     - test -n "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" && cp -aTLv "${SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT}" /etc/piuparts/scripts/post_install_salsa_ci && chmod 755 /etc/piuparts/scripts/post_install_salsa_ci
     - cd  ${WORKING_DIR}
     - apt-ftparchive packages . > Packages
-    - apt-ftparchive release . > Release
+    # Mark the local test repository as the target release so apt-get -t does
+    # not deprioritize test-deb dependencies.
+    - apt-ftparchive -o APT::FTPArchive::Release::Suite="${RELEASE}" release . > Release
+    # Ensure the generated metadata satisfies the apt-get -t invariant.
+    - 'grep -qFx "Suite: ${RELEASE}" Release'
     # passwd is needed for useradd in /etc/piuparts/scripts/post_setup_dummy_users
     - |
       PIUPARTS_BASE_TAR="${WORKING_DIR}/piuparts-base.tar"
