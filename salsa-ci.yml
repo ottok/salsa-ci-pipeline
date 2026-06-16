@@ -1395,6 +1395,7 @@ stages:
   - |
     STABLE="$(distro-info --stable)"
     OLDSTABLE="$(distro-info --oldstable)"
+    CHDIST_COMPONENTS="${SALSA_CI_COMPONENTS:-main}"
     EXTRAS=""
 
     case "$RELEASE" in
@@ -1415,7 +1416,7 @@ stages:
         ;;
     esac
 
-    chdist create "$CHDIST_NAME" "$SALSA_CI_MIRROR" "$BASE" main
+    chdist create "$CHDIST_NAME" "$SALSA_CI_MIRROR" "$BASE" $CHDIST_COMPONENTS
 
     for SUITE in $EXTRAS; do
       REPO="$SALSA_CI_MIRROR"
@@ -1436,8 +1437,8 @@ stages:
       esac
 
       cat > "${HOME}/.chdist/${CHDIST_NAME}/etc/apt/sources.list.d/${type}.list" <<EOF
-    deb ${REPO} ${SUITE} main
-    deb-src ${REPO} ${SUITE} main
+    deb ${REPO} ${SUITE} ${CHDIST_COMPONENTS}
+    deb-src ${REPO} ${SUITE} ${CHDIST_COMPONENTS}
     EOF
     done
   - chdist "$CHDIST_NAME" apt-get update
