@@ -1443,6 +1443,57 @@ stages:
     done
   - chdist "$CHDIST_NAME" apt-get update
 
+.test-debdiff: &test-debdiff
+  stage: test
+  image: ${SALSA_CI_IMAGES}/generic_tests:unstable
+  rules:
+    - if: $SALSA_CI_DISABLE_ALL_TESTS =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_DISABLE_DEBDIFF =~ /^(1|yes|true)$/
+      when: never
+    - if: $SALSA_CI_ENABLE_DEBDIFF =~ /^(1|yes|true)$/
+  script:
+    - apt-get update && eatmydata apt-get install colordiff devscripts dpkg-dev distro-info --no-install-recommends -y
+    - DEBDIFF_ARTIFACT="debian/output/${CI_PROJECT_NAME}.debdiff"
+    - DEBDIFF_FILENAME="${CI_PROJECT_DIR}/${DEBDIFF_ARTIFACT}"
+    - mkdir -vp "$(dirname "$DEBDIFF_FILENAME")"
+    - CURRENT_BUILD_DSC=$(find "$WORKING_DIR" -maxdepth 1 -name '*.dsc' -print -quit)
+    - |
+      if [ -z "$CURRENT_BUILD_DSC" ]; then
+        echo "Error: no source package (.dsc) found in ${WORKING_DIR}."
+        exit 1
+      fi
+    - PACKAGE_NAME=$(grep '^Source:' "$CURRENT_BUILD_DSC" | awk '{print $2}')
+    - PACKAGE_ARCHIVE_PATH="${WORKING_DIR}/package_archive_files"
+    - *setup_chdist
+    - mkdir -vp "$PACKAGE_ARCHIVE_PATH"
+    - cd "$PACKAGE_ARCHIVE_PATH"
+    - |
+      if ! chdist apt-get "$CHDIST_NAME" source --download-only "$PACKAGE_NAME"; then
+        echo "No source package named ${PACKAGE_NAME} found in the ${RELEASE} archive."
+        : > "$DEBDIFF_FILENAME"
+        exit 0
+      fi
+    - cd "$CI_PROJECT_DIR"
+    - ARCHIVE_DSC=$(find "$PACKAGE_ARCHIVE_PATH" -maxdepth 1 -name '*.dsc' -print -quit)
+    - debdiff "$ARCHIVE_DSC" "$CURRENT_BUILD_DSC" > "$DEBDIFF_FILENAME" || true
+    - |
+      if [ -s "$DEBDIFF_FILENAME" ]; then
+        colordiff < "$DEBDIFF_FILENAME"
+      else
+        echo "No differences found between archive and current source package."
+      fi
+  artifacts:
+    paths:
+      - "debian/output/${CI_PROJECT_NAME}.debdiff"
+    when: always
+  variables:
+    GIT_STRATEGY: none
+  needs:
+    - job: build source
+      artifacts: true
+  allow_failure: true
+
 .generate-build-rdep-config: &generate-build-rdep-config
   stage: test
   image: $SALSA_CI_IMAGES_BUILD

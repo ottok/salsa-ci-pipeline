@@ -114,6 +114,9 @@ generate-build-rdep-config:
 build-reverse-dependencies:
   extends: .test-build-reverse-dependencies
 
+debdiff:
+  extends: .test-debdiff
+
 ## Atomic Reprotest jobs
 atomic-reprotest:
   extends: .test-reprotest

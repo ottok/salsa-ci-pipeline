@@ -68,6 +68,7 @@ include:
   * [Using automatically built apt repository](#using-automatically-built-apt-repository)
   * [Enable wrap-and-sort job](#enable-wrap-and-sort-job)
   * [Add extra arguments to licenserecon](#add-extra-arguments-to-licenserecon)
+  * [Compare current source with archive using debdiff](#compare-current-source-with-archive-using-debdiff)
   * [Debian release bump](#debian-release-bump)
 * [Build and autopkgtest jobs with faketime testing](#build-and-autopkgtest-jobs-with-faketime-testing)
   * [Enable build jobs with faketime](#enable-build-jobs-with-faketime)
@@ -1310,6 +1311,24 @@ licensing). To exclude files or directories, create a `debian/lrc.config` file.
 See
 [lrc.config](https://salsa.debian.org/debian/licenserecon/-/blob/main/lrc.config)
 for reference.
+
+### Compare current source with archive using debdiff
+
+The `debdiff` job can be used to show differences between the current source
+package and the one available in the Debian archive, if it exists. This is
+useful for reviewing proposed changes, especially for packages submitted for
+mentoring or proposed updates.
+
+The generated debdiff is uploaded as a job artifact at
+`debian/output/<project_name>.debdiff`.
+
+If you want to enable this job, add the following to your
+`debian/salsa-ci.yml`:
+
+```yaml
+variables:
+  SALSA_CI_ENABLE_DEBDIFF: 1
+```
 
 ### Debian release bump
 
