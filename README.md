@@ -320,7 +320,7 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
 
 variables:
-  SALSA_CI_IGNORED_BRANCHES: 'some-branch|another-ref'
+  SALSA_CI_IGNORED_BRANCHES: '/^(some-branch|another-ref)$/'
 ```
 
 ### Completely disable the pipeline
