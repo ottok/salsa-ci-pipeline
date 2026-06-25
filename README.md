@@ -54,6 +54,7 @@ include:
   * [Customize reprotest](#customize-reprotest)
 * [Build reverse dependencies](#build-reverse-dependencies)
   * [Enable build reverse dependencies](#enable-build-reverse-dependencies)
+  * [Transition-aware reverse dependencies for library transitions](#transition-aware-reverse-dependencies-for-library-transitions)
   * [Maximum of 100 reverse dependencies per pipeline](#maximum-of-100-reverse-dependencies-per-pipeline)
 * [Lintian, Autopkgtests, Piuparts and other quality assurance CI jobs](#lintian-autopkgtests-piuparts-and-other-quality-assurance-ci-jobs)
   * [Customize Lintian](#customize-lintian)
@@ -999,6 +1000,27 @@ dependencies jobs run on **every push**. Salsa admins have explicitly warned
 that this is considered **abuse of shared infrastructure**, see for example
 [this thread on
 debian-project@](https://lists.debian.org/debian-project/2025/08/msg00021.html).
+
+### Transition-aware reverse dependencies for library transitions
+
+By default, build reverse dependencies jobs ask `ratt` to select candidates
+from the binary packages built in the `.changes` file.
+
+For library transitions, you can instead ask `ratt` to select packages whose
+binary dependencies mention affected runtime library package names:
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_BUILD_REVERSE_DEPENDENCIES: 0
+  SALSA_CI_BUILD_REVERSE_DEPENDENCIES_TRANSITION_AFFECTED_REGEX: '^(libfoo2|libfoo1)$'
+```
+
+The value is passed to `ratt -transition_affected`. It should usually be an
+anchored regex for the old and new runtime library package names, for example
+`^(libfoo2|libfoo1)$`.
+
+`ratt` matches this regex against parsed dependency package names. It is not a
+Ben expression and is not matched against the raw `Depends` field.
 
 ### Maximum of 100 reverse dependencies per pipeline
 
