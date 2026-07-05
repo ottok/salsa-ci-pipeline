@@ -101,9 +101,15 @@ variables:
     description: "debci_autopkgtest_args is set to this variable and used by autopkgtest"
     value: ''
   SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS: "0,2,8"
-  SALSA_CI_BLHC_ARGS: ''
-  SALSA_CI_LINTIAN_SUPPRESS_TAGS: ""
-  SALSA_CI_LINTIAN_FAIL_WARNING: ""
+  SALSA_CI_BLHC_ARGS:
+    description: "Arguments appended to blhc's generated arguments"
+    value: ''
+  SALSA_CI_LINTIAN_SUPPRESS_TAGS:
+    description: "Space-separated lintian tags to suppress"
+    value: ''
+  SALSA_CI_LINTIAN_FAIL_WARNING:
+    description: "Set to 1 to fail when lintian reports warnings"
+    value: ''
   SALSA_CI_LINTIAN_SHOW_OVERRIDES:
     description: "To make Lintian show overridden tags, set this to 1"
     value: 0
@@ -113,15 +119,25 @@ variables:
   SALSA_CI_PIUPARTS_ARGS:
     description: "Arguments prepended to piuparts's generated arguments"
     value: ''
-  SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT: ''
-  SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT: ''
-  SALSA_CI_DPKG_BUILDPACKAGE_ARGS: ''
-  SALSA_CI_GBP_BUILDPACKAGE_ARGS: ''
+  SALSA_CI_PIUPARTS_PRE_INSTALL_SCRIPT:
+    description: "Script executed before piuparts installs the package"
+    value: ''
+  SALSA_CI_PIUPARTS_POST_INSTALL_SCRIPT:
+    description: "Script executed after piuparts installs the package"
+    value: ''
+  SALSA_CI_DPKG_BUILDPACKAGE_ARGS:
+    description: "Arguments appended to dpkg-buildpackage"
+    value: ''
+  SALSA_CI_GBP_BUILDPACKAGE_ARGS:
+    description: "Arguments appended to gbp buildpackage"
+    value: ''
   # Is this git branch in git-debrebase rather than git-buildpackage format?
   # Setting this will use git-debrebase convert-to-gbp to convert it.
   # You will also need to set GIT_DEPTH: 0 to disable shallow clones.
   SALSA_CI_GIT_DEBREBASE: 0
-  SALSA_CI_SBUILD_ARGS: ''
+  SALSA_CI_SBUILD_ARGS:
+    description: "Arguments appended to sbuild"
+    value: ''
   SALSA_CI_SBUILD_EXTRA_PACKAGE: ''
   DOCKER_TLS_CERTDIR: ""
   SALSA_CI_DISABLE_APTLY: 1
@@ -165,7 +181,9 @@ variables:
   SALSA_CI_BUILD_TIMEOUT_ARGS: "2.75h"
   SALSA_CI_DISABLE_BUILD_DBGSYM: 1
   SALSA_CI_DISABLE_WRAP_AND_SORT: 1
-  SALSA_CI_WRAP_AND_SORT_ARGS: ''
+  SALSA_CI_WRAP_AND_SORT_ARGS:
+    description: "Arguments appended to wrap-and-sort"
+    value: ''
   SALSA_CI_DISABLE_EXTRACT_SOURCE: 1
   SALSA_CI_FAKETIME_DATE:
     description: "Simulated system date/time used when faketime injection is
@@ -195,7 +213,9 @@ variables:
   SALSA_CI_SBUILD_VERBOSE:
     description: "Enable sbuild verbosity so all the information goes to stdout as well as to the build log files."
     value: 1
-  SALSA_CI_MMDEBSTRAP_EXTRA_ARGS: ''
+  SALSA_CI_MMDEBSTRAP_EXTRA_ARGS:
+    description: "Arguments appended to mmdebstrap"
+    value: ''
   # GitLab runners execute `umask 0000` command by default which may lead to
   # failure of build jobs due to everything being world writeable.
   # This feature flag disables execution of `umask 0000`.
