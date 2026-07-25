@@ -76,6 +76,7 @@ include:
   * [Important warning for faketime jobs](#warning-important-warning-for-faketime-jobs)
 * [Distribution and release selection](#distribution-and-release-selection)
   * [Customise what Debian release to use](#customise-what-debian-release-to-use)
+  * [Using old snapshot.debian.org timestamps](#using-old-snapshotdebianorg-timestamps)
   * [Experimental: Ubuntu support](#experimental-ubuntu-support)
 * [Testing Salsa CI \(and GitLab CI in general\) pipeline definitions locally](#testing-salsa-ci-and-gitlab-ci-in-general-pipeline-definitions-locally)
   * [Testing definition file for correctness](#testing-definition-file-for-correctness)
@@ -1484,6 +1485,27 @@ The following releases are available:
 * testing
 * unstable
 * experimental
+
+### Using old snapshot.debian.org timestamps
+
+Salsa CI images include `/usr/local/bin/gpgvnoexpkeysig`, an advanced APT
+helper for custom jobs or scripts that call `apt` or `mmdebstrap` directly
+against old `snapshot.debian.org` timestamps signed by Debian archive signing
+keys that are now expired.
+
+This helper is not enabled automatically by the standard Salsa CI jobs.
+
+For a custom `apt` command, pass it explicitly when needed:
+
+```shell
+apt-get \
+  -o Acquire::Check-Valid-Until=false \
+  -o Apt::Key::gpgvcommand=/usr/local/bin/gpgvnoexpkeysig \
+  update
+```
+
+Only use this when accepting expired archive signing keys for old snapshots is
+intentional.
 
 ### Experimental: Ubuntu support
 

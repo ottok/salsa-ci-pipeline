@@ -18,7 +18,7 @@
 #
 # To use this script, call apt with
 #
-#    -o Apt::Key::gpgvcommand=/usr/libexec/mmdebstrap/gpgvnoexpkeysig
+#    -o Apt::Key::gpgvcommand=/usr/local/bin/gpgvnoexpkeysig
 #
 # Scripts doing similar things can be found here:
 #
@@ -47,5 +47,22 @@ case $GPGSTATUSFD in
 		;;
 esac
 
-# we need eval because we cannot redirect a variable fd
-eval 'exec gpgv "$@" '"$GPGSTATUSFD"'>&1 | sed "s/^\[GNUPG:\] EXPKEYSIG /[GNUPG:] GOODSIG /" >&'"$GPGSTATUSFD"
+GPGSTATUS="$(mktemp "${TMPDIR:-/tmp}/gpgvnoexpkeysig.XXXXXXXXXX")"
+cleanup() {
+	rm -f "$GPGSTATUS"
+}
+trap cleanup EXIT HUP INT TERM
+
+set +e
+
+# we need eval because POSIX sh cannot redirect a variable fd directly
+eval 'gpgv "$@" '"$GPGSTATUSFD"'> "$GPGSTATUS"'
+GPGV_EXIT=$?
+eval 'sed "s/^\[GNUPG:\] EXPKEYSIG /[GNUPG:] GOODSIG /" < "$GPGSTATUS" >&'"$GPGSTATUSFD"
+SED_EXIT=$?
+set -e
+
+if [ "$GPGV_EXIT" -ne 0 ]; then
+	exit "$GPGV_EXIT"
+fi
+exit "$SED_EXIT"
