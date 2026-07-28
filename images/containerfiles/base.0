@@ -19,6 +19,9 @@ RUN chmod 755 /usr/local/bin/add_extra_repository.sh
 COPY ./scripts/filter-output /usr/local/bin/
 RUN chmod 755 /usr/local/bin/filter-output
 
+COPY ./scripts/gpgvnoexpkeysig /usr/local/bin/
+RUN chmod 755 /usr/local/bin/gpgvnoexpkeysig
+
 COPY files/base/initialize /initialize
 RUN /initialize $VENDOR $RELEASE && rm -f /initialize
 
