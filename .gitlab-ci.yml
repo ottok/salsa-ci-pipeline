@@ -181,6 +181,7 @@ test-pipeline:
         SALSA_CI_EXTRA_REPOSITORY: "deb-src http://deb.debian.org/debian unstable main"
         SALSA_CI_EXTRA_REPOSITORY_KEY: /usr/share/keyrings/debian-archive-keyring.gpg
         SALSA_CI_ENABLE_CROSSBUILD_ARM64: 1
+        SALSA_CI_ENABLE_DEBDIFF: 1
       # test running the project against testing
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         RELEASE: testing
