@@ -25,6 +25,7 @@ RUN apt-get update && apt-get upgrade -y && eatmydata apt-get install --no-insta
     uidmap \
     iproute2 \
     distro-info-data \
+    git-debrebase \
     # Dependencies for debrebuild
     libstring-shellquote-perl \
     python3-apt \
