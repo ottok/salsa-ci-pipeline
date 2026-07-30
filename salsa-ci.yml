@@ -348,12 +348,15 @@ stages:
 
   - test -z "${MMDEBSTRAP_INCLUDE_PACKAGES}" || export MMDEBSTRAP_INCLUDE_PACKAGES_ARGS="--include=${MMDEBSTRAP_INCLUDE_PACKAGES}"
 
-  # Experimental and partial suite chroots should be based on their full parent
-  # suite.
+  # Experimental chroots should be based on unstable with experimental enabled.
+  # Partial suite chroots should be based on their full parent suite.
   - |
+    mmdebstrap_chroot=
     case "${RELEASE}" in
     experimental)
       mmdebstrap_dist=${DEFAULT_RELEASE}
+      mmdebstrap_chroot=${RELEASE}
+      export MMDEBSTRAP_SETUP_HOOK_ARGS="${MMDEBSTRAP_SETUP_HOOK_ARGS} --setup-hook='printf \"deb ${SALSA_CI_MIRROR} experimental ${MMDEBSTRAP_COMPONENTS}\n\" > \"\$1\"/etc/apt/sources.list.d/experimental.list'"
       ;;
     *-proposed-updates)
       mmdebstrap_dist=${RELEASE%-proposed-updates}
@@ -371,10 +374,11 @@ stages:
       mmdebstrap_dist=${RELEASE}
       ;;
     esac
+    test -n "${mmdebstrap_chroot}" || mmdebstrap_chroot=${mmdebstrap_dist}
 
 .build-before-script: &build-before-script
   - *mmdebstrap-config-script
-  - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_SETUP_HOOK_ARGS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_dist}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
+  - export MMDEBSTRAP_COMMAND="mmdebstrap --skip=output/dev --variant=buildd ${MMDEBSTRAP_INCLUDE_PACKAGES_ARGS} --components=\"${MMDEBSTRAP_COMPONENTS}\" ${MMDEBSTRAP_SETUP_HOOK_ARGS} ${MMDEBSTRAP_CUSTOMIZE_HOOK_ARGS} ${SALSA_CI_MMDEBSTRAP_EXTRA_ARGS} ${mmdebstrap_dist} ~/.cache/sbuild/${mmdebstrap_chroot}-${BUILD_ARCH}.tar ${SALSA_CI_MIRROR}"
   - su salsa-ci -c "mkdir -p ~/.cache/sbuild"
 
   - su salsa-ci -c "${MMDEBSTRAP_COMMAND}"
