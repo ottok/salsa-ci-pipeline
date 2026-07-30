@@ -559,23 +559,6 @@ stages:
       ;;
     esac
 
-  # Add incoming when building for unstable or stable. See #307.
-  - export INCOMING_COMPONENTS="main"
-  - test -z "${SALSA_CI_COMPONENTS}" || export INCOMING_COMPONENTS="${INCOMING_COMPONENTS} ${SALSA_CI_COMPONENTS}"
-  - |
-    case "${RELEASE}" in
-    unstable|sid)
-      export BUILD_COMMAND="${BUILD_COMMAND} \
-                            --extra-repository=\"deb http://incoming.debian.org/debian-buildd buildd-${RELEASE} ${INCOMING_COMPONENTS}\" \
-                            --extra-repository=\"deb-src http://incoming.debian.org/debian-buildd buildd-${RELEASE} ${INCOMING_COMPONENTS}\""
-      ;;
-    stable|trixie)
-      export BUILD_COMMAND="${BUILD_COMMAND} \
-                            --extra-repository=\"deb http://incoming.debian.org/debian-buildd buildd-${RELEASE}-proposed-updates ${INCOMING_COMPONENTS}\" \
-                            --extra-repository=\"deb-src http://incoming.debian.org/debian-buildd buildd-${RELEASE}-proposed-updates ${INCOMING_COMPONENTS}\""
-      ;;
-    esac
-
   - test -z "${SALSA_CI_SBUILD_ARGS}" || export BUILD_COMMAND="${BUILD_COMMAND} ${SALSA_CI_SBUILD_ARGS}"
   # TODO: handle multiple (space separated) extra packages
   - test -z "${SALSA_CI_SBUILD_EXTRA_PACKAGE}" || export BUILD_COMMAND="${BUILD_COMMAND} --extra-package=${SALSA_CI_SBUILD_EXTRA_PACKAGE}"
