@@ -1160,7 +1160,7 @@ stages:
     - job: build
       artifacts: true
 
-.test-uscan:
+.test-uscan: &test-uscan
   stage: test
   image: $SALSA_CI_IMAGES_GENERIC_TESTS
   needs:
