@@ -936,7 +936,7 @@ stages:
       ret=0
       # su's -P is required to have ownership over /dev/stderr, /dev/stdout and
       # /dev/stdin, and then fix #256
-      su -P debci -c "debci localtest ${AUTOPKGTEST_INPUT_FILES} --suite ${RELEASE} --output-dir ${DEBCI_OUTPUT_DIR}" || ret=$?
+      su -P debci -c "debci localtest ${AUTOPKGTEST_INPUT_FILES} --suite ${RELEASE} --output-dir ${DEBCI_OUTPUT_DIR}" |& OUTPUT_FILENAME=${WORKING_DIR}/autopkgtest.log filter-output || ret=$?
       case ",$SALSA_CI_AUTOPKGTEST_ALLOWED_EXIT_STATUS," in *",$ret,"*) exit 0;; esac
       exit $ret
     - rm -vrf ${DEBCI_OUTPUT_DIR}/binaries
