@@ -105,7 +105,7 @@ variables:
     description: "Arguments appended to blhc's generated arguments"
     value: ''
   SALSA_CI_LINTIAN_SUPPRESS_TAGS:
-    description: "Space-separated lintian tags to suppress"
+    description: "Comma-separated Lintian tags to suppress"
     value: ''
   SALSA_CI_LINTIAN_FAIL_WARNING:
     description: "Set to 1 to fail when lintian reports warnings"
