@@ -74,6 +74,7 @@ variables:
   SALSA_CI_IMAGES_BUILD_ARM32V5: ${SALSA_CI_IMAGES}/arm32v5/build:latest
   SALSA_CI_IMAGES_BUILD_ARM32V7: ${SALSA_CI_IMAGES}/arm32v7/build:latest
   SALSA_CI_IMAGES_BUILD_ARM64: ${SALSA_CI_IMAGES}/arm64v8/build:latest
+  SALSA_CI_IMAGES_BUILD_PPC64LE: ${SALSA_CI_IMAGES}/ppc64le/build:latest
   SALSA_CI_IMAGES_BUILD_RISCV64: ${SALSA_CI_IMAGES}/riscv64/build:latest
   SALSA_CI_IMAGES_GENERIC_TESTS: ${SALSA_CI_IMAGES}/generic_tests:${RELEASE}
   SALSA_CI_IMAGES_BLHC: ${SALSA_CI_IMAGES}/blhc:${RELEASE}
@@ -721,7 +722,7 @@ stages:
 .build-package-ppc64el: &build-package-ppc64el
   extends:
     - .build-package
-  image: $SALSA_CI_IMAGES_BASE_PPC64LE
+  image: $SALSA_CI_IMAGES_BUILD_PPC64LE
   variables:
     BUILD_ARCH: 'ppc64el'
   tags:
