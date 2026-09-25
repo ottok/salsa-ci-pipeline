@@ -53,6 +53,7 @@ include:
   * [Sbuild verbosity and additional arguments](#sbuild-verbosity-and-additional-arguments)
   * [Customize reprotest](#customize-reprotest)
 * [Build reverse dependencies](#build-reverse-dependencies)
+  * [Experimental suite handling](#experimental-suite-handling)
   * [Enable build reverse dependencies](#enable-build-reverse-dependencies)
   * [Transition-aware reverse dependencies for library transitions](#transition-aware-reverse-dependencies-for-library-transitions)
   * [Maximum of 100 reverse dependencies per pipeline](#maximum-of-100-reverse-dependencies-per-pipeline)
@@ -969,6 +970,19 @@ library updates, or any change where you need confidence that reverse
 dependencies still build successfully. Running build reverse-dependencies jobs
 helps catch breakages early and provides stronger QA before uploads reach the
 archive.
+
+### Experimental suite handling
+
+When `RELEASE=experimental`, reverse-dependencies are resolved/rebuilt from
+**unstable** by default. To opt into buildd-like experimental handling (aspcud
+criteria + experimental overlay, see the [sbuild.conf.erb
+template](https://salsa.debian.org/dsa-team/mirror/dsa-puppet/-/blob/production/modules/buildd/templates/sbuild.conf.erb#L7)
+used by buildd), set `SALSA_CI_DISABLE_RATT_SBUILD_EXPERIMENTAL_ASPCUD` to `0`.
+
+```yaml
+variables:
+  SALSA_CI_DISABLE_RATT_SBUILD_EXPERIMENTAL_ASPCUD: 0
+```
 
 ### Enable build reverse dependencies checking
 
