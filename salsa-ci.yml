@@ -1316,6 +1316,7 @@ stages:
     # so SALSA_CI_PIUPARTS_{PRE,POST}_INSTALL_SCRIPT
     # can refer to committed scripts
     GIT_STRATEGY: fetch
+    RUNNER_SCRIPT_TIMEOUT: ${SALSA_CI_BUILD_TIMEOUT_ARGS}
   artifacts:
     when: always
     paths:
