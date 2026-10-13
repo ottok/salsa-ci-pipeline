@@ -1306,18 +1306,21 @@ stages:
       ${PIUPARTS_KEEP_SOURCES_LIST}
       --single-packages --single-changes-list --distupgrade-to-testdebs-from ${WORKING_DIR}
       --mirror="${SALSA_CI_MIRROR} ${MMDEBSTRAP_COMPONENTS}"
-      --log-file=/tmp/piuparts.log ${WORKING_DIR}/*.changes
+      --log-file=/tmp/piuparts.log ${WORKING_DIR}/*.changes |& OUTPUT_FILENAME=/tmp/output.log filter-output
+  after_script:
     # we can't move the log earlier as piuparts would detect it and fail
-    - mv /tmp/piuparts.log ${WORKING_DIR}/piuparts.log
+    - test -f /tmp/piuparts.log && mv /tmp/piuparts.log ${WORKING_DIR}/piuparts.log || true
+    - test -f /tmp/output.log && mv /tmp/output.log ${WORKING_DIR}/output.log || true
   variables:
     # To make the repository available in this job,
     # so SALSA_CI_PIUPARTS_{PRE,POST}_INSTALL_SCRIPT
     # can refer to committed scripts
     GIT_STRATEGY: fetch
+    RUNNER_SCRIPT_TIMEOUT: ${SALSA_CI_BUILD_TIMEOUT_ARGS}
   artifacts:
     when: always
     paths:
-      - ${WORKING_DIR}/piuparts.log
+      - ${WORKING_DIR}/*.log
   needs:
     - job: build
       artifacts: true
