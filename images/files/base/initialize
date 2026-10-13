@@ -11,23 +11,10 @@ RELEASE=$2
 
 set -xe
 
-fix_apt_sources_for_bullseye_security() {
-    # WARNING: Temporary workaround for salsa ci #595 and Debian #1147093
-    # Remove once Debian #1147150 archives bullseye-security
-    if ! grep -E -q "^deb https?://(deb|security)\.debian\.org/debian-security bullseye-security " \
-	/etc/apt/sources.list; then
-	return
-    fi
-
-    sed -E -i \
-	"s#^deb https?://(deb|security)\.debian\.org/debian-security bullseye-security #deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260903T220410Z bullseye-security #" \
-	/etc/apt/sources.list
-}
-
 fix_apt_sources_for_archived_releases() {
     # Only for Debian's archived releases
     # This is used by the LTS/ELTS team fork
-    if ! grep -E -q "^deb .* (jessie|stretch|buster) " /etc/apt/sources.list; then
+    if ! grep -E -q "^deb .* (jessie|stretch|buster|bullseye) " /etc/apt/sources.list; then
 	return
     fi
 
@@ -39,7 +26,7 @@ fix_apt_sources_for_archived_releases() {
 	    /etc/apt/sources.list.d/backports.list
     fi
 
-    # Drop the updates suite, as it's not present in archive.d.o
+    # Drop the updates suite for archived releases
     sed -E -i '/^deb .* [a-z]+-updates /d' /etc/apt/sources.list
 }
 
@@ -102,7 +89,6 @@ fix_vendor_symlink() {
 }
 
 # Main code
-fix_apt_sources_for_bullseye_security
 fix_apt_sources_for_archived_releases
 configure_apt
 apt_update

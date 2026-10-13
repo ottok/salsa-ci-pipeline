@@ -80,14 +80,18 @@ stages:
         case "$VENDOR" in
           debian)
             case "$RELEASE" in
-              stretch | buster)
+              stretch | buster | bullseye)
                 MIRROR=${DEBIAN_ARCHIVE_MIRROR}
               ;;
               *)
                 MIRROR=${DEBIAN_MIRROR}
               ;;
             esac
-            ALIASES=$(wget -O - ${MIRROR}/dists/${RELEASE}/Release | awk "/^Suite:/ { if (\$2 !~ /${RELEASE}/) print \$2 }")
+            # Archived Suite labels no longer track the current release aliases.
+            ALIASES=""
+            if [ "$MIRROR" != "${DEBIAN_ARCHIVE_MIRROR}" ]; then
+              ALIASES=$(wget -O - ${MIRROR}/dists/${RELEASE}/Release | awk "/^Suite:/ { if (\$2 !~ /${RELEASE}/) print \$2 }")
+            fi
             test "$ALIASES" != 'unstable' || ALIASES="${ALIASES} latest"
             # autopkgtest image is built on top of stable. Let's make the
             # latest tag an alias of it.
