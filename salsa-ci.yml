@@ -528,7 +528,9 @@ stages:
       # Check if we can obtain the orig from the git branches
 
       if ! gbp export-orig --tarball-dir=${BUILD_DIR}; then
-        # Fallback using origtargz
+        # Fallback using origtargz. uscan's Template: GitLab needs libjson-perl
+        eatmydata apt-get install --no-install-recommends -y \
+          libjson-perl
         origtargz -dt
         cp -v ../*orig*tar* ${BUILD_DIR}
         SALSA_CI_GBP_BUILDPACKAGE_ARGS="--git-overlay ${SALSA_CI_GBP_BUILDPACKAGE_ARGS}"
