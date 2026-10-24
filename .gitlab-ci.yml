@@ -402,6 +402,8 @@ ubuntu-test-pipeline:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
         # Test specifically the version in resolute
         PROJECT_TARGET_HEAD: debian/3.12-1
+        # Disable due to sporadic failures as documented in #591
+        SALSA_CI_DISABLE_AUTOPKGTEST: 1
 
 clean images:
   stage: clean
