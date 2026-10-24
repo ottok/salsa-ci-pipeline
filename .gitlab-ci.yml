@@ -372,10 +372,12 @@ test-pipeline-non-default-archs:
 
 ubuntu-test-pipeline:
   variables:
-    # gitlab doesn't pass these variables from var/ubuntu.yml
-    VENDOR: 'ubuntu'
-    DEFAULT_RELEASE: 'resolute'
+    # GitLab doesn't pass these variables from var/ubuntu.yml
     SALSA_CI_MIRROR: 'http://archive.ubuntu.com/ubuntu'
+    VENDOR: 'ubuntu'
+    # Ensure all jobs in matrix run Ubuntu 26.04 "Resolute" regardless of
+    # 'unstable' in d/changelog
+    RELEASE: 'resolute'
   trigger:
     include:
       - local: .pipeline-test-ubuntu.yml
@@ -394,9 +396,12 @@ ubuntu-test-pipeline:
         IMAGE_VERSION: resolute_${CI_COMMIT_REF_SLUG}
         DEBIAN_IMAGE_VERSION: sid_${CI_COMMIT_REF_SLUG}
   parallel:
+    # Currently this matrix only has one single job, but the syntax is kept so
+    # that adding more jobs for Ubuntu is easy later on if needed
     matrix:
       - PROJECT_URL: https://salsa.debian.org/debian/grep
-        PROJECT_TARGET_HEAD: debian/master
+        # Test specifically the version in resolute
+        PROJECT_TARGET_HEAD: debian/3.12-1
 
 clean images:
   stage: clean
